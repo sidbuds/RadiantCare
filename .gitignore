@@ -33,6 +33,32 @@ yarn-error.log*
 .cache/
 *.cache
 
-# Weekly task temp outputs
-周任务/.cache/
-周任务/outputs/
+# Documentation & design files
+docs/
+周任务/
+概要设计图/
+*.docx
+*.pptx
+*.xlsx
+*.mmd
+*.puml
+*.vbs
+*.ps1
+*.ndjson
+*.dbml
+*.kroki
+
+# Keep only source code and build output
+# Root-level docs (not README)
+需求文档.md
+全链路业务说明文档.md
+数据库设计文档.md
+后端技术栈与API设计.md
+前端技术栈与界面API设计.md
+复杂业务设计文档.md
+Docker设计文档.md
+链路-表-API-代码映射文档.md
+MIGRATION_PLAN.md
+backend/README.md
+backend/接口联调手册.md
+frontend/README.md
