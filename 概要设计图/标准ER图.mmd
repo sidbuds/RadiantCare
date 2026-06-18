@@ -1,0 +1,77 @@
+flowchart TB
+    %% 用户管理
+    USER["👤 用户<br/>用户ID | 用户编号 | 姓名<br/>手机号 | 密码 | 状态"]
+    STAFF["👤 后台账号<br/>账号ID | 用户名 | 密码<br/>显示名 | 绑定用户ID"]
+    ROLE["🔐 角色关联<br/>账号ID | 角色编码"]
+
+    %% 预约管理
+    PKG["📦 体检套餐<br/>套餐ID | 套餐编码 | 套餐名称<br/>价格 | 状态"]
+    PKG_ITEM["📋 套餐项目<br/>项目ID | 项目编码 | 项目名称"]
+    APPT["📅 预约<br/>预约ID | 预约单号 | 预约日期<br/>时段编码 | 状态"]
+    RES["📊 资源容量<br/>中心编码 | 预约日期 | 时段编码<br/>总容量 | 已使用"]
+
+    %% 订单管理
+    ORDER["💰 订单<br/>订单ID | 订单号 | 总金额<br/>实付金额 | 状态"]
+    ORDER_ITEM["📝 订单明细<br/>明细ID | 项目编码 | 数量<br/>单价 | 金额"]
+    PAYMENT["💳 支付记录<br/>支付流水号 | 支付渠道<br/>支付金额 | 状态"]
+
+    %% 体检执行
+    TASK["🏥 体检任务<br/>任务ID | 任务号 | 体检日期<br/>任务状态 | 报告状态"]
+    TASK_ITEM["📋 任务项<br/>任务项ID | 项目编码<br/>科室编码 | 医生ID | 项目状态"]
+    RESULT["📊 体检结果<br/>结果ID | 结果值<br/>是否异常 | 异常级别"]
+    ROUTE["🗺️ 导检路线<br/>路线编码 | 科室编码<br/>房间号 | 检查顺序"]
+
+    %% 报告管理
+    REPORT["📄 体检报告<br/>报告ID | 报告编号 | 报告日期<br/>总体结论 | 状态"]
+    REPORT_ITEM["📊 报告指标<br/>指标ID | 项目编码<br/>结果值 | 是否异常"]
+    REVIEW["✅ 审核记录<br/>审核ID | 审核阶段<br/>审核结果 | 审核意见"]
+    TEMPLATE["📑 报告模板<br/>模板ID | 模板编码<br/>模板名称 | 状态"]
+
+    %% 咨询管理
+    CONSULT["💬 咨询工单<br/>咨询ID | 咨询单号<br/>咨询内容 | 状态"]
+    REPLY["💬 咨询回复<br/>回复ID | 回复角色<br/>回复内容 | 回复时间"]
+
+    %% 数据分析
+    COMPARE["📈 对比任务<br/>任务ID | 基线报告ID<br/>对比报告ID | 状态"]
+    COMPARE_RESULT["📊 对比结果<br/>结果ID | 项目编码<br/>基线值 | 对比值 | 趋势"]
+    RISK["⚠️ 风险评分<br/>评分ID | 总分<br/>异常得分 | 风险等级"]
+    ADVICE["💡 健康建议<br/>建议ID | 建议类型<br/>风险等级 | 建议内容"]
+
+    %% 关系定义
+    USER -->|"创建预约 1:N"| APPT
+    USER -->|"创建订单 1:N"| ORDER
+    USER -->|"发起咨询 1:N"| CONSULT
+    
+    STAFF -->|"拥有角色 1:N"| ROLE
+    STAFF -->|"绑定用户 1:1"| USER
+    STAFF -->|"医生录入 1:N"| RESULT
+    STAFF -->|"医生审核 1:N"| REVIEW
+    STAFF -->|"医生回复 1:N"| CONSULT
+    
+    PKG -->|"包含项目 1:N"| PKG_ITEM
+    PKG -->|"被选择 1:N"| APPT
+    
+    APPT -->|"生成订单 1:1"| ORDER
+    APPT -->|"生成任务 1:1"| TASK
+    APPT -->|"占用时段 N:1"| RES
+    
+    ORDER -->|"包含明细 1:N"| ORDER_ITEM
+    ORDER -->|"支付记录 1:N"| PAYMENT
+    
+    TASK -->|"拆分任务项 1:N"| TASK_ITEM
+    TASK -->|"生成报告 1:1"| REPORT
+    
+    TASK_ITEM -->|"录入结果 1:N"| RESULT
+    TASK_ITEM -->|"关联科室 N:1"| ROUTE
+    
+    REPORT -->|"包含指标 1:N"| REPORT_ITEM
+    REPORT -->|"审核记录 1:N"| REVIEW
+    REPORT -->|"使用模板 N:1"| TEMPLATE
+    REPORT -->|"关联咨询 1:N"| CONSULT
+    REPORT -->|"用于对比 1:N"| COMPARE
+    
+    CONSULT -->|"回复消息 1:N"| REPLY
+    
+    COMPARE -->|"对比结果 1:N"| COMPARE_RESULT
+    COMPARE -->|"风险评分 1:1"| RISK
+    COMPARE -->|"健康建议 1:N"| ADVICE

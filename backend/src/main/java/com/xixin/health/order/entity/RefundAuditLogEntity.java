@@ -1,0 +1,21 @@
+package com.xixin.health.order.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.xixin.health.common.model.BaseEntity;
+import lombok.Data;
+
+@Data
+@TableName("refund_audit_log")
+public class RefundAuditLogEntity extends BaseEntity {
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    private Long refundApplyId;
+    private String applyNo;
+    private String auditAction;
+    private String auditResult;
+    private String auditRemark;
+    private Long operatorId;
+    private String operatorName;
+}

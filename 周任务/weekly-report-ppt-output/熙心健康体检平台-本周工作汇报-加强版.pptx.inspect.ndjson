@@ -1,0 +1,281 @@
+{"kind":"deck","id":"pr/bcmp80","name":"Deck"}
+{"kind":"layout","layoutId":"258208c8-4d74-455d-be80-f54bb5a0a790","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"5ccc2021-b3cc-413a-a920-c50abf51c7a4","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/blxdjl","slide":1,"title":"A5-","textShapes":4}
+{"kind":"shape","id":"sh/q1orytsv","slide":1,"bbox":[0,0,216,720]}
+{"kind":"textbox","id":"sh/87ed8bat","slide":1,"text":"A5-\n03\n东软教育视觉识别系统\n基础部分","textPreview":"A5- | 03 | 东软教育视觉识别系统 | 基础部分","textChars":22,"textLines":4,"bbox":[28,188,152,220]}
+{"kind":"textbox","id":"sh/je9cvixc","slide":1,"text":"熙心健康体检平台\n本周工作汇报","textPreview":"熙心健康体检平台 | 本周工作汇报","textChars":15,"textLines":2,"bbox":[278,216,780,120]}
+{"kind":"shape","id":"sh/qtcj6tov","slide":1,"bbox":[278,360,132,8]}
+{"kind":"textbox","id":"sh/1gvy90je","slide":1,"text":"第01组｜第二周｜2026年6月15日-2026年6月18日","textPreview":"第01组｜第二周｜2026年6月15日-2026年6月18日","textChars":30,"textLines":1,"bbox":[278,392,660,64]}
+{"kind":"textbox","id":"sh/fa9w3m94","slide":1,"text":"围绕概要设计、数据库设计与成果图绘制开展本周汇报","textPreview":"围绕概要设计、数据库设计与成果图绘制开展本周汇报","textChars":24,"textLines":1,"bbox":[278,610,520,50]}
+{"kind":"image","id":"im/sji5snel","slide":1,"name":"","bbox":[14,14,176,160]}
+{"kind":"image","id":"im/lszqtcj6","slide":1,"name":"","bbox":[766,548,400,78]}
+{"kind":"notes","id":"nt/blxdjl","slide":1,"text":""}
+{"kind":"slide","id":"sl/9sytyr","slide":2,"title":"NEUEDU","textShapes":12}
+{"kind":"shape","id":"sh/gfmlkjm1","slide":2,"bbox":[0,0,214,720]}
+{"kind":"textbox","id":"sh/yd0z6103","slide":2,"text":"NEUEDU\nWEEKLY\nREPORT","textPreview":"NEUEDU | WEEKLY | REPORT","textChars":20,"textLines":3,"bbox":[28,176,150,110]}
+{"kind":"textbox","id":"sh/9s36hcrm","slide":2,"text":"本周任务","textPreview":"本周任务","textChars":4,"textLines":1,"bbox":[28,320,154,120]}
+{"kind":"textbox","id":"sh/g7adsji5","slide":2,"text":"P.02","textPreview":"P.02","textChars":4,"textLines":1,"bbox":[28,640,120,40]}
+{"kind":"textbox","id":"sh/y1kre1w7","slide":2,"text":"本周工作目标概述","textPreview":"本周工作目标概述","textChars":8,"textLines":1,"bbox":[268,58,840,64]}
+{"kind":"shape","id":"sh/5o7qpg3e","slide":2,"bbox":[268,128,94,6]}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":2,"text":"本周对应项目开发计划书第二里程碑，核心任务是完成系统设计阶段的关键工作","textPreview":"本周对应项目开发计划书第二里程碑，核心任务是完成系统设计阶段的关键工作","textChars":35,"textLines":1,"bbox":[372,118,700,28]}
+{"kind":"shape","id":"sh/m94fu18j","slide":2,"bbox":[270,170,286,204]}
+{"kind":"shape","id":"sh/fu18jqh0","slide":2,"bbox":[270,170,8,204]}
+{"kind":"textbox","id":"sh/4fu18jqh","slide":2,"text":"阶段任务定位","textPreview":"阶段任务定位","textChars":6,"textLines":1,"bbox":[290,186,254,28]}
+{"kind":"textbox","id":"sh/x0nuxc3y","slide":2,"text":"• 从需求分析正式过渡到系统设计阶段\n• 把需求成果转化为系统结构、模块边界与数据模型\n• 完成概要设计说明书中的核心设计内容整理\n• 为后续编码、联调和测试建立统一设计基线","textPreview":"• 从需求分析正式过渡到系统设计阶段 | • 把需求成果转化为系统结构、模块边界与数据模型 | • 完成概要设计说明书中的核心设计内容整理 | • 为后续编码、联调和测试建立统一设计基线","textChars":87,"textLines":4,"bbox":[290,224,252,138]}
+{"kind":"shape","id":"sh/qxs72x4n","slide":2,"bbox":[578,170,286,204]}
+{"kind":"shape","id":"sh/fil0rqd4","slide":2,"bbox":[578,170,8,204]}
+{"kind":"textbox","id":"sh/83itgfml","slide":2,"text":"阶段重要性说明","textPreview":"阶段重要性说明","textChars":7,"textLines":1,"bbox":[598,186,254,28]}
+{"kind":"textbox","id":"sh/xobm58z2","slide":2,"text":"• 系统设计决定后续开发是否有统一实现依据\n• 模块、流程、接口和数据如果此时不统一，开发阶段会反复返工\n• 这一周的成果质量，直接影响后续协作效率与项目稳定性\n• 它是项目从“理解需求”走向“工程实现”的关键过渡","textPreview":"• 系统设计决定后续开发是否有统一实现依据 | • 模块、流程、接口和数据如果此时不统一，开发阶段会反复返工 | • 这一周的成果质量，直接影响后续协作效率与项目稳定性 | • 它是项目从“理解需求”走向“工程实现”的关键过渡","textChars":107,"textLines":4,"bbox":[598,224,252,138]}
+{"kind":"shape","id":"sh/mtwra5gb","slide":2,"bbox":[886,170,316,204]}
+{"kind":"shape","id":"sh/fepkzupw","slide":2,"bbox":[886,170,8,204]}
+{"kind":"textbox","id":"sh/72x4nap4","slide":2,"text":"核心设计输出","textPreview":"核心设计输出","textChars":6,"textLines":1,"bbox":[906,186,284,28]}
+{"kind":"textbox","id":"sh/ih4byhgn","slide":2,"text":"• 系统结构图、模块功能定义与模块结构划分\n• 关键业务时序图、接口说明、系统及模块类图设计\n• 数据库设计书、核心数据表结构与整体 ER 图\n• 把项目主链路沉淀为可开发、可联调、可测试的设计成果","textPreview":"• 系统结构图、模块功能定义与模块结构划分 | • 关键业务时序图、接口说明、系统及模块类图设计 | • 数据库设计书、核心数据表结构与整体 ER 图 | • 把项目主链路沉淀为可开发、可联调、可测试的设计成果","textChars":99,"textLines":4,"bbox":[906,224,282,138]}
+{"kind":"textbox","id":"sh/p8nqxs72","slide":2,"text":"本周工作的核心目标，是完成从需求成果向系统设计成果的转换。前半部分围绕概要设计，对系统结构、模块边界、业务流程和对象组织进行系统化梳理；后半部分围绕数据库设计，将这些业务关系进一步沉淀为稳定的数据结构与实体关系。项目由此具备进入开发阶段的完整设计基础。","textPreview":"本周工作的核心目标，是完成从需求成果向系统设计成果的转换。前半部分围绕概要设计，对系统结构、模块边界、业务流程和对象组织进行系统化梳理；后半部分围绕数据库设计，将这些业务关系进一步沉淀为稳定的数据结构与实体关系。项目由此具备进入开发阶段的完整设计基础。","textChars":126,"textLines":1,"bbox":[270,404,932,130]}
+{"kind":"image","id":"im/a5gbq1or","slide":2,"name":"","bbox":[22,20,156,140]}
+{"kind":"image","id":"im/adsji5sn","slide":2,"name":"","bbox":[974,30,248,48]}
+{"kind":"notes","id":"nt/9sytyr","slide":2,"text":""}
+{"kind":"slide","id":"sl/riwr04","slide":3,"title":"NEUEDU","textShapes":26}
+{"kind":"shape","id":"sh/a5gbq1or","slide":3,"bbox":[0,0,214,720]}
+{"kind":"textbox","id":"sh/s72x4nap","slide":3,"text":"NEUEDU\nWEEKLY\nREPORT","textPreview":"NEUEDU | WEEKLY | REPORT","textChars":20,"textLines":3,"bbox":[28,176,150,110]}
+{"kind":"textbox","id":"sh/3ylc7u54","slide":3,"text":"任务拆分","textPreview":"任务拆分","textChars":4,"textLines":1,"bbox":[28,320,154,120]}
+{"kind":"textbox","id":"sh/adsji5sn","slide":3,"text":"P.03","textPreview":"P.03","textChars":4,"textLines":1,"bbox":[28,640,120,40]}
+{"kind":"textbox","id":"sh/sji5snel","slide":3,"text":"本周任务拆解与推进逻辑","textPreview":"本周任务拆解与推进逻辑","textChars":11,"textLines":1,"bbox":[268,58,840,64]}
+{"kind":"shape","id":"sh/za1gvy90","slide":3,"bbox":[268,128,94,6]}
+{"kind":"textbox","id":"sh/ap4r65wj","slide":3,"text":"总任务不是一次性完成的，而是通过几个前后衔接的设计部分逐步完成","textPreview":"总任务不是一次性完成的，而是通过几个前后衔接的设计部分逐步完成","textChars":31,"textLines":1,"bbox":[372,118,700,28]}
+{"kind":"shape","id":"sh/0je9cvix","slide":3,"bbox":[286,200,168,86]}
+{"kind":"textbox","id":"sh/t47y1kre","slide":3,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[300,216,140,22]}
+{"kind":"textbox","id":"sh/idonyd0z","slide":3,"text":"明确整体架构","textPreview":"明确整体架构","textChars":6,"textLines":1,"bbox":[298,238,144,32]}
+{"kind":"textbox","id":"sh/byhgn29g","slide":3,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[457,224,30,34]}
+{"kind":"shape","id":"sh/0rqd4vmt","slide":3,"bbox":[490,200,168,86]}
+{"kind":"textbox","id":"sh/tcj6tova","slide":3,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[504,216,140,22]}
+{"kind":"textbox","id":"sh/il0rqd4v","slide":3,"text":"拆分模块职责","textPreview":"拆分模块职责","textChars":6,"textLines":1,"bbox":[502,238,144,32]}
+{"kind":"textbox","id":"sh/b6xkf6dc","slide":3,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[661,224,30,34]}
+{"kind":"shape","id":"sh/032lszqt","slide":3,"bbox":[694,200,168,86]}
+{"kind":"textbox","id":"sh/tovahoza","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[708,216,140,22]}
+{"kind":"textbox","id":"sh/tgfmlkjm","slide":3,"text":"梳理关键流程","textPreview":"梳理关键流程","textChars":6,"textLines":1,"bbox":[706,238,144,32]}
+{"kind":"textbox","id":"sh/4vmtwra5","slide":3,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[865,224,30,34]}
+{"kind":"shape","id":"sh/bat47y1k","slide":3,"bbox":[898,200,168,86]}
+{"kind":"textbox","id":"sh/mp0bi9s3","slide":3,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[912,216,140,22]}
+{"kind":"textbox","id":"sh/tsvu9kni","slide":3,"text":"统一对象模型","textPreview":"统一对象模型","textChars":6,"textLines":1,"bbox":[910,238,144,32]}
+{"kind":"textbox","id":"sh/47y1kre1","slide":3,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[1069,224,30,34]}
+{"kind":"shape","id":"sh/bm58z25k","slide":3,"bbox":[1102,200,168,86]}
+{"kind":"textbox","id":"sh/m1cfa9w3","slide":3,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1116,216,140,22]}
+{"kind":"textbox","id":"sh/twra5gbq","slide":3,"text":"落地数据库","textPreview":"落地数据库","textChars":5,"textLines":1,"bbox":[1114,238,144,32]}
+{"kind":"shape","id":"sh/4byhgn29","slide":3,"bbox":[272,332,286,252]}
+{"kind":"shape","id":"sh/ed8bat47","slide":3,"bbox":[272,332,8,252]}
+{"kind":"textbox","id":"sh/7u54zido","slide":3,"text":"概要设计主线","textPreview":"概要设计主线","textChars":6,"textLines":1,"bbox":[290,348,250,28]}
+{"kind":"textbox","id":"sh/wfyxobm5","slide":3,"text":"概要设计承担的是系统骨架搭建任务。它需要明确平台采用什么架构、系统由哪些角色参与、核心模块如何划分、模块之间如何协作以及系统能力如何分层组织。它的本质，是把项目从业务需求描述推进到系统结构表达。","textPreview":"概要设计承担的是系统骨架搭建任务。它需要明确平台采用什么架构、系统由哪些角色参与、核心模块如何划分、模块之间如何协作以及系统能力如何分层组织。它的本质，是把项目从业务需求描述推进到系统结构表达。","textChars":97,"textLines":1,"bbox":[290,388,250,180]}
+{"kind":"shape","id":"sh/l0rqd4vm","slide":3,"bbox":[590,332,286,252]}
+{"kind":"shape","id":"sh/eloj2t83","slide":3,"bbox":[590,332,8,252]}
+{"kind":"textbox","id":"sh/36hcrmhk","slide":3,"text":"流程与模型主线","textPreview":"流程与模型主线","textChars":7,"textLines":1,"bbox":[608,348,250,28]}
+{"kind":"textbox","id":"sh/wra5gbq1","slide":3,"text":"在系统骨架明确之后，需要进一步把关键业务链路转化为时序逻辑，把核心业务对象转化为结构模型。前者回答系统如何运行，后者回答对象如何组织。两条主线共同确保系统设计既有动态协作逻辑，也有静态结构依据。","textPreview":"在系统骨架明确之后，需要进一步把关键业务链路转化为时序逻辑，把核心业务对象转化为结构模型。前者回答系统如何运行，后者回答对象如何组织。两条主线共同确保系统设计既有动态协作逻辑，也有静态结构依据。","textChars":97,"textLines":1,"bbox":[608,388,250,180]}
+{"kind":"shape","id":"sh/lc7u54zi","slide":3,"bbox":[908,332,286,252]}
+{"kind":"shape","id":"sh/epkzupwb","slide":3,"bbox":[908,332,8,252]}
+{"kind":"textbox","id":"sh/7adsji5s","slide":3,"text":"数据库设计主线","textPreview":"数据库设计主线","textChars":7,"textLines":1,"bbox":[926,348,250,28]}
+{"kind":"textbox","id":"sh/re1w7mp0","slide":3,"text":"数据库设计负责把前面形成的业务对象和流程关系沉淀为底层数据规则。它不仅关心字段如何定义，更关心主表与明细表如何组织、主外键如何建立、状态与审计信息如何保留，以及系统是否具备后续扩展与分析能力。","textPreview":"数据库设计负责把前面形成的业务对象和流程关系沉淀为底层数据规则。它不仅关心字段如何定义，更关心主表与明细表如何组织、主外键如何建立、状态与审计信息如何保留，以及系统是否具备后续扩展与分析能力。","textChars":96,"textLines":1,"bbox":[926,388,250,180]}
+{"kind":"textbox","id":"sh/2t83itgf","slide":3,"text":"这页要说明的是：本周虽然产出了很多图和文档，但它们并不是零散结果，而是围绕同一个设计目标被分阶段完成的，每一部分都为下一部分提供依据。","textPreview":"这页要说明的是：本周虽然产出了很多图和文档，但它们并不是零散结果，而是围绕同一个设计目标被分阶段完成的，每一部分都为下一部分提供依据。","textChars":67,"textLines":1,"bbox":[272,608,920,56]}
+{"kind":"image","id":"im/cfa9w3m9","slide":3,"name":"","bbox":[22,20,156,140]}
+{"kind":"image","id":"im/c7u54zid","slide":3,"name":"","bbox":[974,30,248,48]}
+{"kind":"notes","id":"nt/riwr04","slide":3,"text":""}
+{"kind":"slide","id":"sl/ddouj9","slide":4,"title":"NEUEDU","textShapes":12}
+{"kind":"shape","id":"sh/pg3ex0nu","slide":4,"bbox":[0,0,214,720]}
+{"kind":"textbox","id":"sh/7adsji5s","slide":4,"text":"NEUEDU\nWEEKLY\nREPORT","textPreview":"NEUEDU | WEEKLY | REPORT","textChars":20,"textLines":3,"bbox":[28,176,150,110]}
+{"kind":"textbox","id":"sh/w7mp0bi9","slide":4,"text":"任务总结","textPreview":"任务总结","textChars":4,"textLines":1,"bbox":[28,320,154,120]}
+{"kind":"textbox","id":"sh/psfil0rq","slide":4,"text":"P.04","textPreview":"P.04","textChars":4,"textLines":1,"bbox":[28,640,120,40]}
+{"kind":"textbox","id":"sh/7mp0bi9s","slide":4,"text":"第一部分：系统结构设计与总体架构分析","textPreview":"第一部分：系统结构设计与总体架构分析","textChars":18,"textLines":1,"bbox":[268,58,840,64]}
+{"kind":"shape","id":"sh/wfyxobm5","slide":4,"bbox":[268,128,94,6]}
+{"kind":"textbox","id":"sh/l0rqd4vm","slide":4,"text":"这一部分先解决“平台整体应该怎样搭起来”的问题，再进入成果展示","textPreview":"这一部分先解决“平台整体应该怎样搭起来”的问题，再进入成果展示","textChars":31,"textLines":1,"bbox":[372,118,700,28]}
+{"kind":"shape","id":"sh/hk3q5o7q","slide":4,"bbox":[272,176,286,384]}
+{"kind":"shape","id":"sh/oza1gvy9","slide":4,"bbox":[272,176,8,384]}
+{"kind":"textbox","id":"sh/zed8v6ps","slide":4,"text":"结构设计任务内容","textPreview":"结构设计任务内容","textChars":8,"textLines":1,"bbox":[290,192,250,28]}
+{"kind":"textbox","id":"sh/6xkf6dcb","slide":4,"text":"这一部分工作的核心，是围绕概要设计中的系统结构章节，对平台的整体架构进行系统化整理。内容不仅包括系统结构图本身，还包括与结构设计相关的模块分布、角色支撑关系和基础技术层次划分。它解决的是平台整体如何被搭建、如何被理解的问题。","textPreview":"这一部分工作的核心，是围绕概要设计中的系统结构章节，对平台的整体架构进行系统化整理。内容不仅包括系统结构图本身，还包括与结构设计相关的模块分布、角色支撑关系和基础技术层次划分。它解决的是平台整体如何被搭建、如何被理解的问题。","textChars":112,"textLines":1,"bbox":[290,232,250,312]}
+{"kind":"shape","id":"sh/hwfyxobm","slide":4,"bbox":[590,176,286,384]}
+{"kind":"shape","id":"sh/obm58z25","slide":4,"bbox":[590,176,8,384]}
+{"kind":"textbox","id":"sh/zqtcj6to","slide":4,"text":"结构设计形成过程","textPreview":"结构设计形成过程","textChars":8,"textLines":1,"bbox":[608,192,250,28]}
+{"kind":"textbox","id":"sh/65wjudg7","slide":4,"text":"结构设计并不是简单复述技术栈，而是先回到文档中与系统架构相关的章节，对前端、后端、数据库、缓存、文件存储等支撑要素进行职责重组，再结合五类角色与核心业务模块的位置关系，最终把平台在技术层、业务层和支撑层上的组织方式稳定下来。","textPreview":"结构设计并不是简单复述技术栈，而是先回到文档中与系统架构相关的章节，对前端、后端、数据库、缓存、文件存储等支撑要素进行职责重组，再结合五类角色与核心业务模块的位置关系，最终把平台在技术层、业务层和支撑层上的组织方式稳定下来。","textChars":112,"textLines":1,"bbox":[608,232,250,312]}
+{"kind":"shape","id":"sh/h0fepkzu","slide":4,"bbox":[908,176,286,384]}
+{"kind":"shape","id":"sh/sfil0rqd","slide":4,"bbox":[908,176,8,384]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":4,"text":"结构设计项目价值","textPreview":"结构设计项目价值","textChars":8,"textLines":1,"bbox":[926,192,250,28]}
+{"kind":"textbox","id":"sh/d8v6psfi","slide":4,"text":"从项目角度看，结构设计的价值在于建立系统全景认知。它使项目成员理解每一类能力应当落在哪一层、由哪些支撑要素共同完成，并为后续模块划分、接口组织、部署理解和性能考虑提供统一前提。没有这一层的统一，后续设计很容易各自为政。","textPreview":"从项目角度看，结构设计的价值在于建立系统全景认知。它使项目成员理解每一类能力应当落在哪一层、由哪些支撑要素共同完成，并为后续模块划分、接口组织、部署理解和性能考虑提供统一前提。没有这一层的统一，后续设计很容易各自为政。","textChars":109,"textLines":1,"bbox":[926,232,250,312]}
+{"kind":"textbox","id":"sh/6hcrmhk3","slide":4,"text":"从项目角度看，这一步先把系统全景图搭起来，后续所有模块设计才能有依附对象，否则每个人理解中的“系统”都不一样。","textPreview":"从项目角度看，这一步先把系统全景图搭起来，后续所有模块设计才能有依附对象，否则每个人理解中的“系统”都不一样。","textChars":55,"textLines":1,"bbox":[272,592,920,72]}
+{"kind":"image","id":"im/7mp0bi9s","slide":4,"name":"","bbox":[22,20,156,140]}
+{"kind":"image","id":"im/7adsji5s","slide":4,"name":"","bbox":[974,30,248,48]}
+{"kind":"notes","id":"nt/ddouj9","slide":4,"text":""}
+{"kind":"slide","id":"sl/yqevl3","slide":5,"title":"NEUEDU","textShapes":8}
+{"kind":"shape","id":"sh/6xkf6dcb","slide":5,"bbox":[0,0,214,720]}
+{"kind":"textbox","id":"sh/oza1gvy9","slide":5,"text":"NEUEDU\nWEEKLY\nREPORT","textPreview":"NEUEDU | WEEKLY | REPORT","textChars":20,"textLines":3,"bbox":[28,176,150,110]}
+{"kind":"textbox","id":"sh/zqtcj6to","slide":5,"text":"成果展示","textPreview":"成果展示","textChars":4,"textLines":1,"bbox":[28,320,154,120]}
+{"kind":"textbox","id":"sh/65wjudg7","slide":5,"text":"P.05","textPreview":"P.05","textChars":4,"textLines":1,"bbox":[28,640,120,40]}
+{"kind":"textbox","id":"sh/obm58z25","slide":5,"text":"第一部分成果展示：系统结构图","textPreview":"第一部分成果展示：系统结构图","textChars":14,"textLines":1,"bbox":[268,58,840,64]}
+{"kind":"shape","id":"sh/zupwb2hw","slide":5,"bbox":[268,128,94,6]}
+{"kind":"textbox","id":"sh/a9w3m94f","slide":5,"text":"在分析完这一部分任务之后，再用成果图去验证系统结构设计是否已经讲清楚","textPreview":"在分析完这一部分任务之后，再用成果图去验证系统结构设计是否已经讲清楚","textChars":34,"textLines":1,"bbox":[372,118,700,28]}
+{"kind":"shape","id":"sh/1w7mp0bi","slide":5,"bbox":[1024,176,186,438]}
+{"kind":"shape","id":"sh/q5o7qpg3","slide":5,"bbox":[1024,176,8,438]}
+{"kind":"textbox","id":"sh/jqh0fepk","slide":5,"text":"成果图解读","textPreview":"成果图解读","textChars":5,"textLines":1,"bbox":[1042,192,150,28]}
+{"kind":"textbox","id":"sh/8nqxs72x","slide":5,"text":"这张系统结构图把平台整体技术组织方式具体呈现出来。它说明前端负责交互与展示，后端承接业务能力，数据库负责持久化，Redis 与文件存储承担支撑角色。它不是装饰性图示，而是结构设计阶段最直接的全景表达，为后续模块、接口与部署讨论建立共同参照。","textPreview":"这张系统结构图把平台整体技术组织方式具体呈现出来。它说明前端负责交互与展示，后端承接业务能力，数据库负责持久化，Redis 与文件存储承担支撑角色。它不是装饰性图示，而是结构设计阶段最直接的全景表达，为后续模块、接口与部署讨论建立共同参照。","textChars":120,"textLines":1,"bbox":[1042,232,150,366]}
+{"kind":"textbox","id":"sh/18jqh0fe","slide":5,"text":"如果系统结构图解决的是“平台整体怎么搭”，那么这一部分解决的就是“平台内部怎么运转、模块之间怎么说话、对象之间怎么组织”。","textPreview":"如果系统结构图解决的是“平台整体怎么搭”，那么这一部分解决的就是“平台内部怎么运转、模块之间怎么说话、对象之间怎么组织”。","textChars":61,"textLines":1,"bbox":[272,592,920,72]}
+{"kind":"image","id":"im/sneloj2t","slide":5,"name":"","bbox":[22,20,156,140]}
+{"kind":"image","id":"im/szqtcj6t","slide":5,"name":"","bbox":[974,30,248,48]}
+{"kind":"image","id":"im/bm58z25k","slide":5,"name":"","bbox":[276,176,724,438]}
+{"kind":"notes","id":"nt/yqevl3","slide":5,"text":""}
+{"kind":"slide","id":"sl/50gsvd","slide":6,"title":"NEUEDU","textShapes":11}
+{"kind":"shape","id":"sh/9s36hcrm","slide":6,"bbox":[0,0,214,720]}
+{"kind":"textbox","id":"sh/rmhk3q5o","slide":6,"text":"NEUEDU\nWEEKLY\nREPORT","textPreview":"NEUEDU | WEEKLY | REPORT","textChars":20,"textLines":3,"bbox":[28,176,150,110]}
+{"kind":"textbox","id":"sh/gfmlkjm1","slide":6,"text":"任务总结","textPreview":"任务总结","textChars":4,"textLines":1,"bbox":[28,320,154,120]}
+{"kind":"textbox","id":"sh/90je9cvi","slide":6,"text":"P.06","textPreview":"P.06","textChars":4,"textLines":1,"bbox":[28,640,120,40]}
+{"kind":"textbox","id":"sh/rytsvu9k","slide":6,"text":"第二部分：模块划分、流程设计与对象建模分析","textPreview":"第二部分：模块划分、流程设计与对象建模分析","textChars":21,"textLines":1,"bbox":[268,58,840,64]}
+{"kind":"shape","id":"sh/gr2p8nqx","slide":6,"bbox":[268,128,94,6]}
+{"kind":"textbox","id":"sh/9cvixcze","slide":6,"text":"这一部分要解决的，是系统内部各模块到底如何协作、如何分工、如何沉淀为工程对象","textPreview":"这一部分要解决的，是系统内部各模块到底如何协作、如何分工、如何沉淀为工程对象","textChars":38,"textLines":1,"bbox":[372,118,700,28]}
+{"kind":"shape","id":"sh/tovahoza","slide":6,"bbox":[272,176,286,384]}
+{"kind":"shape","id":"sh/032lszqt","slide":6,"bbox":[272,176,8,384]}
+{"kind":"textbox","id":"sh/bi9s36hc","slide":6,"text":"模块设计任务内容","textPreview":"模块设计任务内容","textChars":8,"textLines":1,"bbox":[290,192,250,28]}
+{"kind":"textbox","id":"sh/ixczed8v","slide":6,"text":"这一部分围绕概要设计中的模块功能定义、模块结构、模块动作时序和接口说明展开，目的是把平台内部从功能集合转变为具备明确职责分工的模块体系。重点不在于功能点罗列，而在于固定用户、预约、订单、体检执行、报告、咨询等模块之间的边界和协作关系。","textPreview":"这一部分围绕概要设计中的模块功能定义、模块结构、模块动作时序和接口说明展开，目的是把平台内部从功能集合转变为具备明确职责分工的模块体系。重点不在于功能点罗列，而在于固定用户、预约、订单、体检执行、报告、咨询等模块之间的边界和协作关系。","textChars":117,"textLines":1,"bbox":[290,232,250,312]}
+{"kind":"shape","id":"sh/p0bi9s36","slide":6,"bbox":[590,176,286,384]}
+{"kind":"shape","id":"sh/0fepkzup","slide":6,"bbox":[590,176,8,384]}
+{"kind":"textbox","id":"sh/bulwval8","slide":6,"text":"设计方法与推进路径","textPreview":"设计方法与推进路径","textChars":9,"textLines":1,"bbox":[608,192,250,28]}
+{"kind":"textbox","id":"sh/i9s36hcr","slide":6,"text":"这一部分是沿着流程、接口和类模型三条主线同时推进的。流程设计负责刻画系统运行顺序，接口说明负责定义能力暴露方式，类图负责稳定对象组织结构。三条主线相互印证，保证系统既能被解释清楚，也能被工程化实现。","textPreview":"这一部分是沿着流程、接口和类模型三条主线同时推进的。流程设计负责刻画系统运行顺序，接口说明负责定义能力暴露方式，类图负责稳定对象组织结构。三条主线相互印证，保证系统既能被解释清楚，也能被工程化实现。","textChars":99,"textLines":1,"bbox":[608,232,250,312]}
+{"kind":"shape","id":"sh/t47y1kre","slide":6,"bbox":[908,176,286,384]}
+{"kind":"shape","id":"sh/0je9cvix","slide":6,"bbox":[908,176,8,384]}
+{"kind":"textbox","id":"sh/g7adsji5","slide":6,"text":"对项目的实际意义","textPreview":"对项目的实际意义","textChars":8,"textLines":1,"bbox":[926,192,250,28]}
+{"kind":"textbox","id":"sh/9s36hcrm","slide":6,"text":"这一步的价值，在于把抽象需求翻译成工程语言。它帮助项目成员建立模块协作意识、接口边界意识和对象建模意识，为后续编码、联调、测试和问题定位奠定基础。换句话说，它让项目真正具备了从“业务描述”走向“实现设计”的能力。","textPreview":"这一步的价值，在于把抽象需求翻译成工程语言。它帮助项目成员建立模块协作意识、接口边界意识和对象建模意识，为后续编码、联调、测试和问题定位奠定基础。换句话说，它让项目真正具备了从“业务描述”走向“实现设计”的能力。","textChars":106,"textLines":1,"bbox":[926,232,250,312]}
+{"kind":"image","id":"im/32lszqtc","slide":6,"name":"","bbox":[22,20,156,140]}
+{"kind":"image","id":"im/3ex0nuxc","slide":6,"name":"","bbox":[974,30,248,48]}
+{"kind":"notes","id":"nt/50gsvd","slide":6,"text":""}
+{"kind":"slide","id":"sl/ieic7c","slide":7,"title":"NEUEDU","textShapes":7}
+{"kind":"shape","id":"sh/ex0nuxc3","slide":7,"bbox":[0,0,214,720]}
+{"kind":"textbox","id":"sh/w3m94fu1","slide":7,"text":"NEUEDU\nWEEKLY\nREPORT","textPreview":"NEUEDU | WEEKLY | REPORT","textChars":20,"textLines":3,"bbox":[28,176,150,110]}
+{"kind":"textbox","id":"sh/3q5o7qpg","slide":7,"text":"成果展示","textPreview":"成果展示","textChars":4,"textLines":1,"bbox":[28,320,154,120]}
+{"kind":"textbox","id":"sh/e9cvixcz","slide":7,"text":"P.07","textPreview":"P.07","textChars":4,"textLines":1,"bbox":[28,640,120,40]}
+{"kind":"textbox","id":"sh/wb2hwfyx","slide":7,"text":"第二部分成果展示：医生执行检查与报告发布时序图","textPreview":"第二部分成果展示：医生执行检查与报告发布时序图","textChars":23,"textLines":1,"bbox":[268,58,840,64]}
+{"kind":"shape","id":"sh/32lszqtc","slide":7,"bbox":[268,128,94,6]}
+{"kind":"textbox","id":"sh/ahoza1gv","slide":7,"text":"先展示关键流程成果，再说明它对项目协作和实现的指导作用","textPreview":"先展示关键流程成果，再说明它对项目协作和实现的指导作用","textChars":27,"textLines":1,"bbox":[372,118,700,28]}
+{"kind":"shape","id":"sh/54zidony","slide":7,"bbox":[1022,176,188,430]}
+{"kind":"shape","id":"sh/udg7adsj","slide":7,"bbox":[1022,176,8,430]}
+{"kind":"textbox","id":"sh/nyd0z610","slide":7,"text":"成果图解读","textPreview":"成果图解读","textChars":5,"textLines":1,"bbox":[1040,192,152,28]}
+{"kind":"textbox","id":"sh/cvixczed","slide":7,"text":"这张时序图把到检、任务生成、检查录入、异常判断、报告审核和报告发布串成一条完整业务链。它的价值不只是展示步骤，而是把每一步由谁发起、由谁处理、结果如何传递全部固定下来，使开发与测试能够围绕统一时序主线理解系统。","textPreview":"这张时序图把到检、任务生成、检查录入、异常判断、报告审核和报告发布串成一条完整业务链。它的价值不只是展示步骤，而是把每一步由谁发起、由谁处理、结果如何传递全部固定下来，使开发与测试能够围绕统一时序主线理解系统。","textChars":105,"textLines":1,"bbox":[1040,232,152,358]}
+{"kind":"image","id":"im/0bi9s36h","slide":7,"name":"","bbox":[22,20,156,140]}
+{"kind":"image","id":"im/wjudg7ad","slide":7,"name":"","bbox":[974,30,248,48]}
+{"kind":"image","id":"im/zqtcj6to","slide":7,"name":"","bbox":[270,176,730,430]}
+{"kind":"notes","id":"nt/ieic7c","slide":7,"text":""}
+{"kind":"slide","id":"sl/cmgfl9","slide":8,"title":"NEUEDU","textShapes":7}
+{"kind":"shape","id":"sh/kjm1cfa9","slide":8,"bbox":[0,0,214,720]}
+{"kind":"textbox","id":"sh/2hwfyxob","slide":8,"text":"NEUEDU\nWEEKLY\nREPORT","textPreview":"NEUEDU | WEEKLY | REPORT","textChars":20,"textLines":3,"bbox":[28,176,150,110]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":8,"text":"成果展示","textPreview":"成果展示","textChars":4,"textLines":1,"bbox":[28,320,154,120]}
+{"kind":"textbox","id":"sh/gvy90je9","slide":8,"text":"P.08","textPreview":"P.08","textChars":4,"textLines":1,"bbox":[28,640,120,40]}
+{"kind":"textbox","id":"sh/2p8nqxs7","slide":8,"text":"第二部分成果展示：系统整体类图与预约管理模块类图","textPreview":"第二部分成果展示：系统整体类图与预约管理模块类图","textChars":24,"textLines":1,"bbox":[268,58,840,64]}
+{"kind":"shape","id":"sh/9knih4by","slide":8,"bbox":[268,128,94,6]}
+{"kind":"textbox","id":"sh/kzupwb2h","slide":8,"text":"通过代表性类图成果，验证模块建模是否已经从概念走向结构","textPreview":"通过代表性类图成果，验证模块建模是否已经从概念走向结构","textChars":27,"textLines":1,"bbox":[372,118,700,28]}
+{"kind":"shape","id":"sh/crmhk3q5","slide":8,"bbox":[726,174,468,440]}
+{"kind":"shape","id":"sh/1cfa9w3m","slide":8,"bbox":[726,174,8,440]}
+{"kind":"textbox","id":"sh/uxc3ylc7","slide":8,"text":"成果图解读","textPreview":"成果图解读","textChars":5,"textLines":1,"bbox":[744,190,432,28]}
+{"kind":"textbox","id":"sh/ji5snelo","slide":8,"text":"系统整体类图从全局层面说明平台有哪些核心对象，以及这些对象如何通过组合、聚合和关联关系共同支撑业务；预约管理模块类图则从局部层面说明预约、套餐、资源容量等关键对象如何组织。它们共同证明，业务概念已经被稳定转化为工程对象模型，并能够继续支撑数据库建模、代码设计和接口实现。","textPreview":"系统整体类图从全局层面说明平台有哪些核心对象，以及这些对象如何通过组合、聚合和关联关系共同支撑业务；预约管理模块类图则从局部层面说明预约、套餐、资源容量等关键对象如何组织。它们共同证明，业务概念已经被稳定转化为工程对象模型，并能够继续支撑数据库建模、代码设计和接口实现。","textChars":135,"textLines":1,"bbox":[744,230,432,368]}
+{"kind":"image","id":"im/ylc7u54z","slide":8,"name":"","bbox":[22,20,156,140]}
+{"kind":"image","id":"im/yxobm58z","slide":8,"name":"","bbox":[974,30,248,48]}
+{"kind":"image","id":"im/d8v6psfi","slide":8,"name":"","bbox":[272,174,430,256]}
+{"kind":"image","id":"im/onyd0z61","slide":8,"name":"","bbox":[272,438,430,176]}
+{"kind":"notes","id":"nt/cmgfl9","slide":8,"text":""}
+{"kind":"slide","id":"sl/x69wd1","slide":9,"title":"NEUEDU","textShapes":12}
+{"kind":"shape","id":"sh/d4vmtwra","slide":9,"bbox":[0,0,214,720]}
+{"kind":"textbox","id":"sh/vy90je9c","slide":9,"text":"NEUEDU\nWEEKLY\nREPORT","textPreview":"NEUEDU | WEEKLY | REPORT","textChars":20,"textLines":3,"bbox":[28,176,150,110]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":9,"text":"任务总结","textPreview":"任务总结","textChars":4,"textLines":1,"bbox":[28,320,154,120]}
+{"kind":"textbox","id":"sh/dsji5sne","slide":9,"text":"P.09","textPreview":"P.09","textChars":4,"textLines":1,"bbox":[28,640,120,40]}
+{"kind":"textbox","id":"sh/vmtwra5g","slide":9,"text":"第三部分：数据库设计任务分析","textPreview":"第三部分：数据库设计任务分析","textChars":14,"textLines":1,"bbox":[268,58,840,64]}
+{"kind":"shape","id":"sh/ovahoza1","slide":9,"bbox":[268,128,94,6]}
+{"kind":"textbox","id":"sh/dg7adsji","slide":9,"text":"数据库设计不是系统设计的附属品，而是项目落地的底层支撑","textPreview":"数据库设计不是系统设计的附属品，而是项目落地的底层支撑","textChars":27,"textLines":1,"bbox":[372,118,700,28]}
+{"kind":"shape","id":"sh/1032lszq","slide":9,"bbox":[272,176,286,384]}
+{"kind":"shape","id":"sh/cfa9w3m9","slide":9,"bbox":[272,176,8,384]}
+{"kind":"textbox","id":"sh/judg7ads","slide":9,"text":"数据库设计范围","textPreview":"数据库设计范围","textChars":7,"textLines":1,"bbox":[290,192,250,28]}
+{"kind":"textbox","id":"sh/u9knih4b","slide":9,"text":"这一部分以数据库设计书为核心载体，完成了数据库一览表、核心业务表结构、字段定义、主外键关系以及整体 ER 关系梳理。其覆盖范围贯穿用户与认证、预约与资源、订单与支付、体检执行、报告与审核、咨询管理和数据分析等完整业务域。","textPreview":"这一部分以数据库设计书为核心载体，完成了数据库一览表、核心业务表结构、字段定义、主外键关系以及整体 ER 关系梳理。其覆盖范围贯穿用户与认证、预约与资源、订单与支付、体检执行、报告与审核、咨询管理和数据分析等完整业务域。","textChars":110,"textLines":1,"bbox":[290,232,250,312]}
+{"kind":"shape","id":"sh/1orytsvu","slide":9,"bbox":[590,176,286,384]}
+{"kind":"shape","id":"sh/c7u54zid","slide":9,"bbox":[590,176,8,384]}
+{"kind":"textbox","id":"sh/jm1cfa9w","slide":9,"text":"数据建模思路","textPreview":"数据建模思路","textChars":6,"textLines":1,"bbox":[608,192,250,28]}
+{"kind":"textbox","id":"sh/u18jqh0f","slide":9,"text":"数据库设计并不是先建表再补关系，而是以概要设计中的业务对象与流程关系为前提，反推数据结构组织方式。哪些信息应当沉淀为主数据，哪些需要体现状态变化，哪些必须保留审计痕迹，哪些需要为后续分析与扩展留出空间，都是基于业务闭环逐步推导形成的。","textPreview":"数据库设计并不是先建表再补关系，而是以概要设计中的业务对象与流程关系为前提，反推数据结构组织方式。哪些信息应当沉淀为主数据，哪些需要体现状态变化，哪些必须保留审计痕迹，哪些需要为后续分析与扩展留出空间，都是基于业务闭环逐步推导形成的。","textChars":117,"textLines":1,"bbox":[608,232,250,312]}
+{"kind":"shape","id":"sh/5gbq1ory","slide":9,"bbox":[908,176,286,384]}
+{"kind":"shape","id":"sh/cvixczed","slide":9,"bbox":[908,176,8,384]}
+{"kind":"textbox","id":"sh/c3ylc7u5","slide":9,"text":"数据库设计价值","textPreview":"数据库设计价值","textChars":7,"textLines":1,"bbox":[926,192,250,28]}
+{"kind":"textbox","id":"sh/1kre1w7m","slide":9,"text":"数据库设计真正解决的是系统数据如何被稳定组织、长期沉淀并支持扩展的问题。它既影响开发阶段接口是否容易对齐，也影响联调和测试阶段问题是否容易定位，还决定了项目未来是否具备统计分析、异常追踪、报告对比和健康建议等扩展能力。","textPreview":"数据库设计真正解决的是系统数据如何被稳定组织、长期沉淀并支持扩展的问题。它既影响开发阶段接口是否容易对齐，也影响联调和测试阶段问题是否容易定位，还决定了项目未来是否具备统计分析、异常追踪、报告对比和健康建议等扩展能力。","textChars":109,"textLines":1,"bbox":[926,232,250,312]}
+{"kind":"textbox","id":"sh/uxc3ylc7","slide":9,"text":"数据库设计书越扎实，项目后续越不容易出现“功能能讲出来，但数据落不下来”的问题，它本质上是在给整个系统打地基。","textPreview":"数据库设计书越扎实，项目后续越不容易出现“功能能讲出来，但数据落不下来”的问题，它本质上是在给整个系统打地基。","textChars":55,"textLines":1,"bbox":[272,592,920,72]}
+{"kind":"image","id":"im/vmtwra5g","slide":9,"name":"","bbox":[22,20,156,140]}
+{"kind":"image","id":"im/vy90je9c","slide":9,"name":"","bbox":[974,30,248,48]}
+{"kind":"notes","id":"nt/x69wd1","slide":9,"text":""}
+{"kind":"slide","id":"sl/hgqpu7","slide":10,"title":"NEUEDU","textShapes":7}
+{"kind":"shape","id":"sh/m1cfa9w3","slide":10,"bbox":[0,0,214,720]}
+{"kind":"textbox","id":"sh/47y1kre1","slide":10,"text":"NEUEDU\nWEEKLY\nREPORT","textPreview":"NEUEDU | WEEKLY | REPORT","textChars":20,"textLines":3,"bbox":[28,176,150,110]}
+{"kind":"textbox","id":"sh/bat47y1k","slide":10,"text":"成果展示","textPreview":"成果展示","textChars":4,"textLines":1,"bbox":[28,320,154,120]}
+{"kind":"textbox","id":"sh/mp0bi9s3","slide":10,"text":"P.10","textPreview":"P.10","textChars":4,"textLines":1,"bbox":[28,640,120,40]}
+{"kind":"textbox","id":"sh/4vmtwra5","slide":10,"text":"第三部分成果展示：数据库整体 ER 图","textPreview":"第三部分成果展示：数据库整体 ER 图","textChars":19,"textLines":1,"bbox":[268,58,840,64]}
+{"kind":"shape","id":"sh/b2hwfyxo","slide":10,"bbox":[268,128,94,6]}
+{"kind":"textbox","id":"sh/mhk3q5o7","slide":10,"text":"在任务分析之后，再用 ER 图去验证数据库设计是否真正覆盖了项目主链路","textPreview":"在任务分析之后，再用 ER 图去验证数据库设计是否真正覆盖了项目主链路","textChars":35,"textLines":1,"bbox":[372,118,700,28]}
+{"kind":"shape","id":"sh/pkzupwb2","slide":10,"bbox":[1020,164,190,456]}
+{"kind":"shape","id":"sh/itgfmlkj","slide":10,"bbox":[1020,164,8,456]}
+{"kind":"textbox","id":"sh/7ed8bat4","slide":10,"text":"成果图解读","textPreview":"成果图解读","textChars":5,"textLines":1,"bbox":[1038,180,154,28]}
+{"kind":"textbox","id":"sh/0nuxc3yl","slide":10,"text":"这张 ER 图把整个平台的业务关系完整压缩到了数据层。它不仅说明有哪些表，更说明业务数据如何从用户流转到预约、订单、体检任务、报告、咨询和分析。它帮助项目成员真正建立“业务主线等于数据主线”的意识，为建表、接口、排障和扩展提供稳定底层依据。","textPreview":"这张 ER 图把整个平台的业务关系完整压缩到了数据层。它不仅说明有哪些表，更说明业务数据如何从用户流转到预约、订单、体检任务、报告、咨询和分析。它帮助项目成员真正建立“业务主线等于数据主线”的意识，为建表、接口、排障和扩展提供稳定底层依据。","textChars":120,"textLines":1,"bbox":[1038,220,154,384]}
+{"kind":"image","id":"im/0z61032l","slide":10,"name":"","bbox":[22,20,156,140]}
+{"kind":"image","id":"im/0nuxc3yl","slide":10,"name":"","bbox":[974,30,248,48]}
+{"kind":"image","id":"im/rmhk3q5o","slide":10,"name":"","bbox":[270,164,734,456]}
+{"kind":"notes","id":"nt/hgqpu7","slide":10,"text":""}
+{"kind":"slide","id":"sl/97ogyk","slide":11,"title":"NEUEDU","textShapes":12}
+{"kind":"shape","id":"sh/o7qpg3ex","slide":11,"bbox":[0,0,214,720]}
+{"kind":"textbox","id":"sh/61032lsz","slide":11,"text":"NEUEDU\nWEEKLY\nREPORT","textPreview":"NEUEDU | WEEKLY | REPORT","textChars":20,"textLines":3,"bbox":[28,176,150,110]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":11,"text":"项目总结","textPreview":"项目总结","textChars":4,"textLines":1,"bbox":[28,320,154,120]}
+{"kind":"textbox","id":"sh/oj2t83it","slide":11,"text":"P.11","textPreview":"P.11","textChars":4,"textLines":1,"bbox":[28,640,120,40]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":11,"text":"本周工作总结","textPreview":"本周工作总结","textChars":6,"textLines":1,"bbox":[268,58,840,64]}
+{"kind":"shape","id":"sh/d8v6psfi","slide":11,"bbox":[268,128,94,6]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":11,"text":"这一周最大的价值，不是多了几张图，而是让项目正式具备进入开发阶段的设计基础","textPreview":"这一周最大的价值，不是多了几张图，而是让项目正式具备进入开发阶段的设计基础","textChars":37,"textLines":1,"bbox":[372,118,700,28]}
+{"kind":"shape","id":"sh/epkzupwb","slide":11,"bbox":[272,176,286,372]}
+{"kind":"shape","id":"sh/7adsji5s","slide":11,"bbox":[272,176,8,372]}
+{"kind":"textbox","id":"sh/wval87ed","slide":11,"text":"项目层面的收获","textPreview":"项目层面的收获","textChars":7,"textLines":1,"bbox":[290,192,250,28]}
+{"kind":"textbox","id":"sh/pg3ex0nu","slide":11,"text":"这一周完成之后，平台已经不再停留在“知道要做什么功能”的阶段，而是已经开始明确“这些功能应该怎样在系统中被组织和实现”。系统结构、模块边界、业务流程、对象关系和数据关系都比上一周更收敛，这意味着项目从需求理解正式进入工程设计准备完成的状态。","textPreview":"这一周完成之后，平台已经不再停留在“知道要做什么功能”的阶段，而是已经开始明确“这些功能应该怎样在系统中被组织和实现”。系统结构、模块边界、业务流程、对象关系和数据关系都比上一周更收敛，这意味着项目从需求理解正式进入工程设计准备完成的状态。","textChars":120,"textLines":1,"bbox":[290,232,250,300]}
+{"kind":"shape","id":"sh/e1w7mp0b","slide":11,"bbox":[590,176,286,372]}
+{"kind":"shape","id":"sh/7mp0bi9s","slide":11,"bbox":[590,176,8,372]}
+{"kind":"textbox","id":"sh/w7mp0bi9","slide":11,"text":"团队能力上的提升","textPreview":"团队能力上的提升","textChars":8,"textLines":1,"bbox":[608,192,250,28]}
+{"kind":"textbox","id":"sh/psfil0rq","slide":11,"text":"通过这周的工作，成员真正经历了一次从业务语言到工程语言的转换过程。大家学到的不只是如何完成 UML 图和数据库设计书，更重要的是学会如何把业务场景拆成模块、把流程抽成时序、把对象固化成类模型、把关系沉淀成数据结构。这种能力会直接反映到后续开发与答辩表达中。","textPreview":"通过这周的工作，成员真正经历了一次从业务语言到工程语言的转换过程。大家学到的不只是如何完成 UML 图和数据库设计书，更重要的是学会如何把业务场景拆成模块、把流程抽成时序、把对象固化成类模型、把关系沉淀成数据结构。这种能力会直接反映到后续开发与答辩表达中。","textChars":128,"textLines":1,"bbox":[608,232,250,300]}
+{"kind":"shape","id":"sh/ed8bat47","slide":11,"bbox":[908,176,286,372]}
+{"kind":"shape","id":"sh/7u54zido","slide":11,"bbox":[908,176,8,372]}
+{"kind":"textbox","id":"sh/vy90je9c","slide":11,"text":"对后续阶段的指导","textPreview":"对后续阶段的指导","textChars":8,"textLines":1,"bbox":[926,192,250,28]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":11,"text":"本周形成的设计成果，为第三里程碑开发阶段提供了清晰坐标系。后续无论是前端页面实现、后端接口编写、数据库建表、联调验证还是测试用例设计，都可以以本周成果为基础开展工作。它已经提前解决了一部分原本会在开发阶段爆发的理解偏差问题。","textPreview":"本周形成的设计成果，为第三里程碑开发阶段提供了清晰坐标系。后续无论是前端页面实现、后端接口编写、数据库建表、联调验证还是测试用例设计，都可以以本周成果为基础开展工作。它已经提前解决了一部分原本会在开发阶段爆发的理解偏差问题。","textChars":112,"textLines":1,"bbox":[926,232,250,300]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":11,"text":"如果说第一周主要解决“项目做什么”，那么第二周真正解决的是“项目应该怎样被实现、怎样被协同开发、怎样被稳定落地”。","textPreview":"如果说第一周主要解决“项目做什么”，那么第二周真正解决的是“项目应该怎样被实现、怎样被协同开发、怎样被稳定落地”。","textChars":57,"textLines":1,"bbox":[272,572,922,68]}
+{"kind":"image","id":"im/ixczed8v","slide":11,"name":"","bbox":[22,20,156,140]}
+{"kind":"image","id":"im/i9s36hcr","slide":11,"name":"","bbox":[974,30,248,48]}
+{"kind":"notes","id":"nt/97ogyk","slide":11,"text":""}
+{"kind":"slide","id":"sl/vrl2lw","slide":12,"title":"NEUEDU","textShapes":14}
+{"kind":"shape","id":"sh/r2p8nqxs","slide":12,"bbox":[0,0,214,720]}
+{"kind":"textbox","id":"sh/94fu18jq","slide":12,"text":"NEUEDU\nWEEKLY\nREPORT","textPreview":"NEUEDU | WEEKLY | REPORT","textChars":20,"textLines":3,"bbox":[28,176,150,110]}
+{"kind":"textbox","id":"sh/2p8nqxs7","slide":12,"text":"下周计划","textPreview":"下周计划","textChars":4,"textLines":1,"bbox":[28,320,154,120]}
+{"kind":"textbox","id":"sh/ra5gbq1o","slide":12,"text":"P.12","textPreview":"P.12","textChars":4,"textLines":1,"bbox":[28,640,120,40]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":12,"text":"下周任务安排","textPreview":"下周任务安排","textChars":6,"textLines":1,"bbox":[268,58,840,64]}
+{"kind":"shape","id":"sh/2t83itgf","slide":12,"bbox":[268,128,94,6]}
+{"kind":"textbox","id":"sh/re1w7mp0","slide":12,"text":"在本周设计成果基础上，进入第三里程碑的开发持续迭代阶段","textPreview":"在本周设计成果基础上，进入第三里程碑的开发持续迭代阶段","textChars":27,"textLines":1,"bbox":[372,118,700,28]}
+{"kind":"shape","id":"sh/bulwval8","slide":12,"bbox":[272,182,214,300]}
+{"kind":"shape","id":"sh/i9s36hcr","slide":12,"bbox":[272,182,8,300]}
+{"kind":"textbox","id":"sh/p0bi9s36","slide":12,"text":"06月22日","textPreview":"06月22日","textChars":6,"textLines":1,"bbox":[292,198,182,28]}
+{"kind":"textbox","id":"sh/0fepkzup","slide":12,"text":"• 启动项目开发迭代\n• 按设计成果完成核心模块编码\n• 同步进行接口联调准备","textPreview":"• 启动项目开发迭代 | • 按设计成果完成核心模块编码 | • 同步进行接口联调准备","textChars":39,"textLines":3,"bbox":[292,236,180,234]}
+{"kind":"shape","id":"sh/bi9s36hc","slide":12,"bbox":[506,182,214,300]}
+{"kind":"shape","id":"sh/ixczed8v","slide":12,"bbox":[506,182,8,300]}
+{"kind":"textbox","id":"sh/tovahoza","slide":12,"text":"06月23日","textPreview":"06月23日","textChars":6,"textLines":1,"bbox":[526,198,182,28]}
+{"kind":"textbox","id":"sh/032lszqt","slide":12,"text":"• 继续功能开发\n• 完善预约、订单、报告等主链路\n• 补齐基础数据与页面","textPreview":"• 继续功能开发 | • 完善预约、订单、报告等主链路 | • 补齐基础数据与页面","textChars":37,"textLines":3,"bbox":[526,236,180,234]}
+{"kind":"shape","id":"sh/b6xkf6dc","slide":12,"bbox":[740,182,214,300]}
+{"kind":"shape","id":"sh/il0rqd4v","slide":12,"bbox":[740,182,8,300]}
+{"kind":"textbox","id":"sh/ulwval87","slide":12,"text":"06月24日","textPreview":"06月24日","textChars":6,"textLines":1,"bbox":[760,198,182,28]}
+{"kind":"textbox","id":"sh/j6tovaho","slide":12,"text":"• 推进前后端联调\n• 验证数据库与接口一致性\n• 记录并修复首轮问题","textPreview":"• 推进前后端联调 | • 验证数据库与接口一致性 | • 记录并修复首轮问题","textChars":35,"textLines":3,"bbox":[760,236,180,234]}
+{"kind":"shape","id":"sh/crmhk3q5","slide":12,"bbox":[974,182,218,300]}
+{"kind":"shape","id":"sh/1cfa9w3m","slide":12,"bbox":[974,182,8,300]}
+{"kind":"textbox","id":"sh/uxc3ylc7","slide":12,"text":"06月25日","textPreview":"06月25日","textChars":6,"textLines":1,"bbox":[994,198,186,28]}
+{"kind":"textbox","id":"sh/ji5snelo","slide":12,"text":"• 提交阶段评审材料\n• 整理问题清单与修改项\n• 为后续测试预留缓冲","textPreview":"• 提交阶段评审材料 | • 整理问题清单与修改项 | • 为后续测试预留缓冲","textChars":35,"textLines":3,"bbox":[994,236,184,234]}
+{"kind":"textbox","id":"sh/c3ylc7u5","slide":12,"text":"下周的重点已经不是继续补设计，而是开始验证本周这套设计成果是否足够稳定、是否足够可实现、是否能够真正支撑编码、联调和测试。也就是说，下周开始，设计成果将接受工程实现的检验。","textPreview":"下周的重点已经不是继续补设计，而是开始验证本周这套设计成果是否足够稳定、是否足够可实现、是否能够真正支撑编码、联调和测试。也就是说，下周开始，设计成果将接受工程实现的检验。","textChars":86,"textLines":1,"bbox":[272,526,920,96]}
+{"kind":"image","id":"im/hoza1gvy","slide":12,"name":"","bbox":[22,20,156,140]}
+{"kind":"image","id":"im/hgn29gr2","slide":12,"name":"","bbox":[974,30,248,48]}
+{"kind":"notes","id":"nt/vrl2lw","slide":12,"text":""}
+{"kind":"slide","id":"sl/1tk3gt","slide":13,"title":"NEUEDU","textShapes":5}
+{"kind":"shape","id":"sh/a5gbq1or","slide":13,"bbox":[0,0,214,720]}
+{"kind":"textbox","id":"sh/s72x4nap","slide":13,"text":"NEUEDU\nWEEKLY\nREPORT","textPreview":"NEUEDU | WEEKLY | REPORT","textChars":20,"textLines":3,"bbox":[28,176,150,110]}
+{"kind":"textbox","id":"sh/3ylc7u54","slide":13,"text":"结束页","textPreview":"结束页","textChars":3,"textLines":1,"bbox":[28,320,154,120]}
+{"kind":"textbox","id":"sh/adsji5sn","slide":13,"text":"P.13","textPreview":"P.13","textChars":4,"textLines":1,"bbox":[28,640,120,40]}
+{"kind":"textbox","id":"sh/sji5snel","slide":13,"text":"汇报完毕\n感谢聆听","textPreview":"汇报完毕 | 感谢聆听","textChars":9,"textLines":2,"bbox":[284,224,700,88]}
+{"kind":"shape","id":"sh/za1gvy90","slide":13,"bbox":[284,340,120,8]}
+{"kind":"textbox","id":"sh/ap4r65wj","slide":13,"text":"熙心健康体检平台第二周工作汇报\n第01组","textPreview":"熙心健康体检平台第二周工作汇报 | 第01组","textChars":20,"textLines":2,"bbox":[284,384,700,70]}
+{"kind":"image","id":"im/knih4byh","slide":13,"name":"","bbox":[22,20,156,140]}
+{"kind":"image","id":"im/kf6dcbul","slide":13,"name":"","bbox":[974,30,248,48]}
+{"kind":"image","id":"im/vmtwra5g","slide":13,"name":"","bbox":[760,540,390,80]}
+{"kind":"notes","id":"nt/1tk3gt","slide":13,"text":""}

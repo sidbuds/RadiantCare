@@ -1,0 +1,201 @@
+classDiagram
+    direction TB
+    
+    %% ========== 用户管理模块 ==========
+    namespace 用户管理 {
+        class User {
+            +id: Long
+            +userNo: String
+            +name: String
+            +phone: String
+            +login()
+            +register()
+        }
+        
+        class StaffAccount {
+            +id: Long
+            +username: String
+            +displayName: String
+            +login()
+        }
+        
+        class StaffRoleRel {
+            +id: Long
+            +staffId: Long
+            +roleId: Long
+        }
+    }
+
+    %% ========== 预约管理模块 ==========
+    namespace 预约管理 {
+        class Appointment {
+            +id: Long
+            +appointmentNo: String
+            +userId: Long
+            +packageId: Long
+            +create()
+            +cancel()
+        }
+        
+        class ExamPackage {
+            +id: Long
+            +packageCode: String
+            +packageName: String
+            +price: BigDecimal
+        }
+        
+        class ExamPackageItem {
+            +id: Long
+            +packageId: Long
+            +itemCode: String
+        }
+        
+        class ResourceCapacity {
+            +id: Long
+            +capacityTotal: Integer
+            +capacityUsed: Integer
+        }
+    }
+
+    %% ========== 订单管理模块 ==========
+    namespace 订单管理 {
+        class Order {
+            +id: Long
+            +orderNo: String
+            +totalAmount: BigDecimal
+            +status: Integer
+            +pay()
+        }
+        
+        class OrderItem {
+            +id: Long
+            +orderId: Long
+            +qty: Integer
+        }
+        
+        class PaymentRecord {
+            +id: Long
+            +orderId: Long
+            +amount: BigDecimal
+        }
+    }
+
+    %% ========== 体检执行模块 ==========
+    namespace 体检执行 {
+        class ExamTask {
+            +id: Long
+            +taskNo: String
+            +taskStatus: Integer
+            +generate()
+        }
+        
+        class ExamTaskItem {
+            +id: Long
+            +taskId: Long
+            +itemStatus: Integer
+            +complete()
+        }
+        
+        class ExamResult {
+            +id: Long
+            +resultValue: String
+            +isAbnormal: Integer
+            +create()
+        }
+    }
+
+    %% ========== 报告管理模块 ==========
+    namespace 报告管理 {
+        class ExamReport {
+            +id: Long
+            +reportNo: String
+            +status: Integer
+            +publish()
+        }
+        
+        class ExamReportItem {
+            +id: Long
+            +reportId: Long
+            +resultId: Long
+        }
+        
+        class DoctorReviewRecord {
+            +id: Long
+            +reportId: Long
+            +reviewStatus: Integer
+        }
+    }
+
+    %% ========== 咨询管理模块 ==========
+    namespace 咨询管理 {
+        class DoctorConsultation {
+            +id: Long
+            +consultationNo: String
+            +userId: Long
+            +doctorId: Long
+        }
+        
+        class DoctorConsultationReply {
+            +id: Long
+            +consultationId: Long
+            +replyContent: String
+        }
+    }
+
+    %% ========== 数据分析模块 ==========
+    namespace 数据分析 {
+        class ReportCompareTask {
+            +id: Long
+            +baselineReportId: Long
+            +compareReportId: Long
+        }
+        
+        class HealthRiskScore {
+            +id: Long
+            +taskId: Long
+            +riskLevel: Integer
+        }
+        
+        class HealthAdviceRecord {
+            +id: Long
+            +userId: Long
+            +adviceContent: String
+        }
+    }
+
+    %% ========== 模块内关系 ==========
+    User "1" -- "0..*" StaffAccount
+    StaffAccount "1" *-- "0..*" StaffRoleRel
+    
+    ExamPackage "1" *-- "0..*" ExamPackageItem
+    Order "1" *-- "0..*" OrderItem
+    ExamTask "1" *-- "0..*" ExamTaskItem
+    ExamReport "1" *-- "0..*" ExamReportItem
+    DoctorConsultation "1" *-- "0..*" DoctorConsultationReply
+    ReportCompareTask "1" *-- "0..1" HealthRiskScore
+
+    %% ========== 跨模块关系 ==========
+    User "1" -- "0..*" Appointment
+    User "1" -- "0..*" Order
+    User "1" -- "0..*" DoctorConsultation
+    
+    Appointment "*" -- "1" ExamPackage
+    Appointment "*" -- "1" ResourceCapacity
+    Appointment "0..1" -- "1" Order
+    Appointment "0..1" -- "1" ExamTask
+    
+    Order "1" -- "0..*" PaymentRecord
+    
+    ExamTaskItem "1" -- "0..*" ExamResult
+    ExamResult "*" -- "1" ExamReportItem
+    ExamTask "0..1" -- "1" ExamReport
+    
+    ExamReport "1" -- "0..*" DoctorReviewRecord
+    
+    DoctorConsultation "*" -- "0..1" ExamReport
+    
+    ReportCompareTask "*" -- "1" ExamReport
+    
+    StaffAccount "1" -- "0..*" ExamResult
+    StaffAccount "1" -- "0..*" DoctorReviewRecord
+    StaffAccount "1" -- "0..*" DoctorConsultation

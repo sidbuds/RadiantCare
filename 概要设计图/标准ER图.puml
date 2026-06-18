@@ -1,0 +1,275 @@
+@startuml 熙心健康体检平台ER图
+skinparam defaultFontSize 12
+skinparam rectangleFontSize 14
+skinparam ellipseFontSize 10
+skinparam diamondFontSize 12
+skinparam linetype ortho
+
+title 熙心健康体检平台 - 标准ER图
+
+' ========== 用户管理 ==========
+rectangle "用户" as user {
+  (用户ID)
+  (用户编号)
+  (姓名)
+  (手机号)
+  (密码)
+  (状态)
+}
+
+rectangle "后台账号" as staff {
+  (账号ID)
+  (用户名)
+  (密码)
+  (显示名)
+  (绑定用户ID)
+  (状态)
+}
+
+rectangle "角色关联" as role {
+  (关联ID)
+  (账号ID)
+  (角色编码)
+}
+
+' ========== 预约管理 ==========
+rectangle "体检套餐" as pkg {
+  (套餐ID)
+  (套餐编码)
+  (套餐名称)
+  (价格)
+  (状态)
+}
+
+rectangle "套餐项目" as pkg_item {
+  (项目ID)
+  (套餐ID)
+  (项目编码)
+  (项目名称)
+}
+
+rectangle "预约" as appt {
+  (预约ID)
+  (预约单号)
+  (用户ID)
+  (套餐ID)
+  (预约日期)
+  (时段编码)
+  (状态)
+}
+
+rectangle "资源容量" as res {
+  (容量ID)
+  (中心编码)
+  (预约日期)
+  (时段编码)
+  (总容量)
+  (已使用)
+}
+
+' ========== 订单管理 ==========
+rectangle "订单" as order {
+  (订单ID)
+  (订单号)
+  (用户ID)
+  (预约ID)
+  (总金额)
+  (实付金额)
+  (状态)
+}
+
+rectangle "订单明细" as order_item {
+  (明细ID)
+  (订单ID)
+  (项目类型)
+  (项目编码)
+  (数量)
+  (单价)
+}
+
+rectangle "支付记录" as payment {
+  (支付ID)
+  (支付流水号)
+  (订单ID)
+  (支付渠道)
+  (支付金额)
+  (状态)
+}
+
+' ========== 体检执行 ==========
+rectangle "体检任务" as task {
+  (任务ID)
+  (任务号)
+  (预约ID)
+  (用户ID)
+  (体检日期)
+  (任务状态)
+}
+
+rectangle "任务项" as task_item {
+  (任务项ID)
+  (任务项号)
+  (任务ID)
+  (项目编码)
+  (科室编码)
+  (医生ID)
+  (项目状态)
+}
+
+rectangle "体检结果" as result {
+  (结果ID)
+  (结果号)
+  (任务项ID)
+  (用户ID)
+  (项目编码)
+  (结果值)
+  (是否异常)
+  (录入医生ID)
+}
+
+rectangle "导检路线" as route {
+  (路线ID)
+  (路线编码)
+  (中心编码)
+  (套餐ID)
+  (项目编码)
+  (科室编码)
+  (检查顺序)
+}
+
+' ========== 报告管理 ==========
+rectangle "体检报告" as report {
+  (报告ID)
+  (报告编号)
+  (任务ID)
+  (用户ID)
+  (报告日期)
+  (总体结论)
+  (状态)
+}
+
+rectangle "报告指标" as report_item {
+  (指标ID)
+  (报告ID)
+  (项目编码)
+  (项目名称)
+  (结果值)
+  (是否异常)
+}
+
+rectangle "审核记录" as review {
+  (审核ID)
+  (审核流水号)
+  (报告ID)
+  (审核阶段)
+  (审核结果)
+  (审核意见)
+  (审核人ID)
+}
+
+rectangle "报告模板" as template {
+  (模板ID)
+  (模板编码)
+  (模板名称)
+  (套餐ID)
+  (状态)
+}
+
+' ========== 咨询管理 ==========
+rectangle "咨询工单" as consult {
+  (咨询ID)
+  (咨询单号)
+  (用户ID)
+  (医生ID)
+  (报告ID)
+  (咨询内容)
+  (状态)
+}
+
+rectangle "咨询回复" as reply {
+  (回复ID)
+  (咨询ID)
+  (回复角色)
+  (回复人ID)
+  (回复内容)
+  (回复时间)
+}
+
+' ========== 数据分析 ==========
+rectangle "对比任务" as compare {
+  (任务ID)
+  (任务号)
+  (用户ID)
+  (基线报告ID)
+  (对比报告ID)
+  (状态)
+}
+
+rectangle "对比结果" as compare_result {
+  (结果ID)
+  (任务ID)
+  (项目编码)
+  (基线值)
+  (对比值)
+  (变化率)
+  (趋势)
+}
+
+rectangle "风险评分" as risk {
+  (评分ID)
+  (任务ID)
+  (用户ID)
+  (总分)
+  (风险等级)
+}
+
+rectangle "健康建议" as advice {
+  (建议ID)
+  (建议单号)
+  (用户ID)
+  (报告ID)
+  (建议类型)
+  (风险等级)
+  (建议内容)
+}
+
+' ========== 关系定义 ==========
+user "1" -- "0..*" appt : 创建预约
+user "1" -- "0..*" order : 创建订单
+user "1" -- "0..*" consult : 发起咨询
+
+staff "1" -- "0..*" role : 拥有角色
+staff "||" -- "||" user : 绑定用户
+staff "1" -- "0..*" result : 医生录入
+staff "1" -- "0..*" review : 医生审核
+staff "1" -- "0..*" consult : 医生回复
+
+pkg "1" -- "0..*" pkg_item : 包含项目
+pkg "1" -- "0..*" appt : 被选择
+
+appt "1" -- "1" order : 生成订单
+appt "1" -- "1" task : 生成任务
+appt "0..*" -- "1" res : 占用时段
+
+order "1" -- "0..*" order_item : 包含明细
+order "1" -- "0..*" payment : 支付记录
+
+task "1" -- "0..*" task_item : 拆分任务项
+task "1" -- "1" report : 生成报告
+
+task_item "1" -- "0..*" result : 录入结果
+task_item "0..*" -- "1" route : 关联科室
+
+report "1" -- "0..*" report_item : 包含指标
+report "1" -- "0..*" review : 审核记录
+report "0..*" -- "1" template : 使用模板
+report "0..*" -- "1" consult : 关联咨询
+report "1" -- "0..*" compare : 用于对比
+
+consult "1" -- "0..*" reply : 回复消息
+
+compare "1" -- "0..*" compare_result : 对比结果
+compare "1" -- "1" risk : 风险评分
+compare "1" -- "0..*" advice : 健康建议
+
+@enduml

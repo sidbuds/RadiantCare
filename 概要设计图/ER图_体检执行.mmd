@@ -1,0 +1,66 @@
+erDiagram
+    EXAM_TASK {
+        bigint id PK
+        varchar task_no UK
+        bigint appointment_id FK
+        bigint order_id FK
+        bigint user_id FK
+        varchar center_code
+        date task_date
+        tinyint task_status
+        tinyint report_status
+    }
+
+    EXAM_TASK_ITEM {
+        bigint id PK
+        varchar task_item_no UK
+        bigint task_id FK
+        varchar item_code
+        varchar item_name
+        varchar department_code
+        bigint doctor_id
+        tinyint item_status
+    }
+
+    EXAM_RESULT {
+        bigint id PK
+        varchar result_no UK
+        bigint task_id FK
+        bigint task_item_id FK
+        bigint user_id FK
+        bigint report_id FK
+        varchar item_code
+        varchar result_value
+        decimal result_number
+        tinyint is_abnormal
+        tinyint abnormal_level
+        bigint entry_doctor_id
+    }
+
+    EXAM_DEPARTMENT_ROUTE {
+        bigint id PK
+        varchar route_code UK
+        varchar center_code
+        bigint package_id
+        varchar item_code
+        varchar department_code
+        varchar department_name
+        varchar room_no
+        int route_sort
+    }
+
+    EXAM_RESULT_ATTACHMENT {
+        bigint id PK
+        varchar attachment_no UK
+        bigint result_id FK
+        varchar file_name
+        varchar file_url
+        varchar file_type
+    }
+
+    APPOINTMENT ||--|| EXAM_TASK : "生成任务"
+    EXAM_TASK ||--o{ EXAM_TASK_ITEM : "拆分任务项"
+    EXAM_TASK_ITEM ||--o{ EXAM_RESULT : "录入结果"
+    EXAM_TASK_ITEM }o--|| EXAM_DEPARTMENT_ROUTE : "关联科室"
+    EXAM_RESULT ||--o{ EXAM_RESULT_ATTACHMENT : "附件"
+    STAFF_ACCOUNT ||--o{ EXAM_RESULT : "医生录入"

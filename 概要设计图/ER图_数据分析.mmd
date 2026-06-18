@@ -1,0 +1,61 @@
+erDiagram
+    REPORT_COMPARE_TASK {
+        bigint id PK
+        varchar task_no UK
+        bigint user_id FK
+        bigint baseline_report_id FK
+        bigint compare_report_id FK
+        tinyint status
+    }
+
+    REPORT_COMPARE_RESULT {
+        bigint id PK
+        bigint task_id FK
+        varchar item_code
+        varchar item_name
+        varchar base_value
+        varchar compare_value
+        decimal change_value
+        decimal change_rate
+        tinyint trend
+    }
+
+    HEALTH_RISK_SCORE {
+        bigint id PK
+        bigint task_id FK
+        bigint user_id FK
+        decimal score_total
+        decimal score_abnormal
+        decimal score_trend
+        tinyint risk_level
+        text score_detail
+    }
+
+    HEALTH_ADVICE_RECORD {
+        bigint id PK
+        varchar advice_no UK
+        bigint user_id FK
+        bigint report_id FK
+        bigint compare_task_id FK
+        varchar advice_type
+        tinyint risk_level
+        varchar advice_title
+        text advice_content
+    }
+
+    INDICATOR_TREND_TAG {
+        bigint id PK
+        bigint task_id FK
+        varchar item_code
+        varchar trend_tag
+        tinyint trend_direction
+        int turning_year
+        tinyint risk_level
+    }
+
+    EXAM_REPORT ||--o{ REPORT_COMPARE_TASK : "基线报告"
+    EXAM_REPORT ||--o{ REPORT_COMPARE_TASK : "对比报告"
+    REPORT_COMPARE_TASK ||--o{ REPORT_COMPARE_RESULT : "对比结果"
+    REPORT_COMPARE_TASK ||--|| HEALTH_RISK_SCORE : "风险评分"
+    REPORT_COMPARE_TASK ||--o{ HEALTH_ADVICE_RECORD : "健康建议"
+    REPORT_COMPARE_TASK ||--o{ INDICATOR_TREND_TAG : "趋势标签"

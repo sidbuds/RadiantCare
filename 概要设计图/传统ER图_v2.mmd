@@ -1,0 +1,164 @@
+flowchart LR
+    %% 使用特定形状模拟传统ER图
+    %% 矩形 = 实体
+    %% 椭圆(圆角) = 属性
+    %% 菱形 = 关系
+
+    subgraph 用户管理
+        USER["用户"]
+        STAFF["后台账号"]
+        ROLE["角色"]
+        
+        USER --- U1["用户ID"]
+        USER --- U2["姓名"]
+        USER --- U3["手机号"]
+        
+        STAFF --- S1["账号ID"]
+        STAFF --- S2["用户名"]
+        
+        ROLE --- R1["角色编码"]
+    end
+
+    subgraph 预约管理
+        PKG["体检套餐"]
+        PKG_ITEM["套餐项目"]
+        APPT["预约"]
+        RES["资源容量"]
+        
+        PKG --- P1["套餐ID"]
+        PKG --- P2["套餐名称"]
+        PKG --- P3["价格"]
+        
+        PKG_ITEM --- PI1["项目ID"]
+        PKG_ITEM --- PI2["项目编码"]
+        
+        APPT --- A1["预约ID"]
+        APPT --- A2["预约单号"]
+        APPT --- A3["预约日期"]
+        
+        RES --- RE1["中心编码"]
+        RES --- RE2["总容量"]
+    end
+
+    subgraph 订单管理
+        ORDER["订单"]
+        ORDER_ITEM["订单明细"]
+        PAYMENT["支付记录"]
+        
+        ORDER --- O1["订单ID"]
+        ORDER --- O2["订单号"]
+        ORDER --- O3["总金额"]
+        
+        ORDER_ITEM --- OI1["明细ID"]
+        ORDER_ITEM --- OI2["项目编码"]
+        
+        PAYMENT --- PAY1["支付流水号"]
+        PAYMENT --- PAY2["支付金额"]
+    end
+
+    subgraph 体检执行
+        TASK["体检任务"]
+        TASK_ITEM["任务项"]
+        RESULT["体检结果"]
+        ROUTE["导检路线"]
+        
+        TASK --- T1["任务ID"]
+        TASK --- T2["任务号"]
+        TASK --- T3["体检日期"]
+        
+        TASK_ITEM --- TI1["任务项ID"]
+        TASK_ITEM --- TI2["项目编码"]
+        
+        RESULT --- RES1["结果ID"]
+        RESULT --- RES2["结果值"]
+        
+        ROUTE --- RO1["路线编码"]
+        ROUTE --- RO2["科室编码"]
+    end
+
+    subgraph 报告管理
+        REPORT["体检报告"]
+        REPORT_ITEM["报告指标"]
+        REVIEW["审核记录"]
+        TEMPLATE["报告模板"]
+        
+        REPORT --- RP1["报告ID"]
+        REPORT --- RP2["报告编号"]
+        
+        REPORT_ITEM --- RPI1["指标ID"]
+        REPORT_ITEM --- RPI2["项目编码"]
+        
+        REVIEW --- RV1["审核ID"]
+        REVIEW --- RV2["审核结果"]
+        
+        TEMPLATE --- TPL1["模板ID"]
+        TEMPLATE --- TPL2["模板名称"]
+    end
+
+    subgraph 咨询管理
+        CONSULT["咨询工单"]
+        REPLY["咨询回复"]
+        
+        CONSULT --- C1["咨询ID"]
+        CONSULT --- C2["咨询单号"]
+        
+        REPLY --- REP1["回复ID"]
+        REPLY --- REP2["回复内容"]
+    end
+
+    subgraph 数据分析
+        COMPARE["对比任务"]
+        COMPARE_RESULT["对比结果"]
+        RISK["风险评分"]
+        ADVICE["健康建议"]
+        
+        COMPARE --- CMP1["任务ID"]
+        COMPARE --- CMP2["任务号"]
+        
+        COMPARE_RESULT --- CPR1["结果ID"]
+        COMPARE_RESULT --- CPR2["趋势"]
+        
+        RISK --- RK1["评分ID"]
+        RISK --- RK2["总分"]
+        
+        ADVICE --- AD1["建议ID"]
+        ADVICE --- AD2["建议内容"]
+    end
+
+    %% 关系（菱形用文本表示）
+    USER -.->|"创建预约"| APPT
+    USER -.->|"创建订单"| ORDER
+    USER -.->|"发起咨询"| CONSULT
+    
+    STAFF -.->|"绑定"| USER
+    STAFF -.->|"拥有角色"| ROLE
+    STAFF -.->|"医生录入"| RESULT
+    STAFF -.->|"医生审核"| REVIEW
+    
+    PKG -.->|"包含项目"| PKG_ITEM
+    PKG -.->|"被选择"| APPT
+    
+    APPT -.->|"生成订单"| ORDER
+    APPT -.->|"生成任务"| TASK
+    APPT -.->|"占用时段"| RES
+    
+    ORDER -.->|"包含明细"| ORDER_ITEM
+    ORDER -.->|"支付记录"| PAYMENT
+    
+    TASK -.->|"拆分任务项"| TASK_ITEM
+    TASK -.->|"生成报告"| REPORT
+    
+    TASK_ITEM -.->|"录入结果"| RESULT
+    TASK_ITEM -.->|"关联科室"| ROUTE
+    
+    REPORT -.->|"包含指标"| REPORT_ITEM
+    REPORT -.->|"审核记录"| REVIEW
+    REPORT -.->|"使用模板"| TEMPLATE
+    REPORT -.->|"关联咨询"| CONSULT
+    
+    CONSULT -.->|"回复消息"| REPLY
+    
+    REPORT -.->|"用于对比"| COMPARE
+    COMPARE -.->|"对比结果"| COMPARE_RESULT
+    COMPARE -.->|"风险评分"| RISK
+    COMPARE -.->|"健康建议"| ADVICE

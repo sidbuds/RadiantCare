@@ -1,0 +1,85 @@
+@startuml
+skinparam sequenceArrowThickness 1
+skinparam responseMessageBelowArrow true
+skinparam maxMessageSize 200
+skinparam sequenceMessageSpacing 12
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceGroupBorderColor #AAAAAA
+skinparam sequenceGroupBackgroundColor #F5F5F5
+skinparam padding 20
+
+title 用户预约体检主流程时序图
+
+actor "用户" as U
+participant "注册窗口" as F
+participant "后台管理系统" as B
+participant "数据库存储系统" as D
+
+U -> F : 输入账号密码
+activate F
+F -> B : 提交登录
+activate B
+B -> D : 查询用户
+activate D
+D --> B : 返回记录
+deactivate D
+B -> B : 生成JWT
+B --> F : 返回token
+deactivate B
+F --> U : 登录成功
+deactivate F
+
+U -> F : 选择套餐时段
+activate F
+F -> B : 查询时段
+activate B
+B -> D : 查询容量
+activate D
+D --> B : 返回列表
+deactivate D
+B --> F : 返回数据
+deactivate B
+F --> U : 显示时段
+deactivate F
+
+U -> F : 提交预约
+activate F
+F -> B : 创建预约
+activate B
+B -> D : 校验并创建
+activate D
+D --> B : 成功
+deactivate D
+B --> F : 返回编号
+deactivate B
+F --> U : 预约成功
+deactivate F
+
+U -> F : 创建订单
+activate F
+F -> B : 创建订单
+activate B
+B -> B : 计算金额快照
+B -> D : 写入订单
+activate D
+D --> B : 成功
+deactivate D
+B --> F : 返回编号
+deactivate B
+F --> U : 订单成功
+deactivate F
+
+U -> F : 确认支付
+activate F
+F -> B : 支付订单
+activate B
+B -> D : 更新状态
+activate D
+D --> B : 成功
+deactivate D
+B --> F : 支付成功
+deactivate B
+F --> U : 支付完成
+deactivate F
+
+@enduml

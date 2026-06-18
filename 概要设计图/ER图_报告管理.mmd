@@ -1,0 +1,64 @@
+erDiagram
+    EXAM_REPORT {
+        bigint id PK
+        varchar report_no UK
+        bigint appointment_id FK
+        bigint task_id FK
+        bigint user_id FK
+        bigint package_id FK
+        bigint template_id FK
+        date report_date
+        text overall_conclusion
+        tinyint status
+        varchar pdf_url
+    }
+
+    EXAM_REPORT_ITEM {
+        bigint id PK
+        bigint report_id FK
+        varchar item_code
+        varchar item_name
+        varchar result_value
+        decimal result_number
+        tinyint is_abnormal
+        tinyint abnormal_level
+        int sort_no
+    }
+
+    EXAM_REPORT_ITEM_ABNORMAL {
+        bigint id PK
+        bigint report_id FK
+        bigint report_item_id FK
+        varchar abnormal_code
+        varchar abnormal_name
+        tinyint abnormal_level
+        varchar suggestion
+        tinyint status
+    }
+
+    DOCTOR_REVIEW_RECORD {
+        bigint id PK
+        varchar review_no UK
+        bigint report_id FK
+        bigint task_id FK
+        varchar review_stage
+        varchar review_status
+        varchar review_comment
+        bigint reviewer_id
+    }
+
+    REPORT_TEMPLATE {
+        bigint id PK
+        varchar template_code UK
+        varchar template_name
+        bigint package_id FK
+        varchar template_type
+        tinyint status
+    }
+
+    EXAM_TASK ||--|| EXAM_REPORT : "生成报告"
+    EXAM_REPORT ||--o{ EXAM_REPORT_ITEM : "包含指标"
+    EXAM_REPORT_ITEM ||--o{ EXAM_REPORT_ITEM_ABNORMAL : "异常项"
+    EXAM_REPORT ||--o{ DOCTOR_REVIEW_RECORD : "审核记录"
+    EXAM_REPORT }o--|| REPORT_TEMPLATE : "使用模板"
+    STAFF_ACCOUNT ||--o{ DOCTOR_REVIEW_RECORD : "审核人"

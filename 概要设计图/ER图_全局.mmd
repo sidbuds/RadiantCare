@@ -1,0 +1,40 @@
+erDiagram
+    USER ||--o{ APPOINTMENT : "创建预约"
+    USER ||--o{ ORDER : "创建订单"
+    USER ||--o{ DOCTOR_CONSULTATION : "发起咨询"
+    
+    STAFF_ACCOUNT ||--|| USER : "绑定"
+    STAFF_ACCOUNT ||--o{ STAFF_ROLE_REL : "角色"
+    STAFF_ACCOUNT ||--o{ DOCTOR_REVIEW_RECORD : "审核"
+    STAFF_ACCOUNT ||--o{ EXAM_RESULT : "录入"
+    
+    EXAM_PACKAGE ||--o{ EXAM_PACKAGE_ITEM : "包含项目"
+    EXAM_PACKAGE ||--o{ APPOINTMENT : "被选择"
+    
+    APPOINTMENT ||--|| ORDER : "生成订单"
+    APPOINTMENT ||--|| EXAM_TASK : "生成任务"
+    APPOINTMENT }o--|| RESOURCE_CAPACITY : "占用时段"
+    
+    ORDER ||--o{ ORDER_ITEM : "订单明细"
+    ORDER ||--o{ PAYMENT_RECORD : "支付记录"
+    ORDER ||--o{ REFUND_APPLY : "退款申请"
+    
+    EXAM_TASK ||--o{ EXAM_TASK_ITEM : "任务项"
+    EXAM_TASK ||--|| EXAM_REPORT : "生成报告"
+    
+    EXAM_TASK_ITEM ||--o{ EXAM_RESULT : "录入结果"
+    EXAM_TASK_ITEM }o--|| EXAM_DEPARTMENT_ROUTE : "关联科室"
+    
+    EXAM_REPORT ||--o{ EXAM_REPORT_ITEM : "报告指标"
+    EXAM_REPORT ||--o{ DOCTOR_REVIEW_RECORD : "审核"
+    EXAM_REPORT ||--o{ DOCTOR_CONSULTATION : "关联咨询"
+    EXAM_REPORT }o--|| REPORT_TEMPLATE : "使用模板"
+    
+    EXAM_REPORT_ITEM ||--o{ EXAM_REPORT_ITEM_ABNORMAL : "异常项"
+    
+    DOCTOR_CONSULTATION ||--o{ DOCTOR_CONSULTATION_REPLY : "回复"
+    
+    EXAM_REPORT ||--o{ REPORT_COMPARE_TASK : "对比任务"
+    REPORT_COMPARE_TASK ||--|| HEALTH_RISK_SCORE : "风险评分"
+    REPORT_COMPARE_TASK ||--o{ HEALTH_ADVICE_RECORD : "健康建议"
+    REPORT_COMPARE_TASK ||--o{ REPORT_COMPARE_RESULT : "对比结果"

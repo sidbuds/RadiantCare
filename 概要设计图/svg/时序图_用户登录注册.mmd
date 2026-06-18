@@ -1,0 +1,45 @@
+sequenceDiagram
+    participant U as 用户
+    participant F as 注册窗口
+    participant B as 后台管理系统
+    participant D as 数据库存储系统
+    Note over U,D: 用户登录
+    U->>F: 输入账号密码
+    activate F
+    F->>B: 提交登录
+    activate B
+    B->>D: 查询用户
+    activate D
+    D-->>B: 返回记录
+    deactivate D
+    B->>B: 生成JWT
+    B-->>F: 返回token
+    deactivate B
+    F-->>U: 登录成功
+    deactivate F
+    Note over U,D: 用户注册
+    U->>F: 输入注册信息
+    activate F
+    F->>B: 提交注册
+    activate B
+    B->>D: 写入用户记录
+    activate D
+    D-->>B: 注册成功
+    deactivate D
+    B-->>F: 返回成功
+    deactivate B
+    F-->>U: 注册成功
+    deactivate F
+    Note over U,D: 实名认证
+    U->>F: 输入身份信息
+    activate F
+    F->>B: 提交认证
+    activate B
+    B->>D: 绑定实名信息
+    activate D
+    D-->>B: 认证成功
+    deactivate D
+    B-->>F: 返回成功
+    deactivate B
+    F-->>U: 认证完成
+    deactivate F

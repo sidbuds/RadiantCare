@@ -1,0 +1,44 @@
+sequenceDiagram
+    participant U as 用户
+    participant F as 注册窗口
+    participant B as 后台管理系统
+    participant D as 数据库存储系统
+    Note over U,D: 选择套餐
+    U->>F: 浏览体检套餐
+    activate F
+    F->>B: 查询套餐列表
+    activate B
+    B->>D: 查询套餐
+    activate D
+    D-->>B: 返回列表
+    deactivate D
+    B-->>F: 返回数据
+    deactivate B
+    F-->>U: 显示套餐
+    deactivate F
+    Note over U,D: 创建订单
+    U->>F: 确认下单
+    activate F
+    F->>B: 创建订单
+    activate B
+    B->>D: 写入订单
+    activate D
+    D-->>B: 创建成功
+    deactivate D
+    B-->>F: 返回订单号
+    deactivate B
+    F-->>U: 订单创建成功
+    deactivate F
+    Note over U,D: 支付订单
+    U->>F: 确认支付
+    activate F
+    F->>B: 支付订单
+    activate B
+    B->>D: 更新支付状态
+    activate D
+    D-->>B: 支付成功
+    deactivate D
+    B-->>F: 返回成功
+    deactivate B
+    F-->>U: 支付完成
+    deactivate F

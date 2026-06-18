@@ -1,0 +1,45 @@
+erDiagram
+    EXAM_PACKAGE {
+        bigint id PK
+        varchar package_code UK
+        varchar package_name
+        varchar category
+        decimal price
+        tinyint status
+    }
+
+    EXAM_PACKAGE_ITEM {
+        bigint id PK
+        bigint package_id FK
+        varchar item_code
+        varchar item_name
+        varchar unit
+        varchar ref_range
+        int sort_no
+    }
+
+    APPOINTMENT {
+        bigint id PK
+        varchar appointment_no UK
+        bigint user_id FK
+        bigint package_id FK
+        varchar center_code
+        date appoint_date
+        varchar time_slot_code
+        tinyint status
+    }
+
+    RESOURCE_CAPACITY {
+        bigint id PK
+        varchar center_code
+        date appoint_date
+        varchar time_slot_code
+        int capacity_total
+        int capacity_used
+        tinyint status
+    }
+
+    EXAM_PACKAGE ||--o{ EXAM_PACKAGE_ITEM : "包含项目"
+    EXAM_PACKAGE ||--o{ APPOINTMENT : "被选择"
+    USER ||--o{ APPOINTMENT : "创建预约"
+    APPOINTMENT }o--|| RESOURCE_CAPACITY : "占用时段"

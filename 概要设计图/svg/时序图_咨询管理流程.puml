@@ -1,0 +1,113 @@
+@startuml
+skinparam sequenceArrowThickness 1
+skinparam responseMessageBelowArrow true
+skinparam maxMessageSize 200
+skinparam sequenceMessageSpacing 12
+skinparam sequenceLifeLineBorderColor #999999
+skinparam padding 20
+
+title 咨询管理流程时序图
+
+actor "用户" as U
+actor "管理员" as A
+actor "医生" as D
+participant "注册窗口" as F
+participant "后台管理系统" as B
+participant "数据库存储系统" as DB
+
+U -> F : 发起咨询
+activate F
+F -> B : 创建咨询
+activate B
+B -> DB : 写入记录
+activate DB
+DB --> B : 成功
+deactivate DB
+B --> F : 返回编号
+deactivate B
+F --> U : 提交成功
+deactivate F
+
+note over A,DB : 分配医生
+
+A -> F : 查看待分配
+activate F
+F -> B : 查询列表
+activate B
+B -> DB : 查询待分配
+activate DB
+DB --> B : 列表
+deactivate DB
+B --> F : 数据
+deactivate B
+F --> A : 显示列表
+deactivate F
+
+A -> F : 分配医生
+activate F
+F -> B : 更新分配
+activate B
+B -> DB : 状态改待回复
+activate DB
+DB --> B : 成功
+deactivate DB
+B --> F : 成功
+deactivate B
+F --> A : 分配成功
+deactivate F
+
+note over D,DB : 医生回复
+
+D -> F : 查看待回复
+activate F
+F -> B : 查询列表
+activate B
+B -> DB : 查询待回复
+activate DB
+DB --> B : 列表
+deactivate DB
+B --> F : 数据
+deactivate B
+F --> D : 显示列表
+deactivate F
+
+D -> F : 查看上下文
+activate F
+F -> B : 查询详情
+activate B
+B -> DB : 查报告异常
+activate DB
+DB --> B : 详情
+deactivate DB
+B --> F : 数据
+deactivate B
+F --> D : 显示问题
+deactivate F
+
+D -> F : 输入回复
+activate F
+F -> B : 提交回复
+activate B
+B -> DB : 写入回复
+activate DB
+DB --> B : 成功
+deactivate DB
+B --> F : 成功
+deactivate B
+F --> D : 回复成功
+deactivate F
+
+U -> F : 查看咨询
+activate F
+F -> B : 查询回复
+activate B
+B -> DB : 查回复记录
+activate DB
+DB --> B : 数据
+deactivate DB
+B --> F : 列表
+deactivate B
+F --> U : 显示回复
+deactivate F
+
+@enduml

@@ -1,0 +1,30 @@
+erDiagram
+    USER {
+        bigint id PK
+        varchar user_no UK
+        varchar name
+        tinyint gender
+        varchar mobile UK
+        varchar password_hash
+        tinyint status
+    }
+
+    STAFF_ACCOUNT {
+        bigint id PK
+        varchar username UK
+        varchar password_hash
+        varchar display_name
+        bigint bind_user_id FK
+        tinyint status
+    }
+
+    STAFF_ROLE_REL {
+        bigint id PK
+        bigint staff_account_id FK
+        varchar role_code
+    }
+
+    USER ||--o{ APPOINTMENT : "创建预约"
+    USER ||--o{ ORDER : "创建订单"
+    STAFF_ACCOUNT ||--|| USER : "绑定用户"
+    STAFF_ACCOUNT ||--o{ STAFF_ROLE_REL : "拥有角色"

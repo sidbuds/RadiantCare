@@ -1,0 +1,134 @@
+classDiagram
+    class User {
+        -Long id
+        -String userNo
+        -String name
+        -String phone
+        -String passwordHash
+        -Integer authStatus
+        -Integer isVip
+        +login() bool
+        +register() void
+        +getInfo() User
+        +updateInfo() void
+    }
+    class StaffAccount {
+        -Long id
+        -String username
+        -String passwordHash
+        -String displayName
+        -Integer status
+        +login() bool
+        +getInfo() StaffAccount
+    }
+    class ExamPackage {
+        -Long id
+        -String packageCode
+        -String packageName
+        -BigDecimal price
+        -Integer status
+        +getList() List
+        +getDetail() ExamPackage
+        +create() void
+        +update() void
+    }
+    class Appointment {
+        -Long id
+        -String appointmentNo
+        -Long userId
+        -Long packageId
+        -String centerCode
+        -LocalDate appointmentDate
+        -String timeSlot
+        -Integer status
+        +create() Appointment
+        +cancel() void
+        +getDetail() Appointment
+        +getAvailableSlots() List
+    }
+    class Order {
+        -Long id
+        -String orderNo
+        -Long userId
+        -Long appointmentId
+        -BigDecimal totalAmount
+        -Integer orderStatus
+        -Integer payStatus
+        +create() Order
+        +pay() void
+        +refund() void
+        +getDetail() Order
+        +getList() List
+    }
+    class ExamTask {
+        -Long id
+        -String taskNo
+        -Long orderId
+        -Long userId
+        -Integer taskStatus
+        +generate() ExamTask
+        +getDetail() ExamTask
+        +getGuide() List
+    }
+    class ExamTaskItem {
+        -Long id
+        -String taskItemNo
+        -Long taskId
+        -String departmentCode
+        -Integer itemStatus
+        -Long entryDoctorId
+        +start() void
+        +complete() void
+        +getDetail() ExamTaskItem
+    }
+    class ExamResult {
+        -Long id
+        -Long taskItemId
+        -String indicatorName
+        -String indicatorValue
+        -Integer isAbnormal
+        -Integer abnormalLevel
+        -Long entryDoctorId
+        +create() ExamResult
+        +getList() List
+    }
+    class ExamReport {
+        -Long id
+        -String reportNo
+        -Long taskId
+        -Long userId
+        -Integer reportStatus
+        -String overallConclusion
+        +generate() ExamReport
+        +review() void
+        +publish() void
+        +withdraw() void
+        +getDetail() ExamReport
+        +getList() List
+    }
+    class DoctorConsultation {
+        -Long id
+        -String consultationNo
+        -Long userId
+        -Long reportId
+        -Long assignedDoctorId
+        -String question
+        -Integer status
+        +create() DoctorConsultation
+        +assign() void
+        +reply() void
+        +getDetail() DoctorConsultation
+        +getList() List
+    }
+    User "1" --> "0..*" Appointment : 创建
+    User "1" --> "0..*" Order : 下单
+    User "1" --> "0..*" DoctorConsultation : 咨询
+    StaffAccount "1" --> "0..*" ExamTaskItem : 执行
+    StaffAccount "1" --> "0..*" DoctorConsultation : 回复
+    ExamPackage "1" --> "0..*" ExamTaskItem : 包含
+    Appointment "1" --> "0..1" Order : 生成
+    Order "1" --> "0..1" ExamTask : 生成
+    ExamTask "1" --> "1..*" ExamTaskItem : 拆分
+    ExamTaskItem "1" --> "0..*" ExamResult : 录入
+    ExamTask "1" --> "0..1" ExamReport : 生成
+    ExamReport "1" --> "0..*" DoctorConsultation : 关联

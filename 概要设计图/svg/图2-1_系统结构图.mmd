@@ -1,0 +1,28 @@
+graph LR
+    subgraph A["前端UI层"]
+        A1["Vue 3 / TS / Element Plus"]
+    end
+    subgraph B["展示层"]
+        B1["游客端"]
+        B2["用户端"]
+        B3["医生端"]
+        B4["运营端"]
+        B5["管理端"]
+    end
+    subgraph C["业务层"]
+        direction TB
+        C1["认证 / 用户 / 预约 / 订单 / 体检 / 报告 / 咨询"]
+        C2["套餐 / 运营 / 质控"]
+    end
+    subgraph D["数据层"]
+        D1["Security / JWT / RBAC / MyBatis-Plus"]
+    end
+    subgraph E["数据库"]
+        E1["MySQL"]
+        E2["Redis"]
+        E3["文件存储"]
+    end
+    A --> B
+    B --> C
+    C --> D
+    D --> E

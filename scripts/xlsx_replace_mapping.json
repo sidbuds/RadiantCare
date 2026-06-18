@@ -1,0 +1,311 @@
+{
+  "title": "熙心健康体检平台数据库设计书",
+  "source_workbook": "第08天-XXX系统数据库设计书.xlsx",
+  "updates": [
+    {
+      "sheet": "DB一览表",
+      "cell": "A2",
+      "old": "NEP 系统数据库设计书",
+      "new": "熙心健康体检平台数据库设计书"
+    },
+    {
+      "sheet": "DB一览表",
+      "cell_range": "C6:E14",
+      "note": "按项目文档重填表名、中文名、说明（示例行将替换为熙心健康体检平台核心表）"
+    },
+    {
+      "sheet": "更新履历",
+      "cell_range": "B4:I5",
+      "note": "替换版本/改版内容/设计者/日期（需要你确认设计者姓名与日期）"
+    },
+    {
+      "sheet": "aqi",
+      "cell_range": "B3:E3",
+      "old": "aqi / 空气质量指数级别表",
+      "new": "user / 用户表（示例 sheet 可按模板继续扩展其它表）"
+    },
+    {
+      "sheet": "aqi",
+      "cell_range": "B6:J18",
+      "note": "替换为 user 表字段明细"
+    }
+  ],
+  "preview": {
+    "DB一览表": [
+      {
+        "row": 6,
+        "A": "XIXIN",
+        "B": 1,
+        "C": "user",
+        "D": "用户表",
+        "E": "存储平台用户基本信息"
+      },
+      {
+        "row": 7,
+        "A": null,
+        "B": 2,
+        "C": "staff_account",
+        "D": "后台员工账号表",
+        "E": "存储医生/运营/管理员登录账号"
+      },
+      {
+        "row": 8,
+        "A": null,
+        "B": 3,
+        "C": "staff_role_rel",
+        "D": "员工角色关系表",
+        "E": "存储员工与角色的绑定关系"
+      },
+      {
+        "row": 9,
+        "A": null,
+        "B": 4,
+        "C": "exam_package",
+        "D": "体检套餐表",
+        "E": "存储体检套餐基本信息"
+      },
+      {
+        "row": 10,
+        "A": null,
+        "B": 5,
+        "C": "exam_package_item",
+        "D": "套餐项目表",
+        "E": "存储套餐包含的体检项目"
+      },
+      {
+        "row": 11,
+        "A": null,
+        "B": 6,
+        "C": "appointment",
+        "D": "预约表",
+        "E": "存储用户预约记录"
+      },
+      {
+        "row": 12,
+        "A": null,
+        "B": 7,
+        "C": "order",
+        "D": "订单表",
+        "E": "存储体检订单与支付状态"
+      },
+      {
+        "row": 13,
+        "A": null,
+        "B": 8,
+        "C": "exam_task",
+        "D": "体检任务表",
+        "E": "存储用户体检执行任务"
+      },
+      {
+        "row": 14,
+        "A": null,
+        "B": 9,
+        "C": "exam_result",
+        "D": "体检结果表",
+        "E": "存储体检结果与异常标记"
+      }
+    ],
+    "user_sheet_fields": [
+      {
+        "No": 1,
+        "field": "id",
+        "type": "bigint",
+        "len": "",
+        "notnull": "√",
+        "pk": "√",
+        "constraint": "自增主键",
+        "desc": "用户主键"
+      },
+      {
+        "No": 2,
+        "field": "user_no",
+        "type": "varchar",
+        "len": "64",
+        "notnull": "√",
+        "pk": "",
+        "constraint": "唯一索引",
+        "desc": "用户业务编号"
+      },
+      {
+        "No": 3,
+        "field": "name",
+        "type": "varchar",
+        "len": "100",
+        "notnull": "√",
+        "pk": "",
+        "constraint": "",
+        "desc": "姓名"
+      },
+      {
+        "No": 4,
+        "field": "gender",
+        "type": "tinyint",
+        "len": "",
+        "notnull": "√",
+        "pk": "",
+        "constraint": "",
+        "desc": "性别"
+      },
+      {
+        "No": 5,
+        "field": "birth_date",
+        "type": "date",
+        "len": "",
+        "notnull": "",
+        "pk": "",
+        "constraint": "",
+        "desc": "出生日期"
+      },
+      {
+        "No": 6,
+        "field": "id_type",
+        "type": "tinyint",
+        "len": "",
+        "notnull": "√",
+        "pk": "",
+        "constraint": "",
+        "desc": "证件类型"
+      },
+      {
+        "No": 7,
+        "field": "id_no",
+        "type": "varchar",
+        "len": "64",
+        "notnull": "√",
+        "pk": "",
+        "constraint": "唯一索引",
+        "desc": "证件号码"
+      },
+      {
+        "No": 8,
+        "field": "mobile",
+        "type": "varchar",
+        "len": "32",
+        "notnull": "√",
+        "pk": "",
+        "constraint": "唯一索引",
+        "desc": "手机号"
+      },
+      {
+        "No": 9,
+        "field": "email",
+        "type": "varchar",
+        "len": "128",
+        "notnull": "",
+        "pk": "",
+        "constraint": "",
+        "desc": "邮箱"
+      },
+      {
+        "No": 10,
+        "field": "password_hash",
+        "type": "varchar",
+        "len": "255",
+        "notnull": "",
+        "pk": "",
+        "constraint": "",
+        "desc": "登录密码哈希"
+      },
+      {
+        "No": 11,
+        "field": "address",
+        "type": "varchar",
+        "len": "512",
+        "notnull": "",
+        "pk": "",
+        "constraint": "",
+        "desc": "联系地址"
+      },
+      {
+        "No": 12,
+        "field": "emergency_contact",
+        "type": "varchar",
+        "len": "100",
+        "notnull": "",
+        "pk": "",
+        "constraint": "",
+        "desc": "紧急联系人"
+      },
+      {
+        "No": 13,
+        "field": "emergency_mobile",
+        "type": "varchar",
+        "len": "32",
+        "notnull": "",
+        "pk": "",
+        "constraint": "",
+        "desc": "紧急联系电话"
+      },
+      {
+        "No": 14,
+        "field": "status",
+        "type": "tinyint",
+        "len": "",
+        "notnull": "√",
+        "pk": "",
+        "constraint": "默认1",
+        "desc": "状态"
+      },
+      {
+        "No": 15,
+        "field": "created_at",
+        "type": "datetime",
+        "len": "",
+        "notnull": "√",
+        "pk": "",
+        "constraint": "",
+        "desc": "创建时间"
+      },
+      {
+        "No": 16,
+        "field": "updated_at",
+        "type": "datetime",
+        "len": "",
+        "notnull": "√",
+        "pk": "",
+        "constraint": "",
+        "desc": "更新时间"
+      },
+      {
+        "No": 17,
+        "field": "created_by",
+        "type": "bigint",
+        "len": "",
+        "notnull": "√",
+        "pk": "",
+        "constraint": "",
+        "desc": "创建人ID"
+      },
+      {
+        "No": 18,
+        "field": "updated_by",
+        "type": "bigint",
+        "len": "",
+        "notnull": "√",
+        "pk": "",
+        "constraint": "",
+        "desc": "更新人ID"
+      },
+      {
+        "No": 19,
+        "field": "is_deleted",
+        "type": "tinyint",
+        "len": "",
+        "notnull": "√",
+        "pk": "",
+        "constraint": "默认0",
+        "desc": "逻辑删除"
+      }
+    ]
+  },
+  "questions_to_confirm": [
+    "更新履历的【设计者】填谁？",
+    "更新履历的【日期】用今天 2026-06-17 还是其它日期？",
+    "DB一览表这次先填几张核心表？（默认先填9张，剩余后续扩展）"
+  ],
+  "confirmed": {
+    "designer": "",
+    "date": "2026-06-17",
+    "tables_default_count": 9
+  }
+}

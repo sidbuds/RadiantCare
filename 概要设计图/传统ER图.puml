@@ -1,0 +1,278 @@
+@startuml 熙心健康体检平台传统ER图
+skinparam defaultFontSize 11
+skinparam rectangleFontSize 12
+skinparam ellipseFontSize 9
+skinparam diamondFontSize 11
+skinparam linetype polyline
+
+title 熙心健康体检平台 - 传统ER图（Chen表示法）
+
+' ========== 用户管理 ==========
+rectangle "用户" as user #LightBlue {
+  (用户ID)
+  (用户编号)
+  (姓名)
+  (手机号)
+  (密码)
+  (状态)
+}
+
+rectangle "后台账号" as staff #LightBlue {
+  (账号ID)
+  (用户名)
+  (密码)
+  (显示名)
+  (绑定用户ID)
+}
+
+rectangle "角色关联" as role #LightBlue {
+  (角色编码)
+}
+
+' ========== 预约管理 ==========
+rectangle "体检套餐" as pkg #LightGreen {
+  (套餐ID)
+  (套餐编码)
+  (套餐名称)
+  (价格)
+}
+
+rectangle "套餐项目" as pkg_item #LightGreen {
+  (项目ID)
+  (项目编码)
+  (项目名称)
+}
+
+rectangle "预约" as appt #LightGreen {
+  (预约ID)
+  (预约单号)
+  (预约日期)
+  (时段编码)
+}
+
+rectangle "资源容量" as res #LightGreen {
+  (中心编码)
+  (预约日期)
+  (时段编码)
+  (总容量)
+}
+
+' ========== 订单管理 ==========
+rectangle "订单" as order #LightYellow {
+  (订单ID)
+  (订单号)
+  (总金额)
+  (实付金额)
+}
+
+rectangle "订单明细" as order_item #LightYellow {
+  (明细ID)
+  (项目编码)
+  (数量)
+  (单价)
+}
+
+rectangle "支付记录" as payment #LightYellow {
+  (支付流水号)
+  (支付渠道)
+  (支付金额)
+}
+
+' ========== 体检执行 ==========
+rectangle "体检任务" as task #LightCoral {
+  (任务ID)
+  (任务号)
+  (体检日期)
+  (任务状态)
+}
+
+rectangle "任务项" as task_item #LightCoral {
+  (任务项ID)
+  (项目编码)
+  (科室编码)
+  (项目状态)
+}
+
+rectangle "体检结果" as result #LightCoral {
+  (结果ID)
+  (结果值)
+  (是否异常)
+  (异常级别)
+}
+
+rectangle "导检路线" as route #LightCoral {
+  (路线编码)
+  (科室编码)
+  (检查顺序)
+}
+
+' ========== 报告管理 ==========
+rectangle "体检报告" as report #Plum {
+  (报告ID)
+  (报告编号)
+  (报告日期)
+  (总体结论)
+}
+
+rectangle "报告指标" as report_item #Plum {
+  (指标ID)
+  (项目编码)
+  (结果值)
+  (是否异常)
+}
+
+rectangle "审核记录" as review #Plum {
+  (审核ID)
+  (审核阶段)
+  (审核结果)
+  (审核意见)
+}
+
+rectangle "报告模板" as template #Plum {
+  (模板ID)
+  (模板编码)
+  (模板名称)
+}
+
+' ========== 咨询管理 ==========
+rectangle "咨询工单" as consult #Pink {
+  (咨询ID)
+  (咨询单号)
+  (咨询内容)
+  (状态)
+}
+
+rectangle "咨询回复" as reply #Pink {
+  (回复ID)
+  (回复角色)
+  (回复内容)
+}
+
+' ========== 数据分析 ==========
+rectangle "对比任务" as compare #Cyan {
+  (任务ID)
+  (任务号)
+  (状态)
+}
+
+rectangle "对比结果" as compare_result #Cyan {
+  (结果ID)
+  (项目编码)
+  (基线值)
+  (对比值)
+  (趋势)
+}
+
+rectangle "风险评分" as risk #Cyan {
+  (评分ID)
+  (总分)
+  (风险等级)
+}
+
+rectangle "健康建议" as advice #Cyan {
+  (建议ID)
+  (建议类型)
+  (建议内容)
+}
+
+' ========== 关系定义（菱形） ==========
+diamond "绑定" as d_bind
+diamond "拥有" as d_own
+diamond "创建" as d_create1
+diamond "创建" as d_create2
+diamond "包含" as d_include1
+diamond "被选择" as d_select
+diamond "生成" as d_generate1
+diamond "生成" as d_generate2
+diamond "占用" as d_occupy
+diamond "包含" as d_include2
+diamond "支付" as d_pay
+diamond "拆分" as d_split
+diamond "录入" as d_entry
+diamond "关联" as d_rel
+diamond "包含" as d_include3
+diamond "审核" as d_audit
+diamond "使用" as d_use
+diamond "发起" as d_initiate
+diamond "回复" as d_reply
+diamond "对比" as d_compare
+diamond "评分" as d_score
+diamond "建议" as d_advice
+
+' ========== 连线 ==========
+user -- d_create1
+d_create1 -- appt
+
+user -- d_create2
+d_create2 -- order
+
+user -- d_initiate
+d_initiate -- consult
+
+staff -- d_bind
+d_bind -- user
+
+staff -- d_own
+d_own -- role
+
+pkg -- d_include1
+d_include1 -- pkg_item
+
+pkg -- d_select
+d_select -- appt
+
+appt -- d_generate1
+d_generate1 -- order
+
+appt -- d_generate2
+d_generate2 -- task
+
+appt -- d_occupy
+d_occupy -- res
+
+order -- d_include2
+d_include2 -- order_item
+
+order -- d_pay
+d_pay -- payment
+
+task -- d_split
+d_split -- task_item
+
+task_item -- d_entry
+d_entry -- result
+
+task_item -- d_rel
+d_rel -- route
+
+task -- d_compare
+d_compare -- report
+
+report -- d_include3
+d_include3 -- report_item
+
+report -- d_audit
+d_audit -- review
+
+report -- d_use
+d_use -- template
+
+report -- d_initiate
+d_initiate -- consult
+
+consult -- d_reply
+d_reply -- reply
+
+report -- d_compare
+d_compare -- compare
+
+compare -- d_score
+d_score -- risk
+
+compare -- d_advice
+d_advice -- advice
+
+compare -- d_compare
+d_compare -- compare_result
+
+@enduml
