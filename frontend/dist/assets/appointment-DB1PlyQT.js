@@ -1,0 +1,1 @@
+import{t as e}from"./request-D_77iLOm.js";function t(t){return e.post(`/appointments`,t)}function n(t){return e.get(`/appointments/${t}`)}function r(t,n){return e.post(`/appointments/${t}/cancel`,{reason:n})}function i(){return e.get(`/appointments/mine`)}export{i,t as n,n as r,r as t};

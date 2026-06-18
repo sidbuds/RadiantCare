@@ -1,0 +1,1 @@
+import{t as e}from"./request-D_77iLOm.js";function t(t){return e.get(`/reports/${t}`)}function n(t){return e.post(`/admin/reports/generate`,t)}function r(t,n){return e.post(`/admin/reports/${t}/review`,n)}function i(t){return e.post(`/admin/reports/${t}/publish`)}export{r as i,t as n,i as r,n as t};
