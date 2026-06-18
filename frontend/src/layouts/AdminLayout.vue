@@ -2,6 +2,7 @@
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/app'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import { computed } from 'vue'
 
 const router = useRouter()
@@ -104,6 +105,7 @@ function handleLogout() {
           <span class="header-title">业务工作台</span>
         </div>
         <div class="header-right">
+          <ThemeToggle />
           <el-dropdown>
             <span class="user-info">
               <span class="user-avatar">{{ displayName.slice(0, 1) || 'U' }}</span>
@@ -135,7 +137,7 @@ function handleLogout() {
 .admin-aside {
   overflow: hidden;
   background: var(--color-sidebar-bg);
-  border-right: 1px solid rgba(255,255,255,0.04);
+  border-right: 1px solid var(--color-line);
   transition: width 0.25s var(--ease-out);
   display: flex;
   flex-direction: column;
@@ -147,7 +149,7 @@ function handleLogout() {
   gap: 10px;
   min-height: 68px;
   padding: 18px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--color-line);
 }
 
 .aside-mark {
@@ -158,7 +160,7 @@ function handleLogout() {
   height: 30px;
   border-radius: 8px;
   background: var(--color-brand);
-  color: #111113;
+  color: var(--color-on-brand);
   flex-shrink: 0;
 }
 
@@ -205,7 +207,14 @@ function handleLogout() {
   overflow-x: hidden;
 
   &::-webkit-scrollbar { width: 3px; }
-  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 2px; }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+
+    :global([data-theme="light"]) & {
+      background: rgba(0,0,0,0.1);
+    }
+  }
 
   :deep(.el-menu-item) {
     height: 40px;
@@ -246,7 +255,7 @@ function handleLogout() {
 
 .aside-footer {
   padding: 10px 10px 14px;
-  border-top: 1px solid rgba(255,255,255,0.04);
+  border-top: 1px solid var(--color-line);
 }
 
 .collapse-trigger {
@@ -273,6 +282,12 @@ function handleLogout() {
   padding: 0 26px;
   border-bottom: 1px solid var(--color-line);
   background: rgba(17,17,19,0.85);
+
+  :global([data-theme="light"]) & {
+    background: rgba(245, 242, 237, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
 }
 
 .header-left { display: flex; align-items: center; gap: 12px; }
@@ -310,7 +325,7 @@ function handleLogout() {
   height: 26px;
   border-radius: 999px;
   background: var(--color-brand);
-  color: #111113;
+  color: var(--color-on-brand);
   font-size: 11px;
   font-weight: 700;
 }

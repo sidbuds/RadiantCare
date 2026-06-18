@@ -214,7 +214,7 @@ async function handlePublish() {
   height: 32px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--color-brand), var(--color-brand-deep));
-  color: #111113;
+  color: var(--color-on-brand);
   display: inline-flex;
   align-items: center;
   justify-content: center;

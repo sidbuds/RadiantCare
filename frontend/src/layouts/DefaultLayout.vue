@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 
 const router = useRouter()
@@ -47,6 +48,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
         </div>
 
         <div class="header-right">
+          <ThemeToggle />
           <template v-if="isLoggedIn">
             <el-dropdown>
               <span class="user-info">
@@ -91,10 +93,20 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   height: var(--header-height);
   background: rgba(17, 17, 19, 0.85);
   border-bottom: 1px solid var(--color-line);
-  transition: background 0.2s ease;
+  transition: background 0.3s ease;
 
   &.scrolled {
     background: rgba(17, 17, 19, 0.95);
+  }
+
+  :global([data-theme="light"]) & {
+    background: rgba(245, 242, 237, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    &.scrolled {
+      background: rgba(245, 242, 237, 0.95);
+    }
   }
 }
 
@@ -121,7 +133,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   height: 34px;
   border-radius: 9px;
   background: var(--color-brand);
-  color: #111113;
+  color: var(--color-on-brand);
   flex-shrink: 0;
 }
 
@@ -205,7 +217,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   height: 26px;
   border-radius: 999px;
   background: var(--color-brand);
-  color: #111113;
+  color: var(--color-on-brand);
   font-size: 11px;
   font-weight: 700;
 }

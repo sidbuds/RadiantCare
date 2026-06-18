@@ -107,7 +107,7 @@ onMounted(async () => {
   height: 36px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--color-brand), var(--color-brand-deep));
-  color: #111113;
+  color: var(--color-on-brand);
   font-size: 14px;
   font-weight: 700;
   flex-shrink: 0;

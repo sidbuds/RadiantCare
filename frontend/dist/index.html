@@ -9,9 +9,25 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet" />
+    <script>
+      // Apply theme immediately to prevent flash
+      (function() {
+        var t = localStorage.getItem('xixin-theme');
+        if (t === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        } else if (!t) {
+          if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+            document.documentElement.setAttribute('data-theme', 'light');
+          }
+        }
+      })();
+    </script>
     <style>
       html { background: #111113; }
       body { margin: 0; background: #111113; }
+
+      [data-theme="light"] html,
+      [data-theme="light"] body { background: #F5F2ED; }
 
       .app-loader {
         position: fixed;
@@ -24,6 +40,8 @@
         background: #111113;
         transition: opacity 0.4s ease;
       }
+      [data-theme="light"] .app-loader { background: #F5F2ED; }
+
       .app-loader.fade-out {
         opacity: 0;
         pointer-events: none;
@@ -37,6 +55,8 @@
         align-items: center;
         justify-content: center;
       }
+      [data-theme="light"] .loader-mark { background: #3A8F85; }
+
       .loader-mark svg {
         width: 22px;
         height: 22px;
@@ -46,6 +66,8 @@
         stroke-linecap: round;
         stroke-linejoin: round;
       }
+      [data-theme="light"] .loader-mark svg { stroke: #FFFFFF; }
+
       .loader-text {
         margin-top: 18px;
         font-family: "Outfit", sans-serif;
@@ -55,9 +77,10 @@
         text-transform: uppercase;
         color: rgba(216, 212, 204, 0.25);
       }
+      [data-theme="light"] .loader-text { color: rgba(44, 41, 37, 0.3); }
     </style>
-    <script type="module" crossorigin src="/assets/index-RmM4qLDh.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-D7qRIsMC.css">
+    <script type="module" crossorigin src="/assets/index-C5JL6yVL.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BwK9cjlN.css">
   </head>
   <body>
     <div id="app">

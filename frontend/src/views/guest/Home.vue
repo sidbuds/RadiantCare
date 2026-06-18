@@ -197,6 +197,12 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  :global([data-theme="light"]) & h1 {
+    background: linear-gradient(135deg, #2C2925 0%, #3A8F85 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
 }
 
 .hero-desc {
@@ -246,7 +252,7 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
 
     .action-icon {
       background: var(--color-brand-muted);
-      color: #111113;
+      color: var(--color-brand-deep);
     }
   }
 
@@ -320,6 +326,11 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   box-shadow: var(--shadow-lg);
   position: relative;
   overflow: hidden;
+
+  :global([data-theme="light"]) & {
+    background: linear-gradient(145deg, #FFFFFF, #F8F7F4);
+    box-shadow: var(--shadow-md);
+  }
 
   strong {
     display: block;
@@ -443,7 +454,7 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+    background: linear-gradient(90deg, transparent, var(--color-line-strong), transparent);
   }
 }
 
@@ -464,6 +475,12 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+
+    :global([data-theme="light"]) & {
+      background: linear-gradient(135deg, #2C2925 0%, #3A8F85 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
   }
 
   p {

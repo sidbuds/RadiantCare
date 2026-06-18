@@ -27,6 +27,7 @@
   --color-brand-light: rgba(106, 154, 146, 0.1);
   --color-brand-muted: rgba(106, 154, 146, 0.18);
   --color-brand-glow: rgba(106, 154, 146, 0.25);
+  --color-on-brand: #111113;
 
   /* ── Accent: Warm Rose ── */
   --color-accent: #b87070;
@@ -84,6 +85,69 @@
   --duration-fast: 0.12s;
   --duration-normal: 0.2s;
   --duration-slow: 0.35s;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DAYTIME THEME — "Morning Clarity"
+   Warm parchment · Pure white cards · Rich teal · Deep ink
+   ═══════════════════════════════════════════════════════════ */
+
+[data-theme="light"] {
+  /* ── Surfaces ── */
+  --color-bg: #F5F2ED;
+  --color-bg-elevated: #FDFCFB;
+  --color-surface: #F5F2ED;
+  --color-surface-warm: #F0EDE7;
+  --color-surface-deep: #ECE8E1;
+  --color-panel: #FFFFFF;
+  --color-panel-strong: #F8F7F4;
+
+  /* ── Text ── */
+  --color-ink: #2C2925;
+  --color-ink-soft: #6B6560;
+  --color-ink-muted: #9A9590;
+  --color-ink-faint: #C5C0BA;
+
+  /* ── Brand: Rich Teal ── */
+  --color-brand: #3A8F85;
+  --color-brand-deep: #2A7268;
+  --color-brand-light: rgba(58, 143, 133, 0.08);
+  --color-brand-muted: rgba(58, 143, 133, 0.15);
+  --color-brand-glow: rgba(58, 143, 133, 0.2);
+  --color-on-brand: #FFFFFF;
+
+  /* ── Accent: Warm Rose ── */
+  --color-accent: #C27070;
+  --color-accent-light: rgba(194, 112, 112, 0.08);
+  --color-accent-glow: rgba(194, 112, 112, 0.15);
+
+  /* ── Semantic ── */
+  --color-danger: #D04545;
+  --color-danger-light: rgba(208, 69, 69, 0.06);
+  --color-danger-glow: rgba(208, 69, 69, 0.12);
+  --color-success: #4A9A5A;
+  --color-success-light: rgba(74, 154, 90, 0.06);
+  --color-success-glow: rgba(74, 154, 90, 0.12);
+  --color-warning: #B08530;
+  --color-warning-light: rgba(176, 133, 48, 0.06);
+
+  /* ── Sidebar ── */
+  --color-sidebar-bg: #F0EDE7;
+  --color-sidebar-text: rgba(44, 41, 37, 0.5);
+  --color-sidebar-active: rgba(58, 143, 133, 0.1);
+  --color-sidebar-hover: rgba(0, 0, 0, 0.03);
+
+  /* ── Borders ── */
+  --color-line: rgba(0, 0, 0, 0.07);
+  --color-line-strong: rgba(0, 0, 0, 0.12);
+  --color-line-accent: rgba(58, 143, 133, 0.2);
+
+  /* ── Shadows ── */
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 8px 36px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 16px 52px rgba(0, 0, 0, 0.1);
 }
 
 /* ── Reset ── */
@@ -294,7 +358,7 @@ a {
   --el-button-hover-border-color: var(--color-brand-deep);
   --el-button-active-bg-color: var(--color-brand-deep);
   --el-button-active-border-color: var(--color-brand-deep);
-  --el-button-text-color: #111113;
+  --el-button-text-color: var(--color-on-brand);
 }
 
 .el-button--default {
@@ -597,6 +661,109 @@ a {
   background: rgba(255,255,255,0.08);
   border-radius: 3px;
   &:hover { background: rgba(255,255,255,0.12); }
+}
+
+[data-theme="light"] {
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.12);
+    &:hover { background: rgba(0,0,0,0.2); }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ELEMENT PLUS LIGHT OVERRIDES
+   ═══════════════════════════════════════════════════════════ */
+
+[data-theme="light"] {
+  .el-button--default {
+    --el-button-bg-color: #FFFFFF;
+    --el-button-border-color: var(--color-line-strong);
+    --el-button-hover-bg-color: var(--color-panel-strong);
+    --el-button-hover-border-color: rgba(0,0,0,0.15);
+    --el-button-text-color: var(--color-ink);
+  }
+
+  .el-select-dropdown {
+    background: #FFFFFF !important;
+    border: 1px solid var(--color-line) !important;
+  }
+
+  .el-select-dropdown__item {
+    color: var(--color-ink-soft) !important;
+
+    &:hover, &.hover {
+      background: rgba(0,0,0,0.03) !important;
+      color: var(--color-ink) !important;
+    }
+  }
+
+  .el-table {
+    --el-table-header-bg-color: var(--color-panel-strong);
+    --el-table-row-hover-bg-color: rgba(0,0,0,0.02);
+  }
+
+  .el-table th.el-table__cell {
+    background: var(--color-panel-strong);
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .el-table td.el-table__cell {
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+  }
+
+  .el-table--enable-row-hover .el-table__body tr:hover > td.el-table__cell {
+    background: rgba(0,0,0,0.02);
+  }
+
+  .el-tag--info {
+    --el-tag-bg-color: rgba(0,0,0,0.05);
+    --el-tag-text-color: var(--color-ink-soft);
+  }
+
+  .el-dialog {
+    background: #FFFFFF !important;
+  }
+
+  .el-overlay {
+    background: rgba(0,0,0,0.3) !important;
+  }
+
+  .el-message {
+    background: #FFFFFF !important;
+  }
+
+  .el-tooltip__popper {
+    background: #FFFFFF !important;
+  }
+
+  .el-loading-mask {
+    background: rgba(245,242,237,0.8) !important;
+  }
+
+  .el-dropdown-menu {
+    background: #FFFFFF !important;
+  }
+
+  .el-dropdown-menu__item {
+    color: var(--color-ink-soft) !important;
+
+    &:hover {
+      background: rgba(0,0,0,0.03) !important;
+      color: var(--color-ink) !important;
+    }
+  }
+
+  .el-popover.el-popper {
+    background: #FFFFFF !important;
+  }
+
+  .el-pagination {
+    button, .el-pager li {
+      background: #FFFFFF !important;
+      color: var(--color-ink-soft) !important;
+      border: 1px solid var(--color-line);
+    }
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════

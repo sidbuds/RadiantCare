@@ -519,7 +519,7 @@ function useDemoAccount(username: string, password: string) {
   height: 48px;
   border-radius: 14px;
   background: linear-gradient(135deg, var(--color-brand), var(--color-brand-deep));
-  color: #111113;
+  color: var(--color-on-brand);
   box-shadow: 0 4px 20px rgba(201, 164, 78, 0.3);
 }
 
