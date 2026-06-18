@@ -62,3 +62,7 @@ MIGRATION_PLAN.md
 backend/README.md
 backend/接口联调手册.md
 frontend/README.md
+*.vbs
+*.js
+temp_*
+~$*
