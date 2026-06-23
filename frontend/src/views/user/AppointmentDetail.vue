@@ -86,11 +86,15 @@ function goToOrder() {
       </div>
 
       <div class="action-bar">
-        <el-button v-if="appointment.status === 0 || appointment.status === 1" type="primary" @click="goToOrder">
+        <el-button v-if="appointment.status === 0" type="primary" @click="goToOrder">
           去下单
           <el-icon class="btn-arrow"><ArrowRight /></el-icon>
         </el-button>
-        <el-button v-if="appointment.status === 0 || appointment.status === 1" type="danger" @click="handleCancel">取消预约</el-button>
+        <el-button v-if="appointment.status === 0" type="danger" @click="handleCancel">取消预约</el-button>
+        <el-button v-if="appointment.status === 1" type="primary" @click="goToOrder">
+          查看订单
+          <el-icon class="btn-arrow"><ArrowRight /></el-icon>
+        </el-button>
       </div>
     </div>
   </div>

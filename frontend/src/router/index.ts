@@ -16,8 +16,9 @@ const routes: RouteRecordRaw[] = [
       { path: 'faq', name: 'Faq', component: () => import('@/views/guest/Faq.vue') },
     ],
   },
-  // 登录
+  // 登录/注册
   { path: '/login', name: 'Login', component: () => import('@/views/login/LoginPage.vue') },
+  { path: '/register', name: 'Register', component: () => import('@/views/login/RegisterPage.vue') },
   // 用户端
   {
     path: '/user',
@@ -82,7 +83,7 @@ const router = createRouter({
 })
 
 const roleHomeMap: Record<string, string> = {
-  USER: '/user/appointments',
+  USER: '/',
   DOCTOR: '/doctor/exam-tasks',
   OPERATOR: '/operator/packages',
   ADMIN: '/admin/exam-tasks',

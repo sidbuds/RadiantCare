@@ -1,52 +1,65 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { listPackages, listCenters, getCenterSlots } from '@/api/public'
 import { createAppointment } from '@/api/appointment'
 import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
+import { useLoading } from '@/composables'
+import type { PackageItem, ExamCenter, TimeSlot } from '@/types/api'
 
 const route = useRoute()
 const router = useRouter()
+const { loading, mounted, execute } = useLoading()
 
-const packages = ref<any[]>([])
-const centers = ref<any[]>([])
-const slots = ref<any[]>([])
-const loading = ref(false)
-const mounted = ref(false)
+const packages = ref<PackageItem[]>([])
+const centers = ref<ExamCenter[]>([])
+const slots = ref<TimeSlot[]>([])
 
+const formRef = ref<FormInstance>()
 const form = ref({
-  packageId: Number(route.query.packageId) || 0,
+  packageId: route.query.packageId ? Number(route.query.packageId) : undefined,
   centerCode: '',
   appointDate: '',
   timeSlotCode: '',
   remark: '',
 })
 
+const rules = computed<FormRules>(() => ({
+  packageId: [{ required: true, message: '请选择体检套餐', trigger: 'change' }],
+  centerCode: [{ required: true, message: '请选择体检中心', trigger: 'change' }],
+  appointDate: [{ required: true, message: '请选择预约日期', trigger: 'change' }],
+  timeSlotCode: slots.value.length > 0
+    ? [{ required: true, message: '请选择时段', trigger: 'change' }]
+    : [],
+}))
+
 onMounted(async () => {
-  mounted.value = true
-  const [pkgRes, centerRes]: any = await Promise.all([listPackages(), listCenters()])
+  const [pkgRes, centerRes] = await Promise.all([listPackages(), listCenters()])
   packages.value = pkgRes.data || []
   centers.value = centerRes.data || []
 })
 
 watch(() => [form.value.centerCode, form.value.appointDate], async () => {
   if (form.value.centerCode && form.value.appointDate) {
-    const res: any = await getCenterSlots(form.value.centerCode, form.value.appointDate)
+    const res = await getCenterSlots(form.value.centerCode, form.value.appointDate)
     slots.value = res.data || []
   }
 })
 
 async function handleSubmit() {
-  if (!form.value.packageId || !form.value.centerCode || !form.value.appointDate || !form.value.timeSlotCode) {
-    ElMessage.warning('请填写完整预约信息')
-    return
-  }
-  loading.value = true
-  try {
-    const res: any = await createAppointment(form.value)
+  if (!formRef.value) return
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  execute(async () => {
+    const res = await createAppointment({
+      ...form.value,
+      packageId: form.value.packageId!,
+    })
     ElMessage.success('预约成功')
     router.push(`/user/appointments/${res.data.appointmentNo}`)
-  } catch {} finally { loading.value = false }
+  })
 }
 </script>
 
@@ -66,21 +79,21 @@ async function handleSubmit() {
         <p>选择套餐、体检中心和时间，完成预约。</p>
       </div>
 
-      <el-form :model="form" label-width="100px" class="create-form">
-        <el-form-item label="体检套餐">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="create-form">
+        <el-form-item label="体检套餐" prop="packageId">
           <el-select v-model="form.packageId" placeholder="选择套餐" style="width: 100%;">
             <el-option v-for="p in packages" :key="p.id" :label="`${p.packageName} - ¥${p.price}`" :value="p.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="体检中心">
+        <el-form-item label="体检中心" prop="centerCode">
           <el-select v-model="form.centerCode" placeholder="选择中心" style="width: 100%;">
             <el-option v-for="c in centers" :key="c.centerCode" :label="c.centerName" :value="c.centerCode" />
           </el-select>
         </el-form-item>
-        <el-form-item label="预约日期">
-          <el-date-picker v-model="form.appointDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" style="width: 100%;" />
+        <el-form-item label="预约日期" prop="appointDate">
+          <el-date-picker v-model="form.appointDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" :disabled-date="(date: Date) => date < new Date(new Date().setHours(0,0,0,0))" style="width: 100%;" />
         </el-form-item>
-        <el-form-item label="时段">
+        <el-form-item label="时段" prop="timeSlotCode">
           <div class="slot-grid">
             <button
               v-for="s in slots"
@@ -219,23 +232,11 @@ async function handleSubmit() {
   }
 }
 
-.submit-btn {
-  .btn-arrow {
-    transition: transform 0.3s var(--ease-out-expo);
-  }
-
-  &:hover .btn-arrow {
-    transform: translateX(3px);
-  }
+.submit-btn .btn-arrow {
+  transition: transform 0.3s var(--ease-out-expo);
 }
 
-:deep(.el-radio-button__inner) {
-  border-radius: var(--radius-xs);
-}
-
-:deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-  background: var(--color-brand);
-  border-color: var(--color-brand);
-  box-shadow: -1px 0 0 0 var(--color-brand);
+.submit-btn:hover .btn-arrow {
+  transform: translateX(3px);
 }
 </style>

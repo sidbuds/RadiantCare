@@ -1,0 +1,6 @@
+# 开发环境配置
+logging:
+  level:
+    com.xixin.health: DEBUG
+    java.sql: WARN
+    org.apache.ibatis: WARN

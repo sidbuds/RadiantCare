@@ -11,11 +11,8 @@ import lombok.Data;
 public class RefundAuditLogEntity extends BaseEntity {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private Long refundApplyId;
     private String applyNo;
+    private Long auditorId;
     private String auditAction;
-    private String auditResult;
     private String auditRemark;
-    private Long operatorId;
-    private String operatorName;
 }

@@ -1,6 +1,7 @@
 package com.xixin.health.auth.controller;
 
 import com.xixin.health.auth.dto.LoginRequest;
+import com.xixin.health.auth.dto.RegisterRequest;
 import com.xixin.health.auth.service.AuthService;
 import com.xixin.health.common.api.ApiResult;
 import com.xixin.health.common.util.AuthContext;
@@ -30,6 +31,27 @@ public class AuthController {
         this.authService = authService;
         this.jwtTokenService = jwtTokenService;
         this.jwtProperties = jwtProperties;
+    }
+
+    @PostMapping("/register")
+    public ApiResult<Map<String, Object>> register(@Validated @RequestBody RegisterRequest request) {
+        AuthContext.LoginUser loginUser = authService.register(request);
+        String token = jwtTokenService.generateToken(
+                loginUser.getAccountId(),
+                loginUser.getUserId(),
+                loginUser.getUsername(),
+                loginUser.getDisplayName(),
+                loginUser.getRole()
+        );
+        Map<String, Object> result = new HashMap<String, Object>();
+        result.put("accessToken", token);
+        result.put("tokenType", "Bearer");
+        result.put("expiresIn", jwtProperties.getExpireSeconds());
+        result.put("role", loginUser.getRole().name());
+        result.put("accountId", loginUser.getAccountId());
+        result.put("userId", loginUser.getUserId());
+        result.put("displayName", loginUser.getDisplayName());
+        return ApiResult.success(result);
     }
 
     @PostMapping("/login")

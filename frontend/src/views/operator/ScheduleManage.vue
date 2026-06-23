@@ -1,43 +1,74 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { getOperatorSchedules, createOperatorSchedule, updateOperatorSchedule } from '@/api/operator'
 import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
+import { useLoading, usePagination } from '@/composables'
+import type { Schedule } from '@/types/api'
 
-const schedules = ref<any[]>([])
-const loading = ref(true)
-const mounted = ref(false)
+const { loading, mounted, execute } = useLoading()
+const { pageNum, pageSize, total, onPageChange, onSizeChange } = usePagination()
+
+const schedules = ref<Schedule[]>([])
 const dialogVisible = ref(false)
 const editing = ref(false)
-const form = ref<any>({
-  centerCode: '', appointDate: '', timeSlotCode: '', resourceType: 'CENTER_SLOT', resourceCode: '', capacityTotal: 20, status: 1,
+const formRef = ref<FormInstance>()
+const submitLoading = ref(false)
+
+const form = ref({
+  id: 0,
+  centerCode: '',
+  appointDate: '',
+  timeSlotCode: '',
+  resourceType: 'CENTER_SLOT',
+  resourceCode: '',
+  capacityTotal: 20,
+  status: 1,
 })
 
-onMounted(() => {
-  mounted.value = true
-  loadSchedules()
-})
-
-async function loadSchedules() {
-  loading.value = true
-  try {
-    const res: any = await getOperatorSchedules()
-    schedules.value = res.data || []
-  } catch {} finally { loading.value = false }
+const rules: FormRules = {
+  centerCode: [{ required: true, message: '请输入中心编码', trigger: 'blur' }],
+  appointDate: [{ required: true, message: '请选择日期', trigger: 'change' }],
+  timeSlotCode: [
+    { required: true, message: '请输入时段编码', trigger: 'blur' },
+    { max: 32, message: '编码最长 32 个字符', trigger: 'blur' },
+  ],
+  resourceType: [{ required: true, message: '请输入资源类型', trigger: 'blur' }],
+  resourceCode: [{ required: true, message: '请输入资源编码', trigger: 'blur' }],
+  capacityTotal: [{ required: true, message: '请输入总容量', trigger: 'blur' }],
+  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
 }
+
+function loadSchedules() {
+  execute(async () => {
+    const res = await getOperatorSchedules({ pageNum: pageNum.value, pageSize: pageSize.value })
+    schedules.value = res.data?.list || []
+    total.value = res.data?.total || 0
+  })
+}
+
+watch([pageNum, pageSize], loadSchedules)
 
 function openCreate() {
   editing.value = false
-  form.value = { centerCode: '', appointDate: '', timeSlotCode: '', resourceType: 'CENTER_SLOT', resourceCode: '', capacityTotal: 20, status: 1 }
+  form.value = { id: 0, centerCode: '', appointDate: '', timeSlotCode: '', resourceType: 'CENTER_SLOT', resourceCode: '', capacityTotal: 20, status: 1 }
   dialogVisible.value = true
+  formRef.value?.clearValidate()
 }
 
-function openEdit(row: any) {
+function openEdit(row: Schedule) {
   editing.value = true
   form.value = { ...row }
   dialogVisible.value = true
+  formRef.value?.clearValidate()
 }
 
 async function handleSubmit() {
+  if (!formRef.value) return
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  submitLoading.value = true
   try {
     if (editing.value) {
       await updateOperatorSchedule(form.value.id, form.value)
@@ -47,8 +78,12 @@ async function handleSubmit() {
     ElMessage.success(editing.value ? '更新成功' : '创建成功')
     dialogVisible.value = false
     await loadSchedules()
-  } catch {}
+  } catch (error) {
+    console.error('保存排班失败', error)
+  } finally { submitLoading.value = false }
 }
+
+loadSchedules()
 </script>
 
 <template>
@@ -87,17 +122,42 @@ async function handleSubmit() {
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-wrap">
+        <el-pagination
+          v-model:current-page="pageNum"
+          v-model:page-size="pageSize"
+          :total="total"
+          :page-sizes="[10, 20, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @current-change="onPageChange"
+          @size-change="onSizeChange"
+        />
+      </div>
     </section>
 
     <el-dialog v-model="dialogVisible" :title="editing ? '编辑排班' : '新建排班'" width="500px">
-      <el-form :model="form" label-width="100px">
-        <el-form-item label="中心编码"><el-input v-model="form.centerCode" /></el-form-item>
-        <el-form-item label="日期"><el-date-picker v-model="form.appointDate" type="date" value-format="YYYY-MM-DD" /></el-form-item>
-        <el-form-item label="时段编码"><el-input v-model="form.timeSlotCode" placeholder="如 AM01" /></el-form-item>
-        <el-form-item label="资源类型"><el-input v-model="form.resourceType" /></el-form-item>
-        <el-form-item label="资源编码"><el-input v-model="form.resourceCode" /></el-form-item>
-        <el-form-item label="总容量"><el-input-number v-model="form.capacityTotal" :min="1" /></el-form-item>
-        <el-form-item label="状态">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="中心编码" prop="centerCode">
+          <el-input v-model="form.centerCode" />
+        </el-form-item>
+        <el-form-item label="日期" prop="appointDate">
+          <el-date-picker v-model="form.appointDate" type="date" value-format="YYYY-MM-DD" style="width: 100%;" />
+        </el-form-item>
+        <el-form-item label="时段编码" prop="timeSlotCode">
+          <el-input v-model="form.timeSlotCode" placeholder="如 AM01" />
+        </el-form-item>
+        <el-form-item label="资源类型" prop="resourceType">
+          <el-input v-model="form.resourceType" />
+        </el-form-item>
+        <el-form-item label="资源编码" prop="resourceCode">
+          <el-input v-model="form.resourceCode" />
+        </el-form-item>
+        <el-form-item label="总容量" prop="capacityTotal">
+          <el-input-number v-model="form.capacityTotal" :min="1" />
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio :value="1">启用</el-radio>
             <el-radio :value="0">停用</el-radio>
@@ -106,7 +166,7 @@ async function handleSubmit() {
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -127,6 +187,14 @@ async function handleSubmit() {
 
 :deep(.el-tag) {
   border-radius: 999px;
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-line);
 }
 
 :deep(.el-tag--success) {

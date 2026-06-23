@@ -1,6 +1,9 @@
 package com.xixin.health.operator.controller;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.xixin.health.common.api.ApiResult;
+import com.xixin.health.common.model.PageResult;
 import com.xixin.health.operator.dto.SavePackageRequest;
 import com.xixin.health.operator.service.OperatorPackageService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/operator/packages")
@@ -27,8 +33,13 @@ public class OperatorPackageController {
 
     @GetMapping
     public ApiResult<?> list(@RequestParam(required = false) String packageName,
-                             @RequestParam(required = false) Integer status) {
-        return ApiResult.success(operatorPackageService.list(packageName, status));
+                             @RequestParam(required = false) Integer status,
+                             @RequestParam(defaultValue = "1") int pageNum,
+                             @RequestParam(defaultValue = "10") int pageSize) {
+        PageHelper.startPage(pageNum, pageSize);
+        List<Map<String, Object>> list = operatorPackageService.list(packageName, status);
+        PageInfo<Map<String, Object>> pageInfo = new PageInfo<>(list);
+        return ApiResult.success(PageResult.of(list, pageInfo.getTotal(), pageNum, pageSize));
     }
 
     @GetMapping("/{id}")

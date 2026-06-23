@@ -1,30 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getMyAppointments } from '@/api/appointment'
+import { useLoading, useStatusTag, appointmentStatusMap } from '@/composables'
+import type { Appointment } from '@/types/api'
 
 const router = useRouter()
-const appointments = ref<any[]>([])
-const loading = ref(true)
-const mounted = ref(false)
+const { loading, mounted, execute } = useLoading()
+const { getLabel, getType } = useStatusTag(appointmentStatusMap)
 
-const statusMap: Record<number, { label: string; type: string }> = {
-  0: { label: '待确认', type: 'info' },
-  1: { label: '已确认', type: 'success' },
-  2: { label: '已完成', type: '' },
-  3: { label: '已取消', type: 'danger' },
-}
+const appointments = ref<Appointment[]>([])
 
-onMounted(async () => {
-  mounted.value = true
-  try {
-    const res: any = await getMyAppointments()
-    appointments.value = res.data || []
-  } catch {
-    // handled by interceptor
-  } finally {
-    loading.value = false
-  }
+execute(async () => {
+  const res = await getMyAppointments()
+  appointments.value = res.data || []
 })
 
 function goDetail(no: string) {
@@ -75,7 +64,7 @@ function goDetail(no: string) {
         <el-table-column prop="timeSlotCode" label="时段" min-width="100" />
         <el-table-column label="状态" min-width="110">
           <template #default="{ row }">
-            <el-tag :type="statusMap[row.status]?.type as any">{{ statusMap[row.status]?.label }}</el-tag>
+            <el-tag :type="getType(row.status)">{{ getLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" min-width="120" fixed="right">

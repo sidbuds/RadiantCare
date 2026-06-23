@@ -1,17 +1,20 @@
-import request from './request'
+﻿import { get, post } from './request'
+import type { Order } from '@/types/api'
 
 export function createOrder(data: { appointmentNo: string; couponCode?: string; extraItemCodes?: string[] }) {
-  return request.post('/orders', data)
+  return post<Order>('/orders', data)
 }
 
 export function getOrder(orderNo: string) {
-  return request.get(`/orders/${orderNo}`)
+  return get<Order>(`/orders/${orderNo}`)
 }
 
 export function payOrder(orderNo: string) {
-  return request.post(`/orders/${orderNo}/pay`)
+  return post<Order>(`/orders/${orderNo}/pay`)
 }
 
 export function applyRefund(orderNo: string, data: { reason: string }) {
-  return request.post(`/orders/${orderNo}/refund`, data)
+  return post<void>(`/orders/${orderNo}/refund`, data)
 }
+
+

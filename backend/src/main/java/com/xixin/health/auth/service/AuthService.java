@@ -3,6 +3,7 @@ package com.xixin.health.auth.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.xixin.health.auth.dto.LoginRequest;
+import com.xixin.health.auth.dto.RegisterRequest;
 import com.xixin.health.auth.entity.StaffAccountEntity;
 import com.xixin.health.auth.entity.StaffRoleRelEntity;
 import com.xixin.health.auth.mapper.StaffAccountMapper;
@@ -15,6 +16,7 @@ import com.xixin.health.user.entity.UserEntity;
 import com.xixin.health.user.mapper.UserMapper;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,6 +37,32 @@ public class AuthService {
         this.staffRoleRelMapper = staffRoleRelMapper;
     }
 
+    @Transactional
+    public AuthContext.LoginUser register(RegisterRequest request) {
+        String username = request.getUsername();
+        assertUsernameAvailable(username);
+        assertMobileAvailable(request.getMobile());
+
+        LocalDateTime now = LocalDateTime.now();
+        UserEntity user = new UserEntity();
+        user.setUserNo(username);
+        user.setName(request.getName());
+        user.setMobile(request.getMobile());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setStatus(1);
+        user.setLastLoginAt(now);
+        user.setIsDeleted(0);
+        userMapper.insert(user);
+
+        return new AuthContext.LoginUser(
+                user.getId(),
+                user.getId(),
+                user.getUserNo(),
+                user.getName(),
+                RoleType.USER
+        );
+    }
+
     public AuthContext.LoginUser login(LoginRequest request) {
         StaffAccountEntity staffAccount = staffAccountMapper.selectOne(new LambdaQueryWrapper<StaffAccountEntity>()
                 .eq(StaffAccountEntity::getUsername, request.getUsername())
@@ -45,13 +73,37 @@ public class AuthService {
         }
 
         UserEntity user = userMapper.selectOne(new LambdaQueryWrapper<UserEntity>()
-                .eq(UserEntity::getUserNo, request.getUsername())
+                .and(wrapper -> wrapper
+                        .eq(UserEntity::getUserNo, request.getUsername())
+                        .or()
+                        .eq(UserEntity::getMobile, request.getUsername()))
                 .eq(UserEntity::getIsDeleted, 0)
                 .last("limit 1"));
         if (user != null) {
             return loginUser(user, request.getPassword());
         }
         throw new BizException(ErrorCode.LOGIN_FAILED);
+    }
+
+    private void assertUsernameAvailable(String username) {
+        Long userCount = userMapper.selectCount(new LambdaQueryWrapper<UserEntity>()
+                .eq(UserEntity::getUserNo, username)
+                .eq(UserEntity::getIsDeleted, 0));
+        Long staffCount = staffAccountMapper.selectCount(new LambdaQueryWrapper<StaffAccountEntity>()
+                .eq(StaffAccountEntity::getUsername, username)
+                .eq(StaffAccountEntity::getIsDeleted, 0));
+        if ((userCount != null && userCount > 0) || (staffCount != null && staffCount > 0)) {
+            throw new BizException(ErrorCode.OPERATION_CONFLICT.getCode(), "用户名已存在");
+        }
+    }
+
+    private void assertMobileAvailable(String mobile) {
+        Long mobileCount = userMapper.selectCount(new LambdaQueryWrapper<UserEntity>()
+                .eq(UserEntity::getMobile, mobile)
+                .eq(UserEntity::getIsDeleted, 0));
+        if (mobileCount != null && mobileCount > 0) {
+            throw new BizException(ErrorCode.OPERATION_CONFLICT.getCode(), "手机号已存在");
+        }
     }
 
     private AuthContext.LoginUser loginStaff(StaffAccountEntity staffAccount, String rawPassword) {

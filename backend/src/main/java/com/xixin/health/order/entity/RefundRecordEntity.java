@@ -15,13 +15,11 @@ public class RefundRecordEntity extends BaseEntity {
     @TableId(type = IdType.AUTO)
     private Long id;
     private String refundNo;
-    private Long refundApplyId;
-    private Long orderId;
+    private String applyNo;
     private String orderNo;
-    private String channel;
-    private String channelRefundNo;
     private BigDecimal refundAmount;
-    private Integer status;
+    private Integer refundStatus;
     private LocalDateTime refundTime;
-    private String rawPayload;
+    private String thirdPartyNo;
+    private String remark;
 }

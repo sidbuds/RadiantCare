@@ -5,15 +5,28 @@ import { useUserStore } from '@/stores/user'
 import { roleHomeMap } from '@/router'
 import request from '@/api/request'
 import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
+const formRef = ref<FormInstance>()
 const form = ref({ username: '', password: '' })
 const loading = ref(false)
 const mounted = ref(false)
 const focusedField = ref<string | null>(null)
+
+const rules: FormRules = {
+  username: [
+    { required: true, message: '请输入用户名或手机号', trigger: 'blur' },
+    { min: 2, max: 50, message: '用户名或手机号长度为 2-50 个字符', trigger: 'blur' },
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 4, max: 128, message: '密码长度为 4-128 个字符', trigger: 'blur' },
+  ],
+}
 
 const demoAccounts = [
   { label: '用户', username: 'user', password: '123456', icon: 'User', color: '#b87070' },
@@ -27,10 +40,10 @@ onMounted(() => {
 })
 
 async function handleLogin() {
-  if (!form.value.username || !form.value.password) {
-    ElMessage.warning('请输入用户名和密码')
-    return
-  }
+  if (!formRef.value) return
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
   loading.value = true
   try {
     const res: any = await request.post('/auth/login', form.value)
@@ -52,6 +65,7 @@ async function handleLogin() {
 function useDemoAccount(username: string, password: string) {
   form.value.username = username
   form.value.password = password
+  formRef.value?.clearValidate()
 }
 </script>
 
@@ -136,31 +150,35 @@ function useDemoAccount(username: string, password: string) {
             <p>输入账号密码，进入对应角色工作台。</p>
           </div>
 
-          <el-form :model="form" @keyup.enter="handleLogin" class="login-form">
-            <div class="input-group" :class="{ focused: focusedField === 'username' }">
-              <label>用户名</label>
-              <el-input
-                v-model="form.username"
-                placeholder="请输入用户名"
-                prefix-icon="User"
-                size="large"
-                @focus="focusedField = 'username'"
-                @blur="focusedField = null"
-              />
-            </div>
-            <div class="input-group" :class="{ focused: focusedField === 'password' }">
-              <label>密码</label>
-              <el-input
-                v-model="form.password"
-                placeholder="请输入密码"
-                type="password"
-                prefix-icon="Lock"
-                size="large"
-                show-password
-                @focus="focusedField = 'password'"
-                @blur="focusedField = null"
-              />
-            </div>
+          <el-form ref="formRef" :model="form" :rules="rules" @keyup.enter="handleLogin" class="login-form">
+            <el-form-item prop="username">
+              <div class="input-group" :class="{ focused: focusedField === 'username' }">
+                <label>用户名/手机号</label>
+                <el-input
+                  v-model="form.username"
+                  placeholder="请输入用户名或手机号"
+                  prefix-icon="User"
+                  size="large"
+                  @focus="focusedField = 'username'"
+                  @blur="focusedField = null"
+                />
+              </div>
+            </el-form-item>
+            <el-form-item prop="password">
+              <div class="input-group" :class="{ focused: focusedField === 'password' }">
+                <label>密码</label>
+                <el-input
+                  v-model="form.password"
+                  placeholder="请输入密码"
+                  type="password"
+                  prefix-icon="Lock"
+                  size="large"
+                  show-password
+                  @focus="focusedField = 'password'"
+                  @blur="focusedField = null"
+                />
+              </div>
+            </el-form-item>
             <el-button
               type="primary"
               size="large"
@@ -191,6 +209,10 @@ function useDemoAccount(username: string, password: string) {
               </button>
             </div>
           </div>
+
+          <div class="register-link">
+            还没有账号？<router-link to="/register">立即注册</router-link>
+          </div>
         </div>
       </section>
     </div>
@@ -208,10 +230,6 @@ function useDemoAccount(username: string, password: string) {
   position: relative;
   overflow: hidden;
 }
-
-/* ═══════════════════════════════════════════════════════════
-   ANIMATED BACKGROUND
-   ═══════════════════════════════════════════════════════════ */
 
 .login-bg {
   position: fixed;
@@ -270,10 +288,6 @@ function useDemoAccount(username: string, password: string) {
   100% { transform: translate(-20px, 20px) scale(0.9); }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   LOGIN SHELL
-   ═══════════════════════════════════════════════════════════ */
-
 .login-shell {
   display: grid;
   grid-template-columns: 1fr 420px;
@@ -298,7 +312,6 @@ function useDemoAccount(username: string, password: string) {
   border: 1px solid var(--color-line);
   border-radius: var(--radius-xl);
   background: var(--color-panel);
-
   box-shadow: var(--shadow-lg);
   position: relative;
   overflow: hidden;
@@ -313,10 +326,6 @@ function useDemoAccount(username: string, password: string) {
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
   }
 }
-
-/* ═══════════════════════════════════════════════════════════
-   LEFT: COPY SECTION
-   ═══════════════════════════════════════════════════════════ */
 
 .login-copy {
   display: flex;
@@ -383,7 +392,6 @@ function useDemoAccount(username: string, password: string) {
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
   background: var(--color-panel);
-
   transition: all 0.3s var(--ease-out-expo);
   opacity: 0;
   transform: translateX(-16px);
@@ -470,10 +478,6 @@ function useDemoAccount(username: string, password: string) {
   background: var(--color-line);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   RIGHT: LOGIN CARD
-   ═══════════════════════════════════════════════════════════ */
-
 .login-card {
   align-self: center;
   padding: 40px;
@@ -526,13 +530,22 @@ function useDemoAccount(username: string, password: string) {
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 4px;
+
+  :deep(.el-form-item) {
+    margin-bottom: 16px;
+  }
+
+  :deep(.el-form-item__error) {
+    padding-top: 4px;
+  }
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
   transition: all 0.2s ease;
 
   label {
@@ -582,10 +595,6 @@ function useDemoAccount(username: string, password: string) {
 .submit-btn:hover .btn-arrow {
   transform: translateX(3px);
 }
-
-/* ═══════════════════════════════════════════════════════════
-   DEMO ACCOUNTS
-   ═══════════════════════════════════════════════════════════ */
 
 .demo-section {
   margin-top: 24px;
@@ -647,9 +656,22 @@ function useDemoAccount(username: string, password: string) {
   flex-shrink: 0;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   RESPONSIVE
-   ═══════════════════════════════════════════════════════════ */
+.register-link {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+
+  a {
+    color: var(--color-brand);
+    text-decoration: none;
+    font-weight: 600;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
 
 @media (max-width: 960px) {
   .login-shell {

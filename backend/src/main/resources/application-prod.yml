@@ -1,0 +1,7 @@
+# 生产环境配置
+logging:
+  level:
+    com.xixin.health: INFO
+    java.sql: WARN
+    org.apache.ibatis: WARN
+    root: WARN

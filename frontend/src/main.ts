@@ -23,5 +23,6 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 // Initialize theme before mount to minimize flash
 const appStore = useAppStore()
 appStore.initTheme()
+appStore.startTimeCheck()
 
 app.mount('#app')

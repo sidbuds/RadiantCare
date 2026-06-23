@@ -40,6 +40,7 @@ public class ExamService {
     private final ExamPackageItemMapper examPackageItemMapper;
     private final ExamDepartmentRouteMapper examDepartmentRouteMapper;
     private final ExamResultMapper examResultMapper;
+    private final DoctorAssignmentService doctorAssignmentService;
 
     public ExamService(OrderService orderService,
                        AppointmentMapper appointmentMapper,
@@ -47,7 +48,8 @@ public class ExamService {
                        ExamTaskItemMapper examTaskItemMapper,
                        ExamPackageItemMapper examPackageItemMapper,
                        ExamDepartmentRouteMapper examDepartmentRouteMapper,
-                       ExamResultMapper examResultMapper) {
+                       ExamResultMapper examResultMapper,
+                       DoctorAssignmentService doctorAssignmentService) {
         this.orderService = orderService;
         this.appointmentMapper = appointmentMapper;
         this.examTaskMapper = examTaskMapper;
@@ -55,6 +57,7 @@ public class ExamService {
         this.examPackageItemMapper = examPackageItemMapper;
         this.examDepartmentRouteMapper = examDepartmentRouteMapper;
         this.examResultMapper = examResultMapper;
+        this.doctorAssignmentService = doctorAssignmentService;
     }
 
     @Transactional
@@ -99,6 +102,9 @@ public class ExamService {
                     .eq(ExamDepartmentRouteEntity::getStatus, 1)
                     .eq(ExamDepartmentRouteEntity::getIsDeleted, 0));
 
+            // 智能分配医生
+            Map<String, Object> doctorAssignment = doctorAssignmentService.assignFromRoute(route);
+
             ExamTaskItemEntity taskItem = new ExamTaskItemEntity();
             taskItem.setTaskItemNo(NoGenerator.next("ETI"));
             taskItem.setTaskId(task.getId());
@@ -107,8 +113,8 @@ public class ExamService {
             taskItem.setItemName(packageItem.getItemName());
             taskItem.setDepartmentCode(route == null ? "DEFAULT" : route.getDepartmentCode());
             taskItem.setDepartmentName(route == null ? "默认科室" : route.getDepartmentName());
-            taskItem.setDoctorId(2L);
-            taskItem.setDoctorName("doctor");
+            taskItem.setDoctorId(((Number) doctorAssignment.get("doctorId")).longValue());
+            taskItem.setDoctorName((String) doctorAssignment.get("doctorName"));
             taskItem.setRoomNo(route == null ? "待分配" : route.getRoomNo());
             taskItem.setRouteSort(route == null ? sort : route.getRouteSort());
             taskItem.setItemStatus(0);

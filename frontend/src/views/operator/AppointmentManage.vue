@@ -19,7 +19,7 @@ async function loadData() {
     if (filters.value.centerCode) params.centerCode = filters.value.centerCode
     if (filters.value.status !== '') params.status = filters.value.status
     const res: any = await getOperatorAppointments(params)
-    appointments.value = res.data || []
+    appointments.value = res.data?.list || res.data || []
   } catch {} finally { loading.value = false }
 }
 
@@ -52,19 +52,39 @@ const statusMap: Record<number, { label: string; type: string }> = {
 
     <section class="table-shell data-card" :class="{ 'is-mounted': mounted }">
       <el-table :data="appointments" v-loading="loading">
-        <el-table-column prop="appointmentNo" label="编号" width="200">
+        <el-table-column label="编号" width="200">
           <template #default="{ row }">
-            <span class="mono-text">{{ row.appointmentNo }}</span>
+            <span class="mono-text">{{ row.appointment?.appointmentNo }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="userId" label="用户ID" width="100" />
-        <el-table-column prop="packageId" label="套餐ID" width="100" />
-        <el-table-column prop="centerCode" label="中心" width="100" />
-        <el-table-column prop="appointDate" label="日期" width="120" />
-        <el-table-column prop="timeSlotCode" label="时段" width="100" />
+        <el-table-column label="用户" width="120">
+          <template #default="{ row }">
+            {{ row.userName || row.appointment?.userId }}
+          </template>
+        </el-table-column>
+        <el-table-column label="套餐ID" width="100">
+          <template #default="{ row }">
+            {{ row.appointment?.packageId }}
+          </template>
+        </el-table-column>
+        <el-table-column label="中心" width="100">
+          <template #default="{ row }">
+            {{ row.appointment?.centerCode }}
+          </template>
+        </el-table-column>
+        <el-table-column label="日期" width="120">
+          <template #default="{ row }">
+            {{ row.appointment?.appointDate }}
+          </template>
+        </el-table-column>
+        <el-table-column label="时段" width="100">
+          <template #default="{ row }">
+            {{ row.appointment?.timeSlotCode }}
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="statusMap[row.status]?.type as any">{{ statusMap[row.status]?.label }}</el-tag>
+            <el-tag :type="statusMap[row.appointment?.status]?.type as any">{{ statusMap[row.appointment?.status]?.label }}</el-tag>
           </template>
         </el-table-column>
       </el-table>

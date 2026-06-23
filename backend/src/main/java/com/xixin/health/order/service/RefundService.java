@@ -6,6 +6,8 @@ import com.xixin.health.common.enums.ErrorCode;
 import com.xixin.health.common.exception.BizException;
 import com.xixin.health.common.util.AuthContext;
 import com.xixin.health.common.util.NoGenerator;
+import com.xixin.health.appointment.entity.AppointmentEntity;
+import com.xixin.health.appointment.mapper.AppointmentMapper;
 import com.xixin.health.order.dto.ApplyRefundRequest;
 import com.xixin.health.order.dto.RefundAuditRequest;
 import com.xixin.health.order.entity.OrderEntity;
@@ -28,15 +30,18 @@ import java.util.Map;
 public class RefundService {
 
     private final OrderMapper orderMapper;
+    private final AppointmentMapper appointmentMapper;
     private final RefundApplyMapper refundApplyMapper;
     private final RefundAuditLogMapper refundAuditLogMapper;
     private final RefundRecordMapper refundRecordMapper;
 
     public RefundService(OrderMapper orderMapper,
+                         AppointmentMapper appointmentMapper,
                          RefundApplyMapper refundApplyMapper,
                          RefundAuditLogMapper refundAuditLogMapper,
                          RefundRecordMapper refundRecordMapper) {
         this.orderMapper = orderMapper;
+        this.appointmentMapper = appointmentMapper;
         this.refundApplyMapper = refundApplyMapper;
         this.refundAuditLogMapper = refundAuditLogMapper;
         this.refundRecordMapper = refundRecordMapper;
@@ -73,6 +78,10 @@ public class RefundService {
         apply.setIsDeleted(0);
         refundApplyMapper.insert(apply);
 
+        orderMapper.update(null, new LambdaUpdateWrapper<OrderEntity>()
+                .eq(OrderEntity::getId, order.getId())
+                .set(OrderEntity::getStatus, 3));
+
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("applyNo", apply.getApplyNo());
         result.put("orderNo", orderNo);
@@ -92,11 +101,11 @@ public class RefundService {
     public Map<String, Object> detail(String applyNo) {
         RefundApplyEntity apply = getApplyByNo(applyNo);
         List<RefundAuditLogEntity> auditLogs = refundAuditLogMapper.selectList(new LambdaQueryWrapper<RefundAuditLogEntity>()
-                .eq(RefundAuditLogEntity::getRefundApplyId, apply.getId())
+                .eq(RefundAuditLogEntity::getApplyNo, apply.getApplyNo())
                 .eq(RefundAuditLogEntity::getIsDeleted, 0)
                 .orderByAsc(RefundAuditLogEntity::getId));
         List<RefundRecordEntity> records = refundRecordMapper.selectList(new LambdaQueryWrapper<RefundRecordEntity>()
-                .eq(RefundRecordEntity::getRefundApplyId, apply.getId())
+                .eq(RefundRecordEntity::getApplyNo, apply.getApplyNo())
                 .eq(RefundRecordEntity::getIsDeleted, 0)
                 .orderByAsc(RefundRecordEntity::getId));
         Map<String, Object> result = new HashMap<String, Object>();
@@ -113,7 +122,7 @@ public class RefundService {
             throw new BizException(ErrorCode.REFUND_STATUS_INVALID);
         }
         OrderEntity order = orderMapper.selectById(apply.getOrderId());
-        if (order == null || order.getStatus() == null || order.getStatus() != 1) {
+        if (order == null || order.getStatus() == null || (order.getStatus() != 1 && order.getStatus() != 3)) {
             throw new BizException(ErrorCode.REFUND_ORDER_NOT_ELIGIBLE);
         }
 
@@ -131,15 +140,13 @@ public class RefundService {
 
         RefundRecordEntity record = new RefundRecordEntity();
         record.setRefundNo(NoGenerator.next("RFD"));
-        record.setRefundApplyId(apply.getId());
-        record.setOrderId(order.getId());
+        record.setApplyNo(apply.getApplyNo());
         record.setOrderNo(order.getOrderNo());
-        record.setChannel(order.getPayChannel() == null ? "MOCK" : order.getPayChannel());
-        record.setChannelRefundNo(NoGenerator.next("MRF"));
+        record.setThirdPartyNo(NoGenerator.next("MRF"));
         record.setRefundAmount(apply.getApplyAmount());
-        record.setStatus(1);
+        record.setRefundStatus(1);
         record.setRefundTime(LocalDateTime.now());
-        record.setRawPayload("{\"channel\":\"MOCK\",\"result\":\"SUCCESS\"}");
+        record.setRemark("退款成功");
         record.setCreatedBy(AuthContext.getUserId());
         record.setUpdatedBy(AuthContext.getUserId());
         record.setIsDeleted(0);
@@ -154,6 +161,10 @@ public class RefundService {
                 .eq(OrderEntity::getId, order.getId())
                 .set(OrderEntity::getStatus, 2)
                 .set(OrderEntity::getUpdatedBy, AuthContext.getUserId()));
+
+        appointmentMapper.update(null, new LambdaUpdateWrapper<AppointmentEntity>()
+                .eq(AppointmentEntity::getId, order.getAppointmentId())
+                .set(AppointmentEntity::getStatus, 3));
 
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("applyNo", applyNo);
@@ -185,13 +196,10 @@ public class RefundService {
 
     private void insertAuditLog(RefundApplyEntity apply, String action, String result, String remark) {
         RefundAuditLogEntity log = new RefundAuditLogEntity();
-        log.setRefundApplyId(apply.getId());
         log.setApplyNo(apply.getApplyNo());
+        log.setAuditorId(AuthContext.getUserId());
         log.setAuditAction(action);
-        log.setAuditResult(result);
         log.setAuditRemark(remark);
-        log.setOperatorId(AuthContext.getUserId());
-        log.setOperatorName(AuthContext.get().getUsername());
         log.setCreatedBy(AuthContext.getUserId());
         log.setUpdatedBy(AuthContext.getUserId());
         log.setIsDeleted(0);

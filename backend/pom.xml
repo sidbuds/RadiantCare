@@ -21,6 +21,7 @@
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
         <pagehelper.version>1.4.7</pagehelper.version>
         <jjwt.version>0.9.1</jjwt.version>
+        <springdoc.version>1.8.0</springdoc.version>
     </properties>
 
     <dependencies>
@@ -60,6 +61,11 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -320,16 +320,17 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
 .status-panel {
   padding: 28px;
   border-radius: var(--radius-xl);
-  background: linear-gradient(145deg, #16161f, #111118);
-  border: 1px solid var(--color-line);
-  color: var(--color-ink);
+  background: linear-gradient(145deg, #1a4a3e, #0d3b33);
+  border: 1px solid rgba(58, 143, 133, 0.2);
+  color: #f0ece4;
   box-shadow: var(--shadow-lg);
   position: relative;
   overflow: hidden;
 
   :global([data-theme="light"]) & {
-    background: linear-gradient(145deg, #FFFFFF, #F8F7F4);
-    box-shadow: var(--shadow-md);
+    background: linear-gradient(145deg, #1a4a3e, #0d3b33);
+    color: #f0ece4;
+    box-shadow: 0 4px 20px rgba(13, 59, 51, 0.3);
   }
 
   strong {
@@ -339,14 +340,22 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
     font-size: 22px;
     line-height: 1.25;
     position: relative;
-    color: var(--color-ink);
+    color: #ffffff;
+
+    :global([data-theme="light"]) & {
+      color: #ffffff;
+    }
   }
 
   p {
-    color: var(--color-ink-muted);
+    color: rgba(240, 236, 228, 0.7);
     font-size: 12px;
     line-height: 1.7;
     position: relative;
+
+    :global([data-theme="light"]) & {
+      color: rgba(240, 236, 228, 0.7);
+    }
   }
 }
 
@@ -362,7 +371,7 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-ink-faint);
+  color: rgba(240, 236, 228, 0.5);
 }
 
 .status-dot {

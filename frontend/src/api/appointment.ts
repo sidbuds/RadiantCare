@@ -1,7 +1,8 @@
-import request from './request'
+﻿import { get, post } from './request'
+import type { Appointment, TimeSlot } from '@/types/api'
 
 export function getAvailableSlots(params: { centerCode: string; packageId: number; date: string }) {
-  return request.get('/appointments/available-slots', { params })
+  return get<TimeSlot[]>('/appointments/available-slots', { params })
 }
 
 export function createAppointment(data: {
@@ -11,17 +12,19 @@ export function createAppointment(data: {
   timeSlotCode: string
   remark?: string
 }) {
-  return request.post('/appointments', data)
+  return post<Appointment>('/appointments', data)
 }
 
 export function getAppointment(appointmentNo: string) {
-  return request.get(`/appointments/${appointmentNo}`)
+  return get<Appointment>(`/appointments/${appointmentNo}`)
 }
 
 export function cancelAppointment(appointmentNo: string, reason?: string) {
-  return request.post(`/appointments/${appointmentNo}/cancel`, { reason })
+  return post<void>(`/appointments/${appointmentNo}/cancel${reason ? `?reason=${encodeURIComponent(reason)}` : ''}`)
 }
 
 export function getMyAppointments() {
-  return request.get('/appointments/mine')
+  return get<Appointment[]>('/appointments/mine')
 }
+
+

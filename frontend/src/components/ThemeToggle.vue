@@ -3,20 +3,32 @@ import { useAppStore } from '@/stores/app'
 import { computed } from 'vue'
 
 const appStore = useAppStore()
-const isDark = computed(() => appStore.themeMode === 'dark')
+const resolvedTheme = computed(() => appStore.getResolvedTheme())
+const isDark = computed(() => resolvedTheme.value === 'dark')
+const isAuto = computed(() => appStore.themeMode === 'auto')
+
+const tooltip = computed(() => {
+  if (appStore.themeMode === 'auto') return '自动模式（点击切换）'
+  return isDark.value ? '夜间模式（点击切换）' : '日间模式（点击切换）'
+})
 </script>
 
 <template>
   <button
     class="theme-toggle"
-    :aria-label="isDark ? '切换至日间模式' : '切换至夜间模式'"
-    :title="isDark ? '日间模式' : '夜间模式'"
+    :aria-label="tooltip"
+    :title="tooltip"
     @click="appStore.toggleTheme"
   >
-    <span class="toggle-track" :class="{ 'is-light': !isDark }">
+    <span class="toggle-track" :class="{ 'is-light': !isDark, 'is-auto': isAuto }">
       <span class="toggle-thumb">
+        <!-- Auto icon (clock) -->
+        <svg v-if="isAuto" class="icon icon-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
         <!-- Sun icon -->
-        <svg v-if="!isDark" class="icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg v-else-if="!isDark" class="icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="5" />
           <line x1="12" y1="1" x2="12" y2="3" />
           <line x1="12" y1="21" x2="12" y2="23" />
@@ -61,6 +73,11 @@ const isDark = computed(() => appStore.themeMode === 'dark')
     background: rgba(0, 0, 0, 0.06);
     border-color: rgba(0, 0, 0, 0.1);
   }
+
+  &.is-auto {
+    background: rgba(106, 154, 146, 0.2);
+    border-color: rgba(106, 154, 146, 0.3);
+  }
 }
 
 .toggle-thumb {
@@ -75,13 +92,18 @@ const isDark = computed(() => appStore.themeMode === 'dark')
   justify-content: center;
   transition: transform 0.4s var(--ease-out-expo), background 0.35s ease;
 
-  .toggle-track:not(.is-light) & {
+  .toggle-track:not(.is-light):not(.is-auto) & {
     transform: translateX(22px);
     background: rgba(255, 255, 255, 0.12);
   }
 
   .toggle-track.is-light & {
     transform: translateX(0);
+    background: var(--color-brand);
+  }
+
+  .toggle-track.is-auto & {
+    transform: translateX(11px);
     background: var(--color-brand);
   }
 }
@@ -98,6 +120,10 @@ const isDark = computed(() => appStore.themeMode === 'dark')
 
 .icon-moon {
   color: rgba(255, 255, 255, 0.7);
+}
+
+.icon-auto {
+  color: #FFFFFF;
 }
 
 .theme-toggle:hover .toggle-track {

@@ -1,0 +1,79 @@
+name: xixin-health
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: xixin-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-gwtzn7k8}
+      MYSQL_DATABASE: xixin_health
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./sql/xixin_health_clean.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./sql/xixin_demo_data.sql:/docker-entrypoint-initdb.d/02-demo-data.sql
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-time-zone=+08:00
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD:-gwtzn7k8}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7
+    container_name: xixin-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: xixin-backend
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/xixin_health?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-gwtzn7k8}
+      JWT_SECRET: ${JWT_SECRET:-xixin-health-demo-secret}
+      SERVER_PORT: "18080"
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+    ports:
+      - "18080:18080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE: /api
+    container_name: xixin-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql-data:
+  redis-data:

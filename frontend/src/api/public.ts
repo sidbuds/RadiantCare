@@ -1,29 +1,32 @@
-import request from './request'
+﻿import { get, post } from './request'
+import type { PackageItem, ExamCenter, TimeSlot, CheckupGuideItem, FaqItem } from '@/types/api'
 
 export function listPackages() {
-  return request.get('/public/packages')
+  return get<PackageItem[]>('/public/packages')
 }
 
 export function getPackageDetail(packageCode: string) {
-  return request.get(`/public/packages/${packageCode}`)
+  return get<PackageItem>(`/public/packages/${packageCode}`)
 }
 
 export function listCenters() {
-  return request.get('/public/centers')
+  return get<ExamCenter[]>('/public/centers')
 }
 
 export function getCenterDetail(centerCode: string) {
-  return request.get(`/public/centers/${centerCode}`)
+  return get<ExamCenter>(`/public/centers/${centerCode}`)
 }
 
 export function getCenterSlots(centerCode: string, date?: string) {
-  return request.get(`/public/centers/${centerCode}/slots`, { params: { date } })
+  return get<TimeSlot[]>(`/public/centers/${centerCode}/slots`, { params: { date } })
 }
 
 export function getCheckupGuide() {
-  return request.get('/public/content/checkup-guide')
+  return get<CheckupGuideItem[]>('/public/content/checkup-guide')
 }
 
 export function getFaq() {
-  return request.get('/public/content/faq')
+  return get<FaqItem[]>('/public/content/faq')
 }
+
+

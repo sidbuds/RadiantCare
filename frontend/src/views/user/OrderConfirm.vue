@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { createOrder, getOrder, payOrder } from '@/api/order'
-import { ElMessage } from 'element-plus'
+import { createOrder, getOrder, payOrder, applyRefund } from '@/api/order'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
@@ -12,12 +12,19 @@ const paying = ref(false)
 const mounted = ref(false)
 const appointmentNo = route.params.no as string
 
+const refundReasons = ['行程有变', '身体原因', '套餐不合适', '时间冲突', '其他']
+const selectedReason = ref('')
+const customReason = ref('')
+const showRefundDialog = ref(false)
+
 async function handleCreateOrder() {
   loading.value = true
   try {
     const res: any = await createOrder({ appointmentNo })
     order.value = res.data
-    ElMessage.success('订单创建成功')
+    if (!res.data.isExisting) {
+      ElMessage.success('订单创建成功')
+    }
   } catch {} finally { loading.value = false }
 }
 
@@ -26,8 +33,28 @@ async function handlePay() {
   try {
     await payOrder(order.value.orderNo)
     ElMessage.success('支付成功')
-    order.value.orderStatus = 'PAID'
+    order.value.status = 'PAID'
   } catch {} finally { paying.value = false }
+}
+
+function openRefundDialog() {
+  selectedReason.value = ''
+  customReason.value = ''
+  showRefundDialog.value = true
+}
+
+async function submitRefund() {
+  const reason = selectedReason.value === '其他' ? customReason.value : selectedReason.value
+  if (!reason || !reason.trim()) {
+    ElMessage.warning('请选择或输入退款原因')
+    return
+  }
+  try {
+    await applyRefund(order.value.orderNo, { reason: reason.trim() })
+    ElMessage.success('退款申请已提交')
+    order.value.status = 'REFUNDING'
+    showRefundDialog.value = false
+  } catch {}
 }
 
 function goToGuide() {
@@ -55,13 +82,17 @@ onMounted(() => {
         <h2>订单确认</h2>
       </div>
 
-      <div class="order-status" :class="{ paid: order.orderStatus === 'PAID' }">
+      <div class="order-status" :class="{ paid: order.status === 'PAID', refunding: order.status === 'REFUNDING' }">
         <div class="status-icon">
-          <el-icon :size="24"><CircleCheck v-if="order.orderStatus === 'PAID'" /><Wallet v-else /></el-icon>
+          <el-icon :size="24">
+            <CircleCheck v-if="order.status === 'PAID'" />
+            <Clock v-else-if="order.status === 'REFUNDING'" />
+            <Wallet v-else />
+          </el-icon>
         </div>
         <div class="status-text">
-          <strong>{{ order.orderStatus === 'PAID' ? '支付完成' : '待支付' }}</strong>
-          <span>{{ order.orderStatus === 'PAID' ? '您的订单已支付成功' : '请完成支付以确认订单' }}</span>
+          <strong>{{ order.status === 'PAID' ? '支付完成' : order.status === 'REFUNDING' ? '退款申请中' : '待支付' }}</strong>
+          <span>{{ order.status === 'PAID' ? '您的订单已支付成功' : order.status === 'REFUNDING' ? '退款申请正在审核中，请等待运营处理' : '请完成支付以确认订单' }}</span>
         </div>
       </div>
 
@@ -72,7 +103,9 @@ onMounted(() => {
         </div>
         <div class="info-item">
           <span class="info-label">订单状态</span>
-          <el-tag :type="order.orderStatus === 'PAID' ? 'success' : 'warning'">{{ order.orderStatus }}</el-tag>
+          <el-tag :type="order.status === 'PAID' ? 'success' : order.status === 'REFUNDING' ? 'warning' : 'info'">
+            {{ order.status === 'PAID' ? '已支付' : order.status === 'REFUNDING' ? '退款中' : '待支付' }}
+          </el-tag>
         </div>
         <div class="info-item">
           <span class="info-label">订单金额</span>
@@ -85,17 +118,41 @@ onMounted(() => {
       </div>
 
       <div class="action-bar">
-        <el-button v-if="order.orderStatus === 'PENDING'" type="primary" :loading="paying" @click="handlePay" class="pay-btn">
+        <el-button v-if="order.status === 'PENDING'" type="primary" :loading="paying" @click="handlePay" class="pay-btn">
           模拟支付
           <el-icon class="btn-arrow"><ArrowRight /></el-icon>
         </el-button>
-        <el-button v-if="order.orderStatus === 'PAID'" type="primary" @click="goToGuide">
+        <el-button v-if="order.status === 'PAID'" type="primary" @click="goToGuide">
           查看预约
           <el-icon class="btn-arrow"><ArrowRight /></el-icon>
+        </el-button>
+        <el-button v-if="order.status === 'PAID'" type="danger" @click="openRefundDialog">
+          申请退款
         </el-button>
       </div>
     </div>
     <div v-else-if="loading" class="loading-state" v-loading="true" />
+
+    <el-dialog v-model="showRefundDialog" title="申请退款" width="400px">
+      <div class="refund-reason-list">
+        <p class="refund-hint">请选择退款原因：</p>
+        <el-radio-group v-model="selectedReason" class="reason-group">
+          <el-radio v-for="r in refundReasons" :key="r" :value="r" border class="reason-radio">{{ r }}</el-radio>
+        </el-radio-group>
+        <el-input
+          v-if="selectedReason === '其他'"
+          v-model="customReason"
+          type="textarea"
+          :rows="3"
+          placeholder="请输入退款原因"
+          style="margin-top: 12px;"
+        />
+      </div>
+      <template #footer>
+        <el-button @click="showRefundDialog = false">取消</el-button>
+        <el-button type="primary" @click="submitRefund">提交申请</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -169,6 +226,16 @@ onMounted(() => {
     .status-icon {
       color: var(--color-success);
       background: rgba(34, 197, 94, 0.15);
+    }
+  }
+
+  &.refunding {
+    background: var(--color-warning-light);
+    border-color: rgba(245, 158, 11, 0.2);
+
+    .status-icon {
+      color: var(--color-warning);
+      background: rgba(245, 158, 11, 0.15);
     }
   }
 
@@ -270,6 +337,31 @@ onMounted(() => {
   background: var(--color-warning-light);
   color: var(--color-warning);
   border: none;
+}
+
+:deep(.el-tag--info) {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-ink-muted);
+  border: none;
+}
+
+.refund-reason-list {
+  .refund-hint {
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--color-ink-soft);
+  }
+
+  .reason-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .reason-radio {
+      margin: 0;
+      width: 100%;
+    }
+  }
 }
 
 @media (max-width: 640px) {

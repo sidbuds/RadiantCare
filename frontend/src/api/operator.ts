@@ -1,71 +1,106 @@
-import request from './request'
+import { get, post, put } from './request'
+import type {
+  Appointment,
+  ConversionItem,
+  DashboardData,
+  Order,
+  PackageAnalysisItem,
+  PackageItem,
+  PageResult,
+  RefundApply,
+  Schedule,
+  TrendItem,
+} from '@/types/api'
 
-// 套餐管理
-export function getOperatorPackages() {
-  return request.get('/operator/packages')
+export interface PaginationParams {
+  pageNum?: number
+  pageSize?: number
 }
 
-export function createOperatorPackage(data: any) {
-  return request.post('/operator/packages', data)
+export interface PackageFormData {
+  packageCode?: string
+  packageName?: string
+  category?: string
+  price?: number
+  status?: number
+  remark?: string
+  templateCode?: string
+  items?: Array<{ itemCode: string; itemName: string; unit?: string; refRange?: string; sortNo: number }>
 }
 
-export function updateOperatorPackage(id: number, data: any) {
-  return request.put(`/operator/packages/${id}`, data)
+export interface ScheduleFormData {
+  centerCode?: string
+  appointDate?: string
+  timeSlotCode?: string
+  resourceType?: string
+  resourceCode?: string
+  capacityTotal?: number
+  status?: number
 }
 
-// 排班管理
-export function getOperatorSchedules(params?: any) {
-  return request.get('/operator/schedules', { params })
+export function getOperatorPackages(params?: { packageName?: string; status?: number } & PaginationParams) {
+  return get<PageResult<PackageItem>>('/operator/packages', { params })
 }
 
-export function createOperatorSchedule(data: any) {
-  return request.post('/operator/schedules', data)
+export function createOperatorPackage(data: PackageFormData) {
+  return post<void>('/operator/packages', data)
 }
 
-export function updateOperatorSchedule(id: number, data: any) {
-  return request.put(`/operator/schedules/${id}`, data)
+export function updateOperatorPackage(id: number, data: PackageFormData) {
+  return put<void>(`/operator/packages/${id}`, data)
 }
 
-// 预约管理
-export function getOperatorAppointments(params?: any) {
-  return request.get('/operator/appointments', { params })
+// 修复：排班列表使用 startDate/endDate 替代 date
+export function getOperatorSchedules(params?: { centerCode?: string; startDate?: string; endDate?: string; status?: number } & PaginationParams) {
+  return get<PageResult<Schedule>>('/operator/schedules', { params })
 }
 
-// 订单管理
-export function getOperatorOrders(params?: any) {
-  return request.get('/operator/orders', { params })
+export function createOperatorSchedule(data: ScheduleFormData) {
+  return post<void>('/operator/schedules', data)
 }
 
-// 退款管理
-export function getOperatorRefunds(params?: any) {
-  return request.get('/operator/refunds', { params })
+export function updateOperatorSchedule(id: number, data: ScheduleFormData) {
+  return put<void>(`/operator/schedules/${id}`, data)
+}
+
+// 修复：预约列表使用 appointDate 替代 date
+export function getOperatorAppointments(params?: { centerCode?: string; appointDate?: string; status?: number } & PaginationParams) {
+  return get<PageResult<Appointment>>('/operator/appointments', { params })
+}
+
+// 修复：订单列表添加 userId 和 payChannel 过滤
+export function getOperatorOrders(params?: { orderNo?: string; userId?: number; status?: number; payChannel?: string } & PaginationParams) {
+  return get<PageResult<Order>>('/operator/orders', { params })
+}
+
+export function getOperatorRefunds(params?: { applyStatus?: number; orderNo?: string } & PaginationParams) {
+  return get<PageResult<RefundApply>>('/operator/refunds', { params })
 }
 
 export function getOperatorRefundDetail(applyNo: string) {
-  return request.get(`/operator/refunds/${applyNo}`)
+  return get<RefundApply>(`/operator/refunds/${applyNo}`)
 }
 
 export function approveRefund(applyNo: string, data: { auditRemark: string }) {
-  return request.post(`/operator/refunds/${applyNo}/approve`, data)
+  return post<void>(`/operator/refunds/${applyNo}/approve`, data)
 }
 
 export function rejectRefund(applyNo: string, data: { auditRemark: string }) {
-  return request.post(`/operator/refunds/${applyNo}/reject`, data)
+  return post<void>(`/operator/refunds/${applyNo}/reject`, data)
 }
 
-// 运营分析
-export function getDashboard() {
-  return request.get('/operator/analytics/dashboard')
+export function getDashboard(params?: { startDate?: string; endDate?: string }) {
+  return get<DashboardData>('/operator/analytics/dashboard', { params })
 }
 
-export function getAppointmentTrend(params?: any) {
-  return request.get('/operator/analytics/appointment-trend', { params })
+export function getAppointmentTrend(params?: { startDate?: string; endDate?: string }) {
+  return get<TrendItem[]>('/operator/analytics/appointment-trend', { params })
 }
 
-export function getOrderConversion(params?: any) {
-  return request.get('/operator/analytics/order-conversion', { params })
+export function getOrderConversion(params?: { startDate?: string; endDate?: string }) {
+  return get<ConversionItem[]>('/operator/analytics/order-conversion', { params })
 }
 
-export function getPackageAnalysis(params?: any) {
-  return request.get('/operator/analytics/package-analysis', { params })
+export function getPackageAnalysis(params?: { startDate?: string; endDate?: string }) {
+  return get<PackageAnalysisItem[]>('/operator/analytics/package-analysis', { params })
 }

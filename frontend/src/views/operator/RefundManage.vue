@@ -1,40 +1,60 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { getOperatorRefunds, approveRefund, rejectRefund } from '@/api/operator'
 import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
+import { useLoading, useStatusTag, usePagination, refundStatusMap } from '@/composables'
+import type { RefundApply } from '@/types/api'
 
-const refunds = ref<any[]>([])
-const loading = ref(true)
-const mounted = ref(false)
+const { loading, mounted, execute } = useLoading()
+const { getLabel, getType } = useStatusTag(refundStatusMap)
+const { pageNum, pageSize, total, onPageChange, onSizeChange } = usePagination()
+
+const refunds = ref<RefundApply[]>([])
 const filters = ref({ applyStatus: '' })
 const auditDialog = ref(false)
+const auditFormRef = ref<FormInstance>()
 const auditRemark = ref('')
+const submitLoading = ref(false)
 const currentAction = ref<'approve' | 'reject'>('approve')
 const currentNo = ref('')
 
-onMounted(() => {
-  mounted.value = true
-  loadData()
-})
-
-async function loadData() {
-  loading.value = true
-  try {
-    const params: any = {}
-    if (filters.value.applyStatus !== '') params.applyStatus = filters.value.applyStatus
-    const res: any = await getOperatorRefunds(params)
-    refunds.value = res.data || []
-  } catch {} finally { loading.value = false }
+const auditRules: FormRules = {
+  auditRemark: [
+    { required: true, message: '请输入审核意见', trigger: 'blur' },
+    { max: 500, message: '审核意见最长 500 个字符', trigger: 'blur' },
+  ],
 }
+
+function loadData() {
+  execute(async () => {
+    const params: Record<string, string | number> = {
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+    }
+    if (filters.value.applyStatus !== '') params.applyStatus = filters.value.applyStatus
+    const res = await getOperatorRefunds(params)
+    refunds.value = res.data?.list || []
+    total.value = res.data?.total || 0
+  })
+}
+
+watch([pageNum, pageSize], loadData)
 
 function openAudit(no: string, action: 'approve' | 'reject') {
   currentNo.value = no
   currentAction.value = action
   auditRemark.value = ''
   auditDialog.value = true
+  auditFormRef.value?.clearValidate()
 }
 
 async function handleAudit() {
+  if (!auditFormRef.value) return
+  const valid = await auditFormRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  submitLoading.value = true
   try {
     if (currentAction.value === 'approve') {
       await approveRefund(currentNo.value, { auditRemark: auditRemark.value })
@@ -44,14 +64,12 @@ async function handleAudit() {
     ElMessage.success(currentAction.value === 'approve' ? '已通过' : '已驳回')
     auditDialog.value = false
     await loadData()
-  } catch {}
+  } catch (error) {
+    console.error('审核退款失败', error)
+  } finally { submitLoading.value = false }
 }
 
-const statusMap: Record<number, { label: string; type: string }> = {
-  0: { label: '待审核', type: 'warning' },
-  1: { label: '已通过', type: 'success' },
-  2: { label: '已驳回', type: 'danger' },
-}
+loadData()
 </script>
 
 <template>
@@ -86,7 +104,7 @@ const statusMap: Record<number, { label: string; type: string }> = {
         <el-table-column prop="reason" label="原因" />
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="statusMap[row.applyStatus]?.type as any">{{ statusMap[row.applyStatus]?.label }}</el-tag>
+            <el-tag :type="getType(row.applyStatus)">{{ getLabel(row.applyStatus) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="申请时间" width="180" />
@@ -99,17 +117,30 @@ const statusMap: Record<number, { label: string; type: string }> = {
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-wrap">
+        <el-pagination
+          v-model:current-page="pageNum"
+          v-model:page-size="pageSize"
+          :total="total"
+          :page-sizes="[10, 20, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @current-change="onPageChange"
+          @size-change="onSizeChange"
+        />
+      </div>
     </section>
 
     <el-dialog v-model="auditDialog" :title="currentAction === 'approve' ? '通过退款' : '驳回退款'" width="400px">
-      <el-form label-width="80px">
-        <el-form-item label="审核意见">
+      <el-form ref="auditFormRef" :model="{ auditRemark }" :rules="auditRules" label-width="80px">
+        <el-form-item label="审核意见" prop="auditRemark">
           <el-input v-model="auditRemark" type="textarea" :rows="3" placeholder="请输入审核意见" />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="auditDialog = false">取消</el-button>
-        <el-button :type="currentAction === 'approve' ? 'success' : 'danger'" @click="handleAudit">确定</el-button>
+        <el-button :type="currentAction === 'approve' ? 'success' : 'danger'" :loading="submitLoading" @click="handleAudit">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -131,6 +162,14 @@ const statusMap: Record<number, { label: string; type: string }> = {
 
 :deep(.el-tag) {
   border-radius: 999px;
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-line);
 }
 
 :deep(.el-tag--success) {

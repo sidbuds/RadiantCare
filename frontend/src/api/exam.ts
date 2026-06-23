@@ -1,28 +1,7 @@
-import request from './request'
+import { get, post } from './request'
+import type { ExamGuideRoute, ExamTask, ExamTaskItem } from '@/types/api'
 
-// 用户端
-export function getExamTaskGuide(taskNo: string) {
-  return request.get(`/exam-tasks/${taskNo}/guide`)
-}
-
-export function getExamTaskItems(taskNo: string) {
-  return request.get(`/exam-tasks/${taskNo}/items`)
-}
-
-// 医生端
-export function getDoctorExamTodo() {
-  return request.get('/doctor/exam-tasks/todo')
-}
-
-export function getDoctorExamItem(taskNo: string, taskItemNo: string) {
-  return request.get(`/doctor/exam-tasks/${taskNo}/items/${taskItemNo}`)
-}
-
-export function startExamItem(taskNo: string, taskItemNo: string) {
-  return request.post(`/doctor/exam-tasks/${taskNo}/items/${taskItemNo}/start`)
-}
-
-export function submitExamResults(taskNo: string, taskItemNo: string, data: {
+export interface SubmitExamResultsData {
   itemCode: string
   resultEntries: Array<{
     metricCode: string
@@ -35,15 +14,37 @@ export function submitExamResults(taskNo: string, taskItemNo: string, data: {
     abnormalLevel?: number
   }>
   conclusion: string
-}) {
-  return request.post(`/doctor/exam-tasks/${taskNo}/items/${taskItemNo}/results`, data)
+}
+
+export function getExamTaskGuide(taskNo: string) {
+  return get<ExamGuideRoute[]>(`/exam-tasks/${taskNo}/guide`)
+}
+
+export function getExamTaskItems(taskNo: string) {
+  return get<ExamTaskItem[]>(`/exam-tasks/${taskNo}/items`)
+}
+
+export function getDoctorExamTodo() {
+  return get<ExamTask[]>('/doctor/exam-tasks/todo')
+}
+
+export function getDoctorExamItem(taskNo: string, taskItemNo: string) {
+  return get<ExamTaskItem>(`/doctor/exam-tasks/${taskNo}/items/${taskItemNo}`)
+}
+
+export function startExamItem(taskNo: string, taskItemNo: string) {
+  return post<void>(`/doctor/exam-tasks/${taskNo}/items/${taskItemNo}/start`)
+}
+
+export function submitExamResults(taskNo: string, taskItemNo: string, data: SubmitExamResultsData) {
+  return post<void>(`/doctor/exam-tasks/${taskNo}/items/${taskItemNo}/results`, data)
 }
 
 export function completeExamItem(taskNo: string, taskItemNo: string) {
-  return request.post(`/doctor/exam-tasks/${taskNo}/items/${taskItemNo}/complete`)
+  return post<void>(`/doctor/exam-tasks/${taskNo}/items/${taskItemNo}/complete`)
 }
 
-// 管理端
 export function generateExamTask(data: { orderNo: string }) {
-  return request.post('/admin/exam-tasks/generate', data)
+  return post<ExamTask>('/admin/exam-tasks/generate', data)
 }
+

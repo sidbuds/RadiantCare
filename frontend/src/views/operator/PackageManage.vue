@@ -1,52 +1,86 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { getOperatorPackages, createOperatorPackage, updateOperatorPackage } from '@/api/operator'
+import type { PackageFormData } from '@/api/operator'
 import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
+import { useLoading, usePagination } from '@/composables'
+import type { PackageItem } from '@/types/api'
 
-const packages = ref<any[]>([])
-const loading = ref(true)
-const mounted = ref(false)
+const { loading, mounted, execute } = useLoading()
+const { pageNum, pageSize, total, onPageChange, onSizeChange } = usePagination()
+
+const packages = ref<PackageItem[]>([])
 const dialogVisible = ref(false)
 const editing = ref(false)
-const form = ref<any>({
-  packageCode: '', packageName: '', category: '', price: 0, status: 1, remark: '', templateCode: '',
-  items: [{ itemCode: '', itemName: '', sortNo: 1 }],
+const formRef = ref<FormInstance>()
+const submitLoading = ref(false)
+
+const form = ref({
+  id: 0,
+  packageCode: '',
+  packageName: '',
+  category: '',
+  price: 0,
+  status: 1,
+  remark: '',
+  templateCode: '',
+  items: [{ itemCode: '', itemName: '', sortNo: 1 }] as Array<{ itemCode: string; itemName: string; sortNo: number }>,
 })
 
-onMounted(async () => {
-  mounted.value = true
-  await loadPackages()
-})
-
-async function loadPackages() {
-  loading.value = true
-  try {
-    const res: any = await getOperatorPackages()
-    packages.value = res.data || []
-  } catch {} finally { loading.value = false }
+const rules: FormRules = {
+  packageCode: [
+    { required: true, message: '请输入套餐编码', trigger: 'blur' },
+    { max: 64, message: '编码最长 64 个字符', trigger: 'blur' },
+  ],
+  packageName: [
+    { required: true, message: '请输入套餐名称', trigger: 'blur' },
+    { max: 128, message: '名称最长 128 个字符', trigger: 'blur' },
+  ],
+  category: [{ required: true, message: '请输入类别', trigger: 'blur' }],
+  price: [{ required: true, message: '请输入价格', trigger: 'blur' }],
+  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
 }
+
+function loadPackages() {
+  execute(async () => {
+    const res = await getOperatorPackages({ pageNum: pageNum.value, pageSize: pageSize.value })
+    packages.value = res.data?.list || []
+    total.value = res.data?.total || 0
+  })
+}
+
+watch([pageNum, pageSize], loadPackages)
 
 function openCreate() {
   editing.value = false
-  form.value = { packageCode: '', packageName: '', category: '', price: 0, status: 1, remark: '', templateCode: '', items: [{ itemCode: '', itemName: '', sortNo: 1 }] }
+  form.value = { id: 0, packageCode: '', packageName: '', category: '', price: 0, status: 1, remark: '', templateCode: '', items: [{ itemCode: '', itemName: '', sortNo: 1 }] }
   dialogVisible.value = true
+  formRef.value?.clearValidate()
 }
 
-function openEdit(row: any) {
+function openEdit(row: PackageItem) {
   editing.value = true
-  form.value = { ...row, items: row.items || [{ itemCode: '', itemName: '', sortNo: 1 }] }
+  const packageWithItems = row as PackageItem & Pick<PackageFormData, 'items'>
+  form.value = { ...row, items: packageWithItems.items || [{ itemCode: '', itemName: '', sortNo: 1 }] }
   dialogVisible.value = true
+  formRef.value?.clearValidate()
 }
 
 function addItem() {
   form.value.items.push({ itemCode: '', itemName: '', sortNo: form.value.items.length + 1 })
 }
 
-function removeItem(index: number | string) {
-  form.value.items.splice(Number(index), 1)
+function removeItem(index: number) {
+  form.value.items.splice(index, 1)
 }
 
 async function handleSubmit() {
+  if (!formRef.value) return
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  submitLoading.value = true
   try {
     if (editing.value) {
       await updateOperatorPackage(form.value.id, form.value)
@@ -56,8 +90,12 @@ async function handleSubmit() {
     ElMessage.success(editing.value ? '更新成功' : '创建成功')
     dialogVisible.value = false
     await loadPackages()
-  } catch {}
+  } catch (error) {
+    console.error('保存套餐失败', error)
+  } finally { submitLoading.value = false }
 }
+
+loadPackages()
 </script>
 
 <template>
@@ -98,22 +136,47 @@ async function handleSubmit() {
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-wrap">
+        <el-pagination
+          v-model:current-page="pageNum"
+          v-model:page-size="pageSize"
+          :total="total"
+          :page-sizes="[10, 20, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @current-change="onPageChange"
+          @size-change="onSizeChange"
+        />
+      </div>
     </section>
 
     <el-dialog v-model="dialogVisible" :title="editing ? '编辑套餐' : '新建套餐'" width="600px">
-      <el-form :model="form" label-width="100px">
-        <el-form-item label="套餐编码"><el-input v-model="form.packageCode" /></el-form-item>
-        <el-form-item label="套餐名称"><el-input v-model="form.packageName" /></el-form-item>
-        <el-form-item label="类别"><el-input v-model="form.category" /></el-form-item>
-        <el-form-item label="价格"><el-input-number v-model="form.price" :min="0" :precision="2" /></el-form-item>
-        <el-form-item label="状态">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="套餐编码" prop="packageCode">
+          <el-input v-model="form.packageCode" :disabled="editing" />
+        </el-form-item>
+        <el-form-item label="套餐名称" prop="packageName">
+          <el-input v-model="form.packageName" />
+        </el-form-item>
+        <el-form-item label="类别" prop="category">
+          <el-input v-model="form.category" />
+        </el-form-item>
+        <el-form-item label="价格" prop="price">
+          <el-input-number v-model="form.price" :min="0" :precision="2" />
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio :value="1">启用</el-radio>
             <el-radio :value="0">停用</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="模板编码"><el-input v-model="form.templateCode" /></el-form-item>
-        <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" /></el-form-item>
+        <el-form-item label="模板编码">
+          <el-input v-model="form.templateCode" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="form.remark" type="textarea" />
+        </el-form-item>
         <el-form-item label="检查项">
           <div v-for="(item, index) in form.items" :key="index" style="display: flex; gap: 8px; margin-bottom: 8px;">
             <el-input v-model="item.itemCode" placeholder="编码" style="width: 120px;" />
@@ -126,7 +189,7 @@ async function handleSubmit() {
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -143,6 +206,14 @@ async function handleSubmit() {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-line);
 }
 
 .price-text {

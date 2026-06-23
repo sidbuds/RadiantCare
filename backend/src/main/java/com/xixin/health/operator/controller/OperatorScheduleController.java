@@ -1,6 +1,9 @@
 package com.xixin.health.operator.controller;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.xixin.health.common.api.ApiResult;
+import com.xixin.health.common.model.PageResult;
 import com.xixin.health.operator.dto.SaveScheduleRequest;
 import com.xixin.health.operator.service.OperatorScheduleService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/operator/schedules")
@@ -31,8 +36,13 @@ public class OperatorScheduleController {
     @GetMapping
     public ApiResult<?> list(@RequestParam(required = false) String centerCode,
                              @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-                             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-        return ApiResult.success(operatorScheduleService.list(centerCode, startDate, endDate));
+                             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+                             @RequestParam(defaultValue = "1") int pageNum,
+                             @RequestParam(defaultValue = "10") int pageSize) {
+        PageHelper.startPage(pageNum, pageSize);
+        List<?> list = operatorScheduleService.list(centerCode, startDate, endDate);
+        PageInfo<?> pageInfo = new PageInfo<>(list);
+        return ApiResult.success(PageResult.of(list, pageInfo.getTotal(), pageNum, pageSize));
     }
 
     @PostMapping

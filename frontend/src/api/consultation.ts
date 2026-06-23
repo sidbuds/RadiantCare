@@ -1,38 +1,36 @@
-import request from './request'
+import { get, post } from './request'
+import type { Consultation } from '@/types/api'
 
-// 用户端
-export function createConsultation(data: {
+export interface CreateConsultationData {
   reportNo: string
   sourceType: string
   consultationType: string
   consultationTitle: string
   consultationContent: string
   priorityLevel?: number
-}) {
-  return request.post('/doctor-consultations', data)
+}
+
+export function createConsultation(data: CreateConsultationData) {
+  return post<Consultation>('/doctor-consultations', data)
 }
 
 export function getMyConsultations() {
-  return request.get('/doctor-consultations/mine')
+  return get<Consultation[]>('/doctor-consultations/mine')
 }
 
-// 医生端
 export function getDoctorConsultationTodo() {
-  return request.get('/doctor/consultations/todo')
+  return get<Consultation[]>('/doctor/consultations/todo')
 }
 
 export function getDoctorConsultation(consultationNo: string) {
-  return request.get(`/doctor/consultations/${consultationNo}`)
+  return get<Consultation>(`/doctor/consultations/${consultationNo}`)
 }
 
-export function replyConsultation(consultationNo: string, data: {
-  replyContent: string
-  attachmentUrl?: string
-}) {
-  return request.post(`/doctor/consultations/${consultationNo}/reply`, data)
+export function replyConsultation(consultationNo: string, data: { replyContent: string; attachmentUrl?: string }) {
+  return post<void>(`/doctor/consultations/${consultationNo}/reply`, data)
 }
 
-// 管理端
 export function assignConsultation(consultationNo: string, data: { doctorId: number }) {
-  return request.post(`/admin/doctor-consultations/${consultationNo}/assign`, data)
+  return post<void>(`/admin/doctor-consultations/${consultationNo}/assign`, data)
 }
+

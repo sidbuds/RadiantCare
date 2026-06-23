@@ -296,7 +296,7 @@ function handleLogout() {
   font-family: var(--font-display);
   font-size: 15px;
   font-weight: 400;
-  color: var(--color-ink);
+  color: var(--color-brand);
 }
 
 .header-right {

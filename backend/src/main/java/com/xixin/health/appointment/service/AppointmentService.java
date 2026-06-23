@@ -134,6 +134,24 @@ public class AppointmentService {
                 .set(AppointmentEntity::getStatus, 3)
                 .set(AppointmentEntity::getCancelReason, reason)
                 .set(AppointmentEntity::getUpdatedBy, AuthContext.getUserId()));
+
+        if (entity.getTimeSlotCode() != null && !entity.getTimeSlotCode().isEmpty()) {
+            List<ResourceCapacityEntity> capacities = resourceCapacityMapper.selectList(
+                    new LambdaQueryWrapper<ResourceCapacityEntity>()
+                            .eq(ResourceCapacityEntity::getCenterCode, entity.getCenterCode())
+                            .eq(ResourceCapacityEntity::getAppointDate, entity.getAppointDate())
+                            .eq(ResourceCapacityEntity::getTimeSlotCode, entity.getTimeSlotCode())
+                            .eq(ResourceCapacityEntity::getStatus, 1)
+                            .eq(ResourceCapacityEntity::getIsDeleted, 0));
+            for (ResourceCapacityEntity cap : capacities) {
+                int used = cap.getCapacityUsed() == null ? 0 : cap.getCapacityUsed();
+                if (used > 0) {
+                    cap.setCapacityUsed(used - 1);
+                    resourceCapacityMapper.updateById(cap);
+                    break;
+                }
+            }
+        }
     }
 
     public AppointmentEntity getByNo(String appointmentNo) {

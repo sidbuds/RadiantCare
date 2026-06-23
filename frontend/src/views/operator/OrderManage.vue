@@ -1,35 +1,46 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { getOperatorOrders } from '@/api/operator'
+import { useLoading, useStatusTag, usePagination } from '@/composables'
+import type { Order } from '@/types/api'
 
-const orders = ref<any[]>([])
-const loading = ref(true)
-const mounted = ref(false)
+const { loading, mounted, execute } = useLoading()
+const { pageNum, pageSize, total, onPageChange, onSizeChange } = usePagination()
+
+const orders = ref<Order[]>([])
 const filters = ref({ orderNo: '', status: '' })
 
-onMounted(() => {
-  mounted.value = true
-  loadData()
-})
+const statusMap = {
+  PENDING: { label: '待支付', type: 'warning' as const },
+  PAID: { label: '已支付', type: 'success' as const },
+  REFUNDED: { label: '已退款', type: 'danger' as const },
+  COMPLETED: { label: '已完成', type: '' as const },
+  CLOSED: { label: '已关闭', type: 'info' as const },
+}
+const { getLabel, getType } = useStatusTag(statusMap)
 
-async function loadData() {
-  loading.value = true
-  try {
-    const params: any = {}
+function loadData() {
+  execute(async () => {
+    const params: Record<string, string | number> = {
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+    }
     if (filters.value.orderNo) params.orderNo = filters.value.orderNo
     if (filters.value.status) params.status = filters.value.status
-    const res: any = await getOperatorOrders(params)
-    orders.value = res.data || []
-  } catch {} finally { loading.value = false }
+    const res = await getOperatorOrders(params)
+    orders.value = res.data?.list || []
+    total.value = res.data?.total || 0
+  })
 }
 
-const statusMap: Record<string, { label: string; type: string }> = {
-  PENDING: { label: '待支付', type: 'warning' },
-  PAID: { label: '已支付', type: 'success' },
-  REFUNDED: { label: '已退款', type: 'danger' },
-  COMPLETED: { label: '已完成', type: '' },
-  CLOSED: { label: '已关闭', type: 'info' },
+watch([pageNum, pageSize], loadData)
+
+function handleSearch() {
+  pageNum.value = 1
+  loadData()
 }
+
+loadData()
 </script>
 
 <template>
@@ -47,34 +58,50 @@ const statusMap: Record<string, { label: string; type: string }> = {
       <el-select v-model="filters.status" placeholder="状态" style="width: 120px;" clearable>
         <el-option v-for="(v, k) in statusMap" :key="k" :label="v.label" :value="k" />
       </el-select>
-      <el-button type="primary" @click="loadData">查询</el-button>
+      <el-button type="primary" @click="handleSearch">查询</el-button>
     </div>
 
     <section class="table-shell data-card" :class="{ 'is-mounted': mounted }">
       <el-table :data="orders" v-loading="loading">
-        <el-table-column prop="orderNo" label="订单编号" width="200">
+        <el-table-column label="订单编号" width="200">
           <template #default="{ row }">
-            <span class="mono-text">{{ row.orderNo }}</span>
+            <span class="mono-text">{{ row.order?.orderNo }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="userId" label="用户ID" width="100" />
-        <el-table-column prop="appointmentNo" label="预约编号" width="200">
+        <el-table-column label="用户" width="120">
           <template #default="{ row }">
-            <span class="mono-text">{{ row.appointmentNo }}</span>
+            {{ row.userName || row.order?.userId }}
           </template>
         </el-table-column>
-        <el-table-column prop="totalAmount" label="金额" width="100">
+        <el-table-column label="金额" width="100">
           <template #default="{ row }">
-            <span class="price-text">¥{{ row.totalAmount }}</span>
+            <span class="price-text">¥{{ row.order?.totalAmount }}</span>
           </template>
         </el-table-column>
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="statusMap[row.orderStatus]?.type as any">{{ statusMap[row.orderStatus]?.label }}</el-tag>
+            <el-tag :type="getType(row.order?.status === 0 ? 'PENDING' : row.order?.status === 1 ? 'PAID' : '')">{{ getLabel(row.order?.status === 0 ? 'PENDING' : row.order?.status === 1 ? 'PAID' : '') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
+        <el-table-column label="创建时间" width="180">
+          <template #default="{ row }">
+            {{ row.order?.createdAt }}
+          </template>
+        </el-table-column>
       </el-table>
+
+      <div class="pagination-wrap">
+        <el-pagination
+          v-model:current-page="pageNum"
+          v-model:page-size="pageSize"
+          :total="total"
+          :page-sizes="[10, 20, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @current-change="onPageChange"
+          @size-change="onSizeChange"
+        />
+      </div>
     </section>
   </div>
 </template>
@@ -91,6 +118,14 @@ const statusMap: Record<string, { label: string; type: string }> = {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-line);
 }
 
 .price-text {

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.xixin.health.appointment.entity.AppointmentEntity;
 import com.xixin.health.appointment.entity.ExamPackageEntity;
+import com.xixin.health.appointment.mapper.AppointmentMapper;
 import com.xixin.health.appointment.mapper.ExamPackageMapper;
 import com.xixin.health.appointment.service.AppointmentService;
 import com.xixin.health.common.enums.ErrorCode;
@@ -15,6 +16,7 @@ import com.xixin.health.order.entity.OrderEntity;
 import com.xixin.health.order.entity.OrderItemEntity;
 import com.xixin.health.order.mapper.OrderItemMapper;
 import com.xixin.health.order.mapper.OrderMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,22 +26,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class OrderService {
 
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
     private final AppointmentService appointmentService;
+    private final AppointmentMapper appointmentMapper;
     private final ExamPackageMapper examPackageMapper;
+    private final PaymentService paymentService;
 
     public OrderService(OrderMapper orderMapper,
                         OrderItemMapper orderItemMapper,
                         AppointmentService appointmentService,
-                        ExamPackageMapper examPackageMapper) {
+                        AppointmentMapper appointmentMapper,
+                        ExamPackageMapper examPackageMapper,
+                        PaymentService paymentService) {
         this.orderMapper = orderMapper;
         this.orderItemMapper = orderItemMapper;
         this.appointmentService = appointmentService;
+        this.appointmentMapper = appointmentMapper;
         this.examPackageMapper = examPackageMapper;
+        this.paymentService = paymentService;
     }
 
     @Transactional
@@ -52,12 +61,22 @@ public class OrderService {
                 .eq(OrderEntity::getAppointmentId, appointment.getId())
                 .eq(OrderEntity::getIsDeleted, 0));
         if (count > 0) {
-            throw new BizException(ErrorCode.OPERATION_CONFLICT.getCode(), "该预约已创建订单");
+            OrderEntity existing = orderMapper.selectOne(new LambdaQueryWrapper<OrderEntity>()
+                    .eq(OrderEntity::getAppointmentId, appointment.getId())
+                    .eq(OrderEntity::getIsDeleted, 0)
+                    .last("limit 1"));
+            Map<String, Object> result = new HashMap<>();
+            result.put("orderNo", existing.getOrderNo());
+            result.put("status", getOrderStatusStr(existing.getStatus()));
+            result.put("totalAmount", existing.getTotalAmount());
+            result.put("isExisting", true);
+            return result;
         }
         ExamPackageEntity packageEntity = examPackageMapper.selectById(appointment.getPackageId());
         if (packageEntity == null) {
             throw new BizException(ErrorCode.DATA_NOT_FOUND.getCode(), "套餐不存在");
         }
+
         OrderEntity order = new OrderEntity();
         order.setOrderNo(NoGenerator.next("ORD"));
         order.setAppointmentId(appointment.getId());
@@ -96,12 +115,14 @@ public class OrderService {
             }
         }
 
+        log.info("Order created: orderNo={}, userId={}, amount={}", order.getOrderNo(), order.getUserId(), order.getPayAmount());
+
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("orderNo", order.getOrderNo());
         result.put("totalAmount", order.getTotalAmount());
         result.put("discountAmount", order.getDiscountAmount());
         result.put("payAmount", order.getPayAmount());
-        result.put("status", "WAIT_PAY");
+        result.put("status", "PENDING");
         return result;
     }
 
@@ -123,14 +144,25 @@ public class OrderService {
     @Transactional
     public Map<String, Object> pay(String orderNo) {
         OrderEntity order = detail(orderNo);
-        if (order.getStatus() != 0) {
+        if (order.getStatus() == null || order.getStatus() != 0) {
             throw new BizException(ErrorCode.ORDER_STATUS_INVALID);
         }
+
+        Map<String, Object> payResult = paymentService.createPayment(order);
+        log.info("Payment created: orderNo={}, transactionNo={}", orderNo, payResult.get("transactionNo"));
+
         orderMapper.update(null, new LambdaUpdateWrapper<OrderEntity>()
-                .eq(OrderEntity::getId, order.getId())
+                .eq(OrderEntity::getOrderNo, orderNo)
+                .eq(OrderEntity::getStatus, 0)
                 .set(OrderEntity::getStatus, 1)
-                .set(OrderEntity::getPayChannel, "MOCK")
+                .set(OrderEntity::getPayChannel, "MOCK_SANDBOX")
                 .set(OrderEntity::getPayTime, LocalDateTime.now()));
+
+        appointmentMapper.update(null, new LambdaUpdateWrapper<AppointmentEntity>()
+                .eq(AppointmentEntity::getId, order.getAppointmentId())
+                .eq(AppointmentEntity::getStatus, 0)
+                .set(AppointmentEntity::getStatus, 1));
+
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("orderNo", orderNo);
         result.put("status", "PAID");
@@ -145,5 +177,16 @@ public class OrderService {
             throw new BizException(ErrorCode.DATA_NOT_FOUND.getCode(), "订单不存在");
         }
         return order;
+    }
+
+    private String getOrderStatusStr(Integer status) {
+        if (status == null) return "PENDING";
+        switch (status) {
+            case 0: return "PENDING";
+            case 1: return "PAID";
+            case 2: return "REFUNDED";
+            case 3: return "REFUNDING";
+            default: return "UNKNOWN";
+        }
     }
 }

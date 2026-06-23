@@ -1,14 +1,25 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 const displayName = computed(() => userStore.userInfo?.displayName || '')
 const scrolled = ref(false)
+
+// 计算当前激活的菜单项
+const activeMenu = computed(() => {
+  const path = route.path
+  // 精确匹配首页
+  if (path === '/') return '/'
+  // 匹配其他菜单项（取第一段路径）
+  const match = path.match(/^(\/[^/]+)/)
+  return match ? match[1] : '/'
+})
 
 function goHome() { router.push('/') }
 function goLogin() { router.push('/login') }
@@ -38,7 +49,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
         </div>
 
         <div class="header-nav">
-          <el-menu mode="horizontal" :ellipsis="false" router>
+          <el-menu mode="horizontal" :ellipsis="false" router :default-active="activeMenu">
             <el-menu-item index="/">首页</el-menu-item>
             <el-menu-item index="/packages">体检套餐</el-menu-item>
             <el-menu-item index="/centers">体检中心</el-menu-item>
@@ -145,7 +156,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
 .brand-name {
   font-family: var(--font-display);
   font-size: 16px;
-  font-weight: 400;
+  font-weight: 600;
   color: var(--color-ink);
   line-height: 1.2;
 }
@@ -254,5 +265,12 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
 
 @media (max-width: 640px) {
   .brand-subtitle { display: none; }
+}
+</style>
+
+<style>
+/* 主题特定样式（非 scoped） */
+[data-theme="light"] .default-header .brand-name {
+  color: #3A8F85 !important;
 }
 </style>
