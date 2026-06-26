@@ -19,6 +19,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 预约控制器 - 用户预约体检
+ */
 @RestController
 @RequestMapping("/api/appointments")
 @PreAuthorize("hasRole('USER')")
@@ -30,6 +33,7 @@ public class AppointmentController {
         this.appointmentService = appointmentService;
     }
 
+    /** 查询可用时段 */
     @GetMapping("/available-slots")
     public ApiResult<List<ResourceCapacityEntity>> availableSlots(@RequestParam String centerCode,
                                                                  @RequestParam Long packageId,
@@ -37,21 +41,25 @@ public class AppointmentController {
         return ApiResult.success(appointmentService.availableSlots(centerCode, packageId, date));
     }
 
+    /** 创建预约 */
     @PostMapping
     public ApiResult<Map<String, Object>> create(@Validated @RequestBody CreateAppointmentRequest request) {
         return ApiResult.success(appointmentService.create(request));
     }
 
+    /** 查询预约详情 */
     @GetMapping("/{appointmentNo}")
     public ApiResult<?> detail(@PathVariable String appointmentNo) {
         return ApiResult.success(appointmentService.detail(appointmentNo));
     }
 
+    /** 查询我的预约列表 */
     @GetMapping("/mine")
     public ApiResult<?> mine() {
         return ApiResult.success(appointmentService.mine());
     }
 
+    /** 取消预约 */
     @PostMapping("/{appointmentNo}/cancel")
     public ApiResult<Void> cancel(@PathVariable String appointmentNo, @RequestParam(required = false) String reason) {
         appointmentService.cancel(appointmentNo, reason);

@@ -21,6 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * 认证服务 - 处理登录/注册逻辑
+ */
 @Service
 public class AuthService {
 
@@ -37,6 +40,7 @@ public class AuthService {
         this.staffRoleRelMapper = staffRoleRelMapper;
     }
 
+    /** 用户注册 */
     @Transactional
     public AuthContext.LoginUser register(RegisterRequest request) {
         String username = request.getUsername();
@@ -63,6 +67,7 @@ public class AuthService {
         );
     }
 
+    /** 用户登录(支持用户名/手机号) */
     public AuthContext.LoginUser login(LoginRequest request) {
         StaffAccountEntity staffAccount = staffAccountMapper.selectOne(new LambdaQueryWrapper<StaffAccountEntity>()
                 .eq(StaffAccountEntity::getUsername, request.getUsername())
@@ -108,10 +113,10 @@ public class AuthService {
 
     private AuthContext.LoginUser loginStaff(StaffAccountEntity staffAccount, String rawPassword) {
         if (staffAccount.getStatus() == null || staffAccount.getStatus() != 1) {
-            throw new BizException(ErrorCode.LOGIN_FAILED);
+            throw new BizException(ErrorCode.LOGIN_FAILED.getCode(), "账号已被封禁");
         }
         if (!passwordEncoder.matches(rawPassword, staffAccount.getPasswordHash())) {
-            throw new BizException(ErrorCode.LOGIN_FAILED);
+            throw new BizException(ErrorCode.LOGIN_FAILED.getCode(), "账号已被封禁");
         }
         List<StaffRoleRelEntity> roles = staffRoleRelMapper.selectList(new LambdaQueryWrapper<StaffRoleRelEntity>()
                 .eq(StaffRoleRelEntity::getStaffAccountId, staffAccount.getId())

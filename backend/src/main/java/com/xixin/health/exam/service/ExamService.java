@@ -10,7 +10,9 @@ import com.xixin.health.common.enums.ErrorCode;
 import com.xixin.health.common.exception.BizException;
 import com.xixin.health.common.util.AuthContext;
 import com.xixin.health.common.util.NoGenerator;
+import com.xixin.health.exam.dto.ExamResultEntryDto;
 import com.xixin.health.exam.dto.GenerateExamTaskRequest;
+import com.xixin.health.exam.dto.GuideItemVO;
 import com.xixin.health.exam.dto.SubmitExamResultRequest;
 import com.xixin.health.exam.entity.ExamDepartmentRouteEntity;
 import com.xixin.health.exam.entity.ExamResultEntity;
@@ -21,19 +23,28 @@ import com.xixin.health.exam.mapper.ExamResultMapper;
 import com.xixin.health.exam.mapper.ExamTaskItemMapper;
 import com.xixin.health.exam.mapper.ExamTaskMapper;
 import com.xixin.health.order.entity.OrderEntity;
-import com.xixin.health.order.service.OrderService;
+import com.xixin.health.order.mapper.OrderMapper;
+import com.xixin.health.report.service.ReportService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
+@Slf4j
 public class ExamService {
 
-    private final OrderService orderService;
+    private final OrderMapper orderMapper;
     private final AppointmentMapper appointmentMapper;
     private final ExamTaskMapper examTaskMapper;
     private final ExamTaskItemMapper examTaskItemMapper;
@@ -41,16 +52,18 @@ public class ExamService {
     private final ExamDepartmentRouteMapper examDepartmentRouteMapper;
     private final ExamResultMapper examResultMapper;
     private final DoctorAssignmentService doctorAssignmentService;
+    private final ReportService reportService;
 
-    public ExamService(OrderService orderService,
+    public ExamService(OrderMapper orderMapper,
                        AppointmentMapper appointmentMapper,
                        ExamTaskMapper examTaskMapper,
                        ExamTaskItemMapper examTaskItemMapper,
                        ExamPackageItemMapper examPackageItemMapper,
                        ExamDepartmentRouteMapper examDepartmentRouteMapper,
                        ExamResultMapper examResultMapper,
-                       DoctorAssignmentService doctorAssignmentService) {
-        this.orderService = orderService;
+                       DoctorAssignmentService doctorAssignmentService,
+                       ReportService reportService) {
+        this.orderMapper = orderMapper;
         this.appointmentMapper = appointmentMapper;
         this.examTaskMapper = examTaskMapper;
         this.examTaskItemMapper = examTaskItemMapper;
@@ -58,20 +71,35 @@ public class ExamService {
         this.examDepartmentRouteMapper = examDepartmentRouteMapper;
         this.examResultMapper = examResultMapper;
         this.doctorAssignmentService = doctorAssignmentService;
+        this.reportService = reportService;
     }
 
     @Transactional
     public Map<String, Object> generateTask(GenerateExamTaskRequest request) {
-        OrderEntity order = orderService.getByNo(request.getOrderNo());
+        OrderEntity order = getOrderByNo(request.getOrderNo());
+        return generateTaskForPaidOrder(order);
+    }
+
+    @Transactional
+    public Map<String, Object> generateTaskForPaidOrder(OrderEntity order) {
         if (order.getStatus() == null || order.getStatus() != 1) {
             throw new BizException(ErrorCode.ORDER_STATUS_INVALID.getCode(), "订单未支付，不能生成体检任务");
         }
-        long taskCount = examTaskMapper.selectCount(new LambdaQueryWrapper<ExamTaskEntity>()
+
+        ExamTaskEntity existing = examTaskMapper.selectOne(new LambdaQueryWrapper<ExamTaskEntity>()
                 .eq(ExamTaskEntity::getOrderId, order.getId())
-                .eq(ExamTaskEntity::getIsDeleted, 0));
-        if (taskCount > 0) {
-            throw new BizException(ErrorCode.OPERATION_CONFLICT.getCode(), "该订单已生成体检任务");
+                .eq(ExamTaskEntity::getIsDeleted, 0)
+                .last("limit 1"));
+        if (existing != null) {
+            Map<String, Object> result = new HashMap<String, Object>();
+            result.put("taskNo", existing.getTaskNo());
+            result.put("appointmentNo", existing.getAppointmentNo());
+            result.put("packageId", existing.getPackageId());
+            result.put("status", "WAIT_EXAM");
+            result.put("isExisting", true);
+            return result;
         }
+
         AppointmentEntity appointment = appointmentMapper.selectById(order.getAppointmentId());
         ExamTaskEntity task = new ExamTaskEntity();
         task.setTaskNo(NoGenerator.next("ET"));
@@ -93,17 +121,28 @@ public class ExamService {
                 .eq(ExamPackageItemEntity::getPackageId, order.getPackageId())
                 .eq(ExamPackageItemEntity::getIsDeleted, 0)
                 .orderByAsc(ExamPackageItemEntity::getSortNo));
+        if (packageItems.isEmpty()) {
+            throw new BizException(ErrorCode.PACKAGE_ITEM_REQUIRED);
+        }
+
         int sort = 1;
+        Set<Long> assignedDoctorIds = new LinkedHashSet<Long>();
         for (ExamPackageItemEntity packageItem : packageItems) {
             ExamDepartmentRouteEntity route = examDepartmentRouteMapper.selectOne(new LambdaQueryWrapper<ExamDepartmentRouteEntity>()
                     .eq(ExamDepartmentRouteEntity::getCenterCode, appointment.getCenterCode())
                     .eq(ExamDepartmentRouteEntity::getPackageId, order.getPackageId())
                     .eq(ExamDepartmentRouteEntity::getItemCode, packageItem.getItemCode())
                     .eq(ExamDepartmentRouteEntity::getStatus, 1)
-                    .eq(ExamDepartmentRouteEntity::getIsDeleted, 0));
+                    .eq(ExamDepartmentRouteEntity::getIsDeleted, 0)
+                    .last("limit 1"));
+            if (route == null) {
+                throw new BizException(ErrorCode.DOCTOR_ASSIGN_INVALID.getCode(),
+                        "检查项未配置科室路线: " + packageItem.getItemCode());
+            }
 
-            // 智能分配医生
-            Map<String, Object> doctorAssignment = doctorAssignmentService.assignFromRoute(route);
+            Map<String, Object> doctorAssignment = doctorAssignmentService.assignFromRoute(route, assignedDoctorIds);
+            Long assignedDoctorId = ((Number) doctorAssignment.get("doctorId")).longValue();
+            assignedDoctorIds.add(assignedDoctorId);
 
             ExamTaskItemEntity taskItem = new ExamTaskItemEntity();
             taskItem.setTaskItemNo(NoGenerator.next("ETI"));
@@ -111,12 +150,12 @@ public class ExamService {
             taskItem.setTaskNo(task.getTaskNo());
             taskItem.setItemCode(packageItem.getItemCode());
             taskItem.setItemName(packageItem.getItemName());
-            taskItem.setDepartmentCode(route == null ? "DEFAULT" : route.getDepartmentCode());
-            taskItem.setDepartmentName(route == null ? "默认科室" : route.getDepartmentName());
-            taskItem.setDoctorId(((Number) doctorAssignment.get("doctorId")).longValue());
+            taskItem.setDepartmentCode(route.getDepartmentCode());
+            taskItem.setDepartmentName(route.getDepartmentName());
+            taskItem.setDoctorId(assignedDoctorId);
             taskItem.setDoctorName((String) doctorAssignment.get("doctorName"));
-            taskItem.setRoomNo(route == null ? "待分配" : route.getRoomNo());
-            taskItem.setRouteSort(route == null ? sort : route.getRouteSort());
+            taskItem.setRoomNo(route.getRoomNo());
+            taskItem.setRouteSort(route.getRouteSort() == null ? sort : route.getRouteSort());
             taskItem.setItemStatus(0);
             taskItem.setEntryStatus(0);
             taskItem.setIsDeleted(0);
@@ -161,24 +200,85 @@ public class ExamService {
                 .orderByAsc(ExamTaskItemEntity::getRouteSort));
     }
 
-    public List<ExamTaskItemEntity> guide(String taskNo) {
-        return taskItemsForUser(taskNo);
+    public List<GuideItemVO> guide(String taskNo) {
+        ExamTaskEntity task = detail(taskNo);
+        List<ExamTaskItemEntity> items = taskItemsForUser(taskNo);
+        List<ExamDepartmentRouteEntity> routes = examDepartmentRouteMapper.selectList(
+                new LambdaQueryWrapper<ExamDepartmentRouteEntity>()
+                        .eq(ExamDepartmentRouteEntity::getCenterCode, task.getCenterCode())
+                        .eq(ExamDepartmentRouteEntity::getPackageId, task.getPackageId())
+                        .eq(ExamDepartmentRouteEntity::getStatus, 1)
+                        .eq(ExamDepartmentRouteEntity::getIsDeleted, 0)
+                        .orderByAsc(ExamDepartmentRouteEntity::getRouteSort));
+
+        Map<String, ExamDepartmentRouteEntity> routeMap = new HashMap<String, ExamDepartmentRouteEntity>();
+        for (ExamDepartmentRouteEntity route : routes) {
+            routeMap.put(route.getItemCode(), route);
+        }
+
+        List<GuideItemVO> result = new ArrayList<GuideItemVO>();
+        for (ExamTaskItemEntity item : items) {
+            GuideItemVO vo = new GuideItemVO();
+            vo.setTaskItemId(item.getId());
+            vo.setTaskItemNo(item.getTaskItemNo());
+            vo.setItemCode(item.getItemCode());
+            vo.setItemName(item.getItemName());
+            vo.setDoctorName(item.getDoctorName());
+            vo.setItemStatus(item.getItemStatus());
+
+            ExamDepartmentRouteEntity route = routeMap.get(item.getItemCode());
+            if (route != null) {
+                vo.setDepartmentCode(route.getDepartmentCode());
+                vo.setDepartmentName(route.getDepartmentName());
+                vo.setRoomNo(route.getRoomNo());
+                vo.setFloorNo(route.getFloorNo());
+                vo.setBuildingNo(route.getBuildingNo());
+                vo.setGuideText(route.getGuideText());
+                vo.setNeedEmptyStomach(route.getNeedEmptyStomach());
+                vo.setRouteSort(route.getRouteSort());
+            } else {
+                vo.setDepartmentCode(item.getDepartmentCode());
+                vo.setDepartmentName(item.getDepartmentName());
+                vo.setRoomNo(item.getRoomNo());
+            }
+            result.add(vo);
+        }
+
+        result.sort((left, right) -> {
+            Integer leftSort = left.getRouteSort() == null ? Integer.MAX_VALUE : left.getRouteSort();
+            Integer rightSort = right.getRouteSort() == null ? Integer.MAX_VALUE : right.getRouteSort();
+            return leftSort.compareTo(rightSort);
+        });
+        return result;
     }
 
     public List<ExamTaskItemEntity> doctorTodo() {
         return examTaskItemMapper.selectList(new LambdaQueryWrapper<ExamTaskItemEntity>()
-                .eq(ExamTaskItemEntity::getDoctorId, AuthContext.getUserId())
+                .eq(ExamTaskItemEntity::getDoctorId, AuthContext.getAccountId())
                 .eq(ExamTaskItemEntity::getIsDeleted, 0)
                 .in(ExamTaskItemEntity::getItemStatus, 0, 1, 4)
                 .orderByAsc(ExamTaskItemEntity::getId));
     }
 
-    public ExamTaskItemEntity doctorItemDetail(String taskNo, String taskItemNo) {
+    public Map<String, Object> doctorItemDetail(String taskNo, String taskItemNo) {
         ExamTaskItemEntity item = getDoctorTaskItem(taskNo, taskItemNo);
-        if (!AuthContext.getUserId().equals(item.getDoctorId())) {
-            throw new BizException(ErrorCode.DOCTOR_ASSIGN_INVALID);
-        }
-        return item;
+        ExamTaskEntity task = getTaskByNo(taskNo);
+        ExamPackageItemEntity packageItem = examPackageItemMapper.selectOne(new LambdaQueryWrapper<ExamPackageItemEntity>()
+                .eq(ExamPackageItemEntity::getPackageId, task.getPackageId())
+                .eq(ExamPackageItemEntity::getItemCode, item.getItemCode())
+                .eq(ExamPackageItemEntity::getIsDeleted, 0)
+                .last("limit 1"));
+
+        Map<String, Object> preset = new HashMap<String, Object>();
+        preset.put("metricCode", packageItem == null ? item.getItemCode() : packageItem.getItemCode());
+        preset.put("metricName", packageItem == null ? item.getItemName() : packageItem.getItemName());
+        preset.put("unit", packageItem == null ? null : packageItem.getUnit());
+        preset.put("refRange", packageItem == null ? null : packageItem.getRefRange());
+
+        Map<String, Object> result = new HashMap<String, Object>();
+        result.put("item", item);
+        result.put("presetMetrics", Collections.singletonList(preset));
+        return result;
     }
 
     @Transactional
@@ -198,13 +298,14 @@ public class ExamService {
     @Transactional
     public Map<String, Object> submitResult(String taskNo, String taskItemNo, SubmitExamResultRequest request) {
         ExamTaskItemEntity item = getDoctorTaskItem(taskNo, taskItemNo);
-        for (com.xixin.health.exam.dto.ExamResultEntryDto entry : request.getResultEntries()) {
+        ExamTaskEntity task = getTaskByNo(taskNo);
+        for (ExamResultEntryDto entry : request.getResultEntries()) {
             ExamResultEntity result = new ExamResultEntity();
             result.setResultNo(NoGenerator.next("ER"));
             result.setTaskId(item.getTaskId());
             result.setTaskItemId(item.getId());
             result.setTaskItemNo(item.getTaskItemNo());
-            result.setUserId(getTaskByNo(taskNo).getUserId());
+            result.setUserId(task.getUserId());
             result.setItemCode(entry.getMetricCode());
             result.setItemName(entry.getMetricName());
             result.setResultType(request.getItemCode());
@@ -215,8 +316,8 @@ public class ExamService {
             result.setConclusion(request.getConclusion());
             result.setIsAbnormal(Boolean.TRUE.equals(entry.getAbnormal()) ? 1 : 0);
             result.setAbnormalLevel(entry.getAbnormalLevel() == null ? 0 : entry.getAbnormalLevel());
-            result.setEntryDoctorId(AuthContext.getUserId());
-            result.setEntryDoctorName(AuthContext.get().getUsername());
+            result.setEntryDoctorId(AuthContext.getAccountId());
+            result.setEntryDoctorName(AuthContext.get() == null ? null : AuthContext.get().getUsername());
             result.setEntryTime(LocalDateTime.now());
             result.setAuditStatus(0);
             result.setIsDeleted(0);
@@ -225,6 +326,7 @@ public class ExamService {
         examTaskItemMapper.update(null, new LambdaUpdateWrapper<ExamTaskItemEntity>()
                 .eq(ExamTaskItemEntity::getId, item.getId())
                 .set(ExamTaskItemEntity::getEntryStatus, 2));
+
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("taskItemNo", taskItemNo);
         result.put("entryStatus", "SAVED");
@@ -240,10 +342,12 @@ public class ExamService {
         if (resultCount == 0) {
             throw new BizException(ErrorCode.OPERATION_CONFLICT.getCode(), "请先录入检查结果");
         }
+
         examTaskItemMapper.update(null, new LambdaUpdateWrapper<ExamTaskItemEntity>()
                 .eq(ExamTaskItemEntity::getId, item.getId())
                 .set(ExamTaskItemEntity::getItemStatus, 2)
                 .set(ExamTaskItemEntity::getCompleteTime, LocalDateTime.now()));
+
         long remain = examTaskItemMapper.selectCount(new LambdaQueryWrapper<ExamTaskItemEntity>()
                 .eq(ExamTaskItemEntity::getTaskId, item.getTaskId())
                 .eq(ExamTaskItemEntity::getIsDeleted, 0)
@@ -254,17 +358,51 @@ public class ExamService {
                     .set(ExamTaskEntity::getTaskStatus, 2)
                     .set(ExamTaskEntity::getGuideStatus, 2)
                     .set(ExamTaskEntity::getCompleteTime, LocalDateTime.now()));
+            triggerReportGenerationAfterCommit(taskNo);
         }
     }
 
     public ExamTaskEntity getTaskByNo(String taskNo) {
         ExamTaskEntity task = examTaskMapper.selectOne(new LambdaQueryWrapper<ExamTaskEntity>()
                 .eq(ExamTaskEntity::getTaskNo, taskNo)
-                .eq(ExamTaskEntity::getIsDeleted, 0));
+                .eq(ExamTaskEntity::getIsDeleted, 0)
+                .last("limit 1"));
         if (task == null) {
             throw new BizException(ErrorCode.EXAM_TASK_NOT_FOUND);
         }
         return task;
+    }
+
+    private OrderEntity getOrderByNo(String orderNo) {
+        OrderEntity order = orderMapper.selectOne(new LambdaQueryWrapper<OrderEntity>()
+                .eq(OrderEntity::getOrderNo, orderNo)
+                .eq(OrderEntity::getIsDeleted, 0)
+                .last("limit 1"));
+        if (order == null) {
+            throw new BizException(ErrorCode.DATA_NOT_FOUND.getCode(), "订单不存在");
+        }
+        return order;
+    }
+
+    private void triggerReportGenerationAfterCommit(final String taskNo) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    autoGenerateReport(taskNo);
+                }
+            });
+            return;
+        }
+        autoGenerateReport(taskNo);
+    }
+
+    private void autoGenerateReport(String taskNo) {
+        try {
+            reportService.autoGenerateForCompletedTask(taskNo);
+        } catch (Exception exception) {
+            log.error("Auto generate report failed: taskNo={}", taskNo, exception);
+        }
     }
 
     private ExamTaskItemEntity getDoctorTaskItem(String taskNo, String taskItemNo) {
@@ -272,11 +410,12 @@ public class ExamService {
         ExamTaskItemEntity item = examTaskItemMapper.selectOne(new LambdaQueryWrapper<ExamTaskItemEntity>()
                 .eq(ExamTaskItemEntity::getTaskId, task.getId())
                 .eq(ExamTaskItemEntity::getTaskItemNo, taskItemNo)
-                .eq(ExamTaskItemEntity::getIsDeleted, 0));
+                .eq(ExamTaskItemEntity::getIsDeleted, 0)
+                .last("limit 1"));
         if (item == null) {
             throw new BizException(ErrorCode.DATA_NOT_FOUND.getCode(), "检查项不存在");
         }
-        if (!AuthContext.getUserId().equals(item.getDoctorId())) {
+        if (!AuthContext.getAccountId().equals(item.getDoctorId())) {
             throw new BizException(ErrorCode.DOCTOR_ASSIGN_INVALID);
         }
         return item;

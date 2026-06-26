@@ -8,6 +8,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * 体检任务检查项实体
+ */
 @Data
 @TableName("exam_task_item")
 public class ExamTaskItemEntity extends BaseEntity {

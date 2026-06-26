@@ -9,6 +9,9 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * 体检结果实体
+ */
 @Data
 @TableName("exam_result")
 public class ExamResultEntity extends BaseEntity {

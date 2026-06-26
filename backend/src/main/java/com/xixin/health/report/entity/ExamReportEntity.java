@@ -9,6 +9,9 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * 体检报告实体
+ */
 @Data
 @TableName("exam_report")
 public class ExamReportEntity extends BaseEntity {

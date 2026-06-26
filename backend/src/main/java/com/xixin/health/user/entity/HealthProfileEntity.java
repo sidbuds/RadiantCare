@@ -6,6 +6,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.xixin.health.common.model.BaseEntity;
 import lombok.Data;
 
+/**
+ * 健康档案实体
+ */
 @Data
 @TableName("health_profile")
 public class HealthProfileEntity extends BaseEntity {

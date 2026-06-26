@@ -5,6 +5,9 @@ import lombok.Data;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
+/**
+ * 创建咨询请求参数
+ */
 @Data
 public class CreateConsultationRequest {
     @NotBlank(message = "报告编号不能为空")

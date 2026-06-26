@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 管理端咨询控制器
+ */
+@Deprecated
 @RestController
 @RequestMapping("/api/admin/doctor-consultations")
 @PreAuthorize("hasRole('ADMIN')")
@@ -22,6 +26,7 @@ public class AdminConsultationController {
         this.consultationService = consultationService;
     }
 
+    /** 分配医生 */
     @PostMapping("/{consultationNo}/assign")
     public ApiResult<?> assign(@PathVariable String consultationNo, @Validated @RequestBody AssignConsultationRequest request) {
         return ApiResult.success(consultationService.assign(consultationNo, request));

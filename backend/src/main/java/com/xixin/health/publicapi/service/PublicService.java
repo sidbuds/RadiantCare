@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.*;
 
+/**
+ * 公开接口服务 - 套餐/中心/指南等公开数据
+ */
 @Service
 public class PublicService {
 
@@ -32,6 +35,7 @@ public class PublicService {
         this.resourceCapacityMapper = resourceCapacityMapper;
     }
 
+    /** 查询可用套餐列表 */
     public List<ExamPackageEntity> listPackages() {
         return examPackageMapper.selectList(new LambdaQueryWrapper<ExamPackageEntity>()
                 .eq(ExamPackageEntity::getStatus, 1)
@@ -39,6 +43,7 @@ public class PublicService {
                 .orderByAsc(ExamPackageEntity::getId));
     }
 
+    /** 查询套餐详情 */
     public Map<String, Object> getPackageDetail(String packageCode) {
         ExamPackageEntity pkg = examPackageMapper.selectOne(new LambdaQueryWrapper<ExamPackageEntity>()
                 .eq(ExamPackageEntity::getPackageCode, packageCode)
@@ -64,6 +69,7 @@ public class PublicService {
         return result;
     }
 
+    /** 查询体检中心列表 */
     public List<ExamCenterEntity> listCenters() {
         return examCenterMapper.selectList(new LambdaQueryWrapper<ExamCenterEntity>()
                 .eq(ExamCenterEntity::getStatus, 1)
@@ -71,6 +77,7 @@ public class PublicService {
                 .orderByAsc(ExamCenterEntity::getId));
     }
 
+    /** 查询体检中心详情 */
     public ExamCenterEntity getCenterDetail(String centerCode) {
         return examCenterMapper.selectOne(new LambdaQueryWrapper<ExamCenterEntity>()
                 .eq(ExamCenterEntity::getCenterCode, centerCode)
@@ -79,6 +86,7 @@ public class PublicService {
                 .last("limit 1"));
     }
 
+    /** 查询体检中心可用时段 */
     public List<ResourceCapacityEntity> getCenterSlots(String centerCode, LocalDate date) {
         if (date == null) {
             date = LocalDate.now();
@@ -91,6 +99,7 @@ public class PublicService {
                 .orderByAsc(ResourceCapacityEntity::getTimeSlotCode));
     }
 
+    /** 获取体检指南 */
     public Map<String, Object> getCheckupGuide() {
         Map<String, Object> guide = new LinkedHashMap<>();
         List<Map<String, String>> steps = new ArrayList<>();
@@ -125,6 +134,7 @@ public class PublicService {
         return guide;
     }
 
+    /** 获取常见问题 */
     public List<Map<String, String>> getFaq() {
         List<Map<String, String>> faqList = new ArrayList<>();
 

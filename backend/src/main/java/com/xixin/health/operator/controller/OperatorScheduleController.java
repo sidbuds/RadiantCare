@@ -22,6 +22,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 运营端排班控制器
+ */
 @RestController
 @RequestMapping("/api/operator/schedules")
 @PreAuthorize("hasRole('OPERATOR')")
@@ -35,12 +38,13 @@ public class OperatorScheduleController {
 
     @GetMapping
     public ApiResult<?> list(@RequestParam(required = false) String centerCode,
+                             @RequestParam(required = false) String departmentCode,
                              @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                              @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
                              @RequestParam(defaultValue = "1") int pageNum,
                              @RequestParam(defaultValue = "10") int pageSize) {
         PageHelper.startPage(pageNum, pageSize);
-        List<?> list = operatorScheduleService.list(centerCode, startDate, endDate);
+        List<?> list = operatorScheduleService.list(centerCode, departmentCode, startDate, endDate);
         PageInfo<?> pageInfo = new PageInfo<>(list);
         return ApiResult.success(PageResult.of(list, pageInfo.getTotal(), pageNum, pageSize));
     }

@@ -1,22 +1,36 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { createCompareTask, getCompareTask, getCompareResults, getHealthAdvice } from '@/api/compare'
+import { getMyReports } from '@/api/report'
 import { ElMessage } from 'element-plus'
+import type { ExamReport } from '@/types/api'
 
 const form = ref({ baselineReportNo: '', compareReportNo: '' })
 const loading = ref(false)
 const compareResult = ref<any>(null)
 const results = ref<any[]>([])
 const advice = ref<any[]>([])
+const reports = ref<ExamReport[]>([])
 const mounted = ref(false)
 
-onMounted(() => {
+onMounted(async () => {
   mounted.value = true
+  const res = await getMyReports()
+  reports.value = res.data || []
 })
+
+function reportLabel(report: ExamReport) {
+  const date = report.reportDate || report.publishedAt || report.createdAt || ''
+  return `${report.reportNo} / ${report.packageName || '体检报告'} / ${date}`
+}
 
 async function handleCompare() {
   if (!form.value.baselineReportNo || !form.value.compareReportNo) {
-    ElMessage.warning('请输入两份报告编号')
+    ElMessage.warning('请选择两份报告')
+    return
+  }
+  if (form.value.baselineReportNo === form.value.compareReportNo) {
+    ElMessage.warning('不能选择同一份报告进行对比')
     return
   }
   loading.value = true
@@ -29,9 +43,11 @@ async function handleCompare() {
       getHealthAdvice(taskNo),
     ])
     compareResult.value = taskRes.data
-    results.value = resultsRes.data || []
+    results.value = resultsRes.data?.compareResults || resultsRes.data || []
     advice.value = adviceRes.data || []
-  } catch {} finally { loading.value = false }
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -42,16 +58,32 @@ async function handleCompare() {
         <span class="section-eyebrow">REPORT COMPARE</span>
         <h2>历年报告对比</h2>
       </div>
-      <p>对比两份报告的指标变化，了解健康趋势。</p>
+      <p>选择两份已发布报告，生成指标变化趋势和健康建议。</p>
     </div>
 
     <div class="compare-form-card glass-panel" :class="{ 'is-mounted': mounted }">
       <el-form :inline="true" :model="form">
         <el-form-item label="基线报告">
-          <el-input v-model="form.baselineReportNo" placeholder="报告编号" />
+          <el-select v-model="form.baselineReportNo" filterable placeholder="请选择报告" style="width: 300px;">
+            <el-option
+              v-for="report in reports"
+              :key="report.reportNo"
+              :label="reportLabel(report)"
+              :value="report.reportNo"
+              :disabled="report.reportNo === form.compareReportNo"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="对比报告">
-          <el-input v-model="form.compareReportNo" placeholder="报告编号" />
+          <el-select v-model="form.compareReportNo" filterable placeholder="请选择报告" style="width: 300px;">
+            <el-option
+              v-for="report in reports"
+              :key="report.reportNo"
+              :label="reportLabel(report)"
+              :value="report.reportNo"
+              :disabled="report.reportNo === form.baselineReportNo"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleCompare">
@@ -100,14 +132,6 @@ async function handleCompare() {
     opacity: 1;
     transform: translateY(0);
   }
-
-  .btn-arrow {
-    transition: transform 0.3s var(--ease-out-expo);
-  }
-
-  .el-button:hover .btn-arrow {
-    transform: translateX(3px);
-  }
 }
 
 .results-card,
@@ -117,7 +141,6 @@ async function handleCompare() {
   opacity: 0;
   transform: translateY(16px);
   transition: opacity 0.4s var(--ease-out-expo), transform 0.4s var(--ease-out-expo);
-  transition-delay: 0.2s;
 
   &.is-mounted {
     opacity: 1;
@@ -131,19 +154,6 @@ async function handleCompare() {
   font-weight: 700;
   color: var(--color-ink);
   margin: 0 0 20px;
-  padding-left: 16px;
-  position: relative;
-
-  &::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 4px;
-    bottom: 4px;
-    width: 4px;
-    border-radius: 2px;
-    background: linear-gradient(180deg, var(--color-brand), var(--color-accent));
-  }
 }
 
 .advice-item {
@@ -151,19 +161,6 @@ async function handleCompare() {
   gap: 16px;
   padding: 18px 0;
   border-bottom: 1px solid var(--color-line);
-
-  &:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  &:first-child {
-    padding-top: 0;
-  }
-}
-
-.advice-marker {
-  flex-shrink: 0;
 }
 
 .marker-icon {
@@ -175,30 +172,5 @@ async function handleCompare() {
   border-radius: var(--radius-sm);
   background: var(--color-accent-light);
   color: var(--color-accent);
-}
-
-.advice-content {
-  h4 {
-    font-family: var(--font-display);
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--color-ink);
-    margin: 0 0 6px;
-  }
-
-  p {
-    font-size: 14px;
-    color: var(--color-ink-muted);
-    line-height: 1.75;
-    margin: 0;
-  }
-}
-
-@media (max-width: 768px) {
-  .compare-form-card,
-  .results-card,
-  .advice-card {
-    padding: 24px;
-  }
 }
 </style>

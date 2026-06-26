@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { getOperatorPackages, createOperatorPackage, updateOperatorPackage } from '@/api/operator'
-import type { PackageFormData } from '@/api/operator'
+import {
+  getOperatorPackages,
+  getOperatorPackageDetail,
+  createOperatorPackage,
+  updateOperatorPackage,
+  updateOperatorPackageStatus,
+  getExamItemOptions,
+} from '@/api/operator'
+import type { ExamItemOption, PackageFormData } from '@/api/operator'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useLoading, usePagination } from '@/composables'
@@ -11,6 +18,7 @@ const { loading, mounted, execute } = useLoading()
 const { pageNum, pageSize, total, onPageChange, onSizeChange } = usePagination()
 
 const packages = ref<PackageItem[]>([])
+const itemOptions = ref<ExamItemOption[]>([])
 const dialogVisible = ref(false)
 const editing = ref(false)
 const formRef = ref<FormInstance>()
@@ -50,6 +58,11 @@ function loadPackages() {
   })
 }
 
+async function loadItemOptions() {
+  const res = await getExamItemOptions()
+  itemOptions.value = res.data || []
+}
+
 watch([pageNum, pageSize], loadPackages)
 
 function openCreate() {
@@ -59,10 +72,12 @@ function openCreate() {
   formRef.value?.clearValidate()
 }
 
-function openEdit(row: PackageItem) {
+async function openEdit(row: PackageItem) {
   editing.value = true
-  const packageWithItems = row as PackageItem & Pick<PackageFormData, 'items'>
-  form.value = { ...row, items: packageWithItems.items || [{ itemCode: '', itemName: '', sortNo: 1 }] }
+  const detail = await getOperatorPackageDetail(row.id)
+  const pkg = detail.data || row
+  const packageWithItems = pkg as PackageItem & Pick<PackageFormData, 'items'>
+  form.value = { ...pkg, items: packageWithItems.items?.length ? packageWithItems.items as any : [{ itemCode: '', itemName: '', sortNo: 1 }] }
   dialogVisible.value = true
   formRef.value?.clearValidate()
 }
@@ -73,6 +88,25 @@ function addItem() {
 
 function removeItem(index: number) {
   form.value.items.splice(index, 1)
+}
+
+function handleItemChange(index: number, itemCode: string) {
+  const option = itemOptions.value.find((item) => item.itemCode === itemCode)
+  if (!option) return
+  form.value.items[index] = {
+    ...form.value.items[index],
+    itemCode: option.itemCode,
+    itemName: option.itemName,
+    unit: option.unit,
+    refRange: option.refRange,
+  } as any
+}
+
+async function handleToggleStatus(row: PackageItem) {
+  const nextStatus = row.status === 1 ? 0 : 1
+  await updateOperatorPackageStatus(row.id, nextStatus)
+  ElMessage.success(nextStatus === 1 ? '已启用' : '已停用')
+  loadPackages()
 }
 
 async function handleSubmit() {
@@ -96,6 +130,7 @@ async function handleSubmit() {
 }
 
 loadPackages()
+loadItemOptions()
 </script>
 
 <template>
@@ -130,9 +165,12 @@ loadPackages()
             <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '启用' : '停用' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120">
+        <el-table-column label="操作" width="160">
           <template #default="{ row }">
             <el-button type="primary" link @click="openEdit(row)">编辑</el-button>
+            <el-button :type="row.status === 1 ? 'danger' : 'success'" link @click="handleToggleStatus(row)">
+              {{ row.status === 1 ? '停用' : '启用' }}
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -179,7 +217,20 @@ loadPackages()
         </el-form-item>
         <el-form-item label="检查项">
           <div v-for="(item, index) in form.items" :key="index" style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <el-input v-model="item.itemCode" placeholder="编码" style="width: 120px;" />
+            <el-select
+              v-model="item.itemCode"
+              filterable
+              placeholder="编码/名称"
+              style="width: 220px;"
+              @change="(value: string) => handleItemChange(index, value)"
+            >
+              <el-option
+                v-for="option in itemOptions"
+                :key="option.itemCode"
+                :label="`${option.itemCode} / ${option.itemName}`"
+                :value="option.itemCode"
+              />
+            </el-select>
             <el-input v-model="item.itemName" placeholder="名称" style="width: 160px;" />
             <el-input-number v-model="item.sortNo" placeholder="排序" style="width: 100px;" :controls="false" />
             <el-button type="danger" :icon="'Delete'" circle size="small" @click="removeItem(index)" />

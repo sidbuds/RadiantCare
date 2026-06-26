@@ -1,44 +1,79 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { getDoctorConsultationTodo, replyConsultation } from '@/api/consultation'
+import { computed, onMounted, ref } from 'vue'
+import { getDoctorConsultation, getDoctorConsultationTodo, replyConsultation } from '@/api/consultation'
 import { ElMessage } from 'element-plus'
 
 const consultations = ref<any[]>([])
+const current = ref<any | null>(null)
+const replies = ref<any[]>([])
 const loading = ref(true)
+const detailLoading = ref(false)
+const sending = ref(false)
 const mounted = ref(false)
-const dialogVisible = ref(false)
-const currentNo = ref('')
-const replyForm = ref({ replyContent: '', attachmentUrl: '' })
-const replying = ref(false)
+const replyText = ref('')
 
-onMounted(async () => {
-  mounted.value = true
+const currentNo = computed(() => current.value?.consultationNo || '')
+const isClosed = computed(() => current.value?.consultationStatus === 3)
+
+function statusLabel(status: number) {
+  if (status === 2) return '已回复'
+  if (status === 3) return '已关闭'
+  return '待回复'
+}
+
+function statusType(status: number) {
+  if (status === 2) return 'success'
+  if (status === 3) return 'info'
+  return 'warning'
+}
+
+async function loadList(selectNo?: string) {
+  loading.value = true
   try {
     const res: any = await getDoctorConsultationTodo()
     consultations.value = res.data || []
-  } catch {} finally { loading.value = false }
-})
-
-function openReply(no: string) {
-  currentNo.value = no
-  replyForm.value = { replyContent: '', attachmentUrl: '' }
-  dialogVisible.value = true
+    const nextNo = selectNo || currentNo.value || consultations.value[0]?.consultationNo
+    if (nextNo) {
+      await selectConsultation(nextNo)
+    } else {
+      current.value = null
+      replies.value = []
+    }
+  } finally {
+    loading.value = false
+  }
 }
 
-async function handleReply() {
-  if (!replyForm.value.replyContent) {
+async function selectConsultation(no: string) {
+  detailLoading.value = true
+  try {
+    const res: any = await getDoctorConsultation(no)
+    current.value = res.data?.consultation
+    replies.value = res.data?.replies || []
+  } finally {
+    detailLoading.value = false
+  }
+}
+
+async function sendReply() {
+  if (!currentNo.value || !replyText.value.trim()) {
     ElMessage.warning('请输入回复内容')
     return
   }
-  replying.value = true
+  sending.value = true
   try {
-    await replyConsultation(currentNo.value, replyForm.value)
-    ElMessage.success('回复成功')
-    dialogVisible.value = false
-    const res: any = await getDoctorConsultationTodo()
-    consultations.value = res.data || []
-  } catch {} finally { replying.value = false }
+    await replyConsultation(currentNo.value, { replyContent: replyText.value.trim() })
+    replyText.value = ''
+    await loadList(currentNo.value)
+  } finally {
+    sending.value = false
+  }
 }
+
+onMounted(() => {
+  mounted.value = true
+  loadList()
+})
 </script>
 
 <template>
@@ -46,74 +81,227 @@ async function handleReply() {
     <div class="page-header">
       <div>
         <span class="section-eyebrow">CONSULTATION</span>
-        <h2>待回复咨询</h2>
+        <h2>咨询对话</h2>
       </div>
-      <p>及时回复用户咨询，提升服务质量和用户满意度。</p>
+      <p>查看用户问题上下文，并在同一会话中连续回复。</p>
     </div>
 
-    <section class="table-shell data-card" :class="{ 'is-mounted': mounted }">
-      <el-table :data="consultations" v-loading="loading">
-        <el-table-column prop="consultationNo" label="咨询编号" width="200">
-          <template #default="{ row }">
-            <span class="mono-text">{{ row.consultationNo }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="consultationTitle" label="标题" />
-        <el-table-column prop="consultationContent" label="内容" show-overflow-tooltip />
-        <el-table-column prop="userName" label="用户" width="120" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'REPLIED' ? 'success' : 'warning'">{{ row.status }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120">
-          <template #default="{ row }">
-            <el-button v-if="row.status !== 'REPLIED'" type="primary" link @click="openReply(row.consultationNo)">回复</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </section>
+    <section class="consult-shell" :class="{ 'is-mounted': mounted }">
+      <aside class="conversation-list" v-loading="loading">
+        <button
+          v-for="item in consultations"
+          :key="item.consultationNo"
+          class="conversation-item"
+          :class="{ active: item.consultationNo === currentNo }"
+          @click="selectConsultation(item.consultationNo)"
+        >
+          <div class="item-main">
+            <strong>{{ item.consultationTitle || '报告咨询' }}</strong>
+            <span>{{ item.reportNo }} · {{ item.createdAt }}</span>
+          </div>
+          <el-tag :type="statusType(item.consultationStatus)" size="small">
+            {{ statusLabel(item.consultationStatus) }}
+          </el-tag>
+        </button>
+        <el-empty v-if="!loading && consultations.length === 0" description="暂无待处理咨询" />
+      </aside>
 
-    <el-dialog v-model="dialogVisible" title="回复咨询" width="500px">
-      <el-form :model="replyForm" label-width="80px">
-        <el-form-item label="回复内容">
-          <el-input v-model="replyForm.replyContent" type="textarea" :rows="5" placeholder="请输入回复" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="replying" @click="handleReply">提交回复</el-button>
-      </template>
-    </el-dialog>
+      <main class="chat-panel" v-loading="detailLoading">
+        <template v-if="current">
+          <header class="chat-header">
+            <div>
+              <strong>{{ current.consultationTitle || '报告咨询' }}</strong>
+              <span>报告 {{ current.reportNo }} · {{ current.consultationType }}</span>
+            </div>
+            <el-tag :type="statusType(current.consultationStatus)">
+              {{ statusLabel(current.consultationStatus) }}
+            </el-tag>
+          </header>
+
+          <div class="message-list">
+            <div
+              v-for="reply in replies"
+              :key="reply.id"
+              class="message-row"
+              :class="{ mine: reply.replyRole === 'DOCTOR' }"
+            >
+              <div class="message-bubble">
+                <div class="message-meta">{{ reply.replyRole === 'DOCTOR' ? '我' : reply.replyUserName || '用户' }}</div>
+                <p>{{ reply.replyContent }}</p>
+                <time>{{ reply.replyTime || reply.createdAt }}</time>
+              </div>
+            </div>
+          </div>
+
+          <footer class="chat-input">
+            <el-input
+              v-model="replyText"
+              type="textarea"
+              :rows="3"
+              :disabled="isClosed"
+              placeholder="输入回复内容"
+              @keydown.ctrl.enter.prevent="sendReply"
+            />
+            <el-button type="primary" :loading="sending" :disabled="isClosed" @click="sendReply">发送</el-button>
+          </footer>
+        </template>
+        <el-empty v-else description="选择一个咨询" />
+      </main>
+    </section>
   </div>
 </template>
 
 <style scoped lang="scss">
-.table-shell {
-  padding: 20px;
+.consult-shell {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  gap: 16px;
+  min-height: 620px;
   opacity: 0;
   transform: translateY(16px);
   transition: opacity 0.4s var(--ease-out-expo), transform 0.4s var(--ease-out-expo);
+}
 
-  &.is-mounted {
-    opacity: 1;
-    transform: translateY(0);
+.consult-shell.is-mounted {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.conversation-list,
+.chat-panel {
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+
+.conversation-list {
+  padding: 12px;
+  overflow: auto;
+}
+
+.conversation-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.conversation-item.active,
+.conversation-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--color-line);
+}
+
+.item-main {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-main strong,
+.item-main span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-main span {
+  color: var(--color-ink-muted);
+  font-size: 12px;
+}
+
+.chat-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.chat-header,
+.chat-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.chat-header span {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-ink-muted);
+  font-size: 12px;
+}
+
+.message-list {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+}
+
+.message-row {
+  display: flex;
+  margin-bottom: 14px;
+}
+
+.message-row.mine {
+  justify-content: flex-end;
+}
+
+.message-bubble {
+  max-width: min(640px, 78%);
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--color-line);
+}
+
+.message-row.mine .message-bubble {
+  background: var(--color-brand-light);
+  border-color: rgba(201, 164, 78, 0.25);
+}
+
+.message-meta {
+  margin-bottom: 6px;
+  color: var(--color-ink-muted);
+  font-size: 12px;
+}
+
+.message-bubble p {
+  margin: 0;
+  color: var(--color-ink);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.message-bubble time {
+  display: block;
+  margin-top: 8px;
+  color: var(--color-ink-faint);
+  font-size: 11px;
+}
+
+.chat-input {
+  border-top: 1px solid var(--color-line);
+  border-bottom: 0;
+}
+
+.chat-input .el-button {
+  align-self: stretch;
+}
+
+@media (max-width: 900px) {
+  .consult-shell {
+    grid-template-columns: 1fr;
   }
-}
-
-:deep(.el-tag) {
-  border-radius: 999px;
-}
-
-:deep(.el-tag--success) {
-  background: var(--color-success-light);
-  color: var(--color-success);
-  border: none;
-}
-
-:deep(.el-tag--warning) {
-  background: var(--color-warning-light);
-  color: var(--color-warning);
-  border: none;
 }
 </style>

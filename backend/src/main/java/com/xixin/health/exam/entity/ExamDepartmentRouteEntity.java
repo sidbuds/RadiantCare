@@ -6,6 +6,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.xixin.health.common.model.BaseEntity;
 import lombok.Data;
 
+/**
+ * 科室路线实体 - 导检路线配置
+ */
 @Data
 @TableName("exam_department_route")
 public class ExamDepartmentRouteEntity extends BaseEntity {

@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 运营端退款控制器
+ */
 @RestController
 @RequestMapping("/api/operator/refunds")
 @PreAuthorize("hasRole('OPERATOR')")

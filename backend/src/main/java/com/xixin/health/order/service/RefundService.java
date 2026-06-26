@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 退款服务 - 处理退款申请/审批/执行
+ */
 @Service
 public class RefundService {
 
@@ -47,6 +50,7 @@ public class RefundService {
         this.refundRecordMapper = refundRecordMapper;
     }
 
+    /** 申请退款 */
     @Transactional
     public Map<String, Object> apply(String orderNo, ApplyRefundRequest request) {
         OrderEntity order = getOrderByNo(orderNo);
@@ -90,6 +94,7 @@ public class RefundService {
         return result;
     }
 
+    /** 查询退款申请列表 */
     public List<RefundApplyEntity> list(Integer applyStatus, String orderNo) {
         return refundApplyMapper.selectList(new LambdaQueryWrapper<RefundApplyEntity>()
                 .eq(applyStatus != null, RefundApplyEntity::getApplyStatus, applyStatus)
@@ -98,6 +103,7 @@ public class RefundService {
                 .orderByDesc(RefundApplyEntity::getId));
     }
 
+    /** 查询退款申请详情 */
     public Map<String, Object> detail(String applyNo) {
         RefundApplyEntity apply = getApplyByNo(applyNo);
         List<RefundAuditLogEntity> auditLogs = refundAuditLogMapper.selectList(new LambdaQueryWrapper<RefundAuditLogEntity>()
@@ -115,6 +121,7 @@ public class RefundService {
         return result;
     }
 
+    /** 审批通过退款 */
     @Transactional
     public Map<String, Object> approve(String applyNo, RefundAuditRequest request) {
         RefundApplyEntity apply = getApplyByNo(applyNo);
@@ -122,7 +129,7 @@ public class RefundService {
             throw new BizException(ErrorCode.REFUND_STATUS_INVALID);
         }
         OrderEntity order = orderMapper.selectById(apply.getOrderId());
-        if (order == null || order.getStatus() == null || (order.getStatus() != 1 && order.getStatus() != 3)) {
+        if (order == null || order.getStatus() == null || order.getStatus() != 3) {
             throw new BizException(ErrorCode.REFUND_ORDER_NOT_ELIGIBLE);
         }
 
@@ -174,11 +181,19 @@ public class RefundService {
         return result;
     }
 
+    /** 驳回退款申请 */
     @Transactional
     public Map<String, Object> reject(String applyNo, RefundAuditRequest request) {
         RefundApplyEntity apply = getApplyByNo(applyNo);
         if (apply.getApplyStatus() == null || apply.getApplyStatus() != 0) {
             throw new BizException(ErrorCode.REFUND_STATUS_INVALID);
+        }
+        OrderEntity order = orderMapper.selectById(apply.getOrderId());
+        if (order == null || order.getStatus() == null || order.getStatus() == 2 || order.getStatus() == 4) {
+            throw new BizException(ErrorCode.REFUND_ORDER_NOT_ELIGIBLE);
+        }
+        if (order.getStatus() != 3) {
+            throw new BizException(ErrorCode.OPERATION_CONFLICT.getCode(), "订单不在退款中，不能拒绝退款");
         }
         refundApplyMapper.update(null, new LambdaUpdateWrapper<RefundApplyEntity>()
                 .eq(RefundApplyEntity::getId, apply.getId())
@@ -186,6 +201,12 @@ public class RefundService {
                 .set(RefundApplyEntity::getAuditStatus, 2)
                 .set(RefundApplyEntity::getUpdatedBy, AuthContext.getUserId()));
         insertAuditLog(apply, "REJECT", "REJECT", request.getAuditRemark());
+
+        orderMapper.update(null, new LambdaUpdateWrapper<OrderEntity>()
+                .eq(OrderEntity::getId, order.getId())
+                .eq(OrderEntity::getStatus, 3)
+                .set(OrderEntity::getStatus, 1)
+                .set(OrderEntity::getUpdatedBy, AuthContext.getUserId()));
 
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("applyNo", applyNo);

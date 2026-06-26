@@ -5,6 +5,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * 实体基类 - 包含公共字段
+ */
 @Data
 public class BaseEntity {
 

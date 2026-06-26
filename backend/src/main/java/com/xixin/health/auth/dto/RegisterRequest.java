@@ -6,6 +6,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+/**
+ * 注册请求参数
+ */
 @Data
 public class RegisterRequest {
     @NotBlank(message = "用户名不能为空")

@@ -70,6 +70,8 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
                 <el-dropdown-menu>
                   <el-dropdown-item @click="goMyAppointments">我的预约</el-dropdown-item>
                   <el-dropdown-item @click="goMyReports">我的报告</el-dropdown-item>
+                  <el-dropdown-item @click="router.push('/user/profile')">个人信息</el-dropdown-item>
+                  <el-dropdown-item @click="router.push('/user/health-profile')">健康档案</el-dropdown-item>
                   <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
                 </el-dropdown-menu>
               </template>

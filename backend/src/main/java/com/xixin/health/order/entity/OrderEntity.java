@@ -9,6 +9,9 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * 订单实体
+ */
 @Data
 @TableName("`order`")
 public class OrderEntity extends BaseEntity {

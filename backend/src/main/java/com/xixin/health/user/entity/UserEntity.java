@@ -9,6 +9,9 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * 用户实体
+ */
 @Data
 @TableName("user")
 public class UserEntity extends BaseEntity {

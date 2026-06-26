@@ -18,12 +18,24 @@ export function getMyConsultations() {
   return get<Consultation[]>('/doctor-consultations/mine')
 }
 
+export function getMyConsultation(consultationNo: string) {
+  return get<{ consultation: Consultation; replies: any[] }>(`/doctor-consultations/${consultationNo}`)
+}
+
+export function sendConsultationMessage(consultationNo: string, data: { replyContent: string; attachmentUrl?: string }) {
+  return post<void>(`/doctor-consultations/${consultationNo}/messages`, data)
+}
+
+export function closeConsultation(consultationNo: string) {
+  return post<void>(`/doctor-consultations/${consultationNo}/close`)
+}
+
 export function getDoctorConsultationTodo() {
   return get<Consultation[]>('/doctor/consultations/todo')
 }
 
 export function getDoctorConsultation(consultationNo: string) {
-  return get<Consultation>(`/doctor/consultations/${consultationNo}`)
+  return get<{ consultation: Consultation; replies: any[] }>(`/doctor/consultations/${consultationNo}`)
 }
 
 export function replyConsultation(consultationNo: string, data: { replyContent: string; attachmentUrl?: string }) {

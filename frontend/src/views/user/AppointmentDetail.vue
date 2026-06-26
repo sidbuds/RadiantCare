@@ -11,10 +11,11 @@ const loading = ref(true)
 const mounted = ref(false)
 
 const statusMap: Record<number, { label: string; type: string }> = {
-  0: { label: '待确认', type: 'info' },
-  1: { label: '已确认', type: 'success' },
-  2: { label: '已完成', type: '' },
-  3: { label: '已取消', type: 'danger' },
+  0: { label: '待支付', type: 'info' },
+  1: { label: '待体检', type: 'success' },
+  2: { label: '已体检', type: '' },
+  3: { label: '已关闭', type: 'danger' },
+  4: { label: '爽约', type: 'danger' },
 }
 
 onMounted(async () => {
@@ -22,20 +23,39 @@ onMounted(async () => {
   try {
     const res: any = await getAppointment(route.params.no as string)
     appointment.value = res.data
-  } catch {} finally { loading.value = false }
+  } catch {
+    // handled by interceptor
+  } finally {
+    loading.value = false
+  }
 })
 
 async function handleCancel() {
   try {
-    await ElMessageBox.confirm('确定要取消此预约吗？', '取消预约')
+    await ElMessageBox.confirm('确定要取消此次预约吗？', '取消预约')
     await cancelAppointment(route.params.no as string)
     ElMessage.success('预约已取消')
     appointment.value.status = 3
-  } catch {}
+  } catch {
+    // ignore cancel
+  }
 }
 
 function goToOrder() {
   router.push(`/user/orders/${appointment.value.appointmentNo}/confirm`)
+}
+
+function goToReports() {
+  router.push('/user/reports')
+}
+
+function goToGuide() {
+  const taskNo = appointment.value?.taskNo
+  if (!taskNo) {
+    ElMessage.warning('当前预约尚未生成体检任务')
+    return
+  }
+  router.push(`/user/exam-tasks/${taskNo}/guide`)
 }
 </script>
 
@@ -64,7 +84,7 @@ function goToOrder() {
           <el-tag :type="statusMap[appointment.status]?.type as any">{{ statusMap[appointment.status]?.label }}</el-tag>
         </div>
         <div class="info-item">
-          <span class="info-label">套餐ID</span>
+          <span class="info-label">套餐 ID</span>
           <span class="info-value">{{ appointment.packageId }}</span>
         </div>
         <div class="info-item">
@@ -91,8 +111,16 @@ function goToOrder() {
           <el-icon class="btn-arrow"><ArrowRight /></el-icon>
         </el-button>
         <el-button v-if="appointment.status === 0" type="danger" @click="handleCancel">取消预约</el-button>
-        <el-button v-if="appointment.status === 1" type="primary" @click="goToOrder">
+        <el-button v-if="appointment.status === 1" type="primary" @click="goToGuide">
+          查看导检
+          <el-icon class="btn-arrow"><ArrowRight /></el-icon>
+        </el-button>
+        <el-button v-if="appointment.status === 1" @click="goToOrder">
           查看订单
+          <el-icon class="btn-arrow"><ArrowRight /></el-icon>
+        </el-button>
+        <el-button v-if="appointment.status === 2" type="primary" @click="goToReports">
+          查看报告
           <el-icon class="btn-arrow"><ArrowRight /></el-icon>
         </el-button>
       </div>

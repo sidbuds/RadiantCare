@@ -8,6 +8,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 
+/**
+ * 保存排班请求参数
+ */
 @Data
 public class SaveScheduleRequest {
     @NotBlank(message = "centerCode不能为空")
@@ -26,4 +29,6 @@ public class SaveScheduleRequest {
     private Integer capacityTotal;
     @NotNull(message = "status不能为空")
     private Integer status;
+    private String departmentCode;
+    private String departmentName;
 }

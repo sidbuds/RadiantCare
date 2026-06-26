@@ -8,6 +8,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 
+/**
+ * 检查结果条目DTO
+ */
 @Data
 public class ExamResultEntryDto {
     @NotBlank(message = "指标编码不能为空")

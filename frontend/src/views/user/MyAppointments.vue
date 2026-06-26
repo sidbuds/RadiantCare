@@ -38,8 +38,8 @@ function goDetail(no: string) {
       <article
         v-for="(item, idx) in [
           { label: '预约总数', value: appointments.length, color: 'var(--color-brand)' },
-          { label: '待确认', value: appointments.filter(a => a.status === 0).length, color: 'var(--color-accent)' },
-          { label: '已确认', value: appointments.filter(a => a.status === 1).length, color: 'var(--color-success)' },
+          { label: '待支付', value: appointments.filter(a => a.status === 0).length, color: 'var(--color-accent)' },
+          { label: '待体检', value: appointments.filter(a => a.status === 1).length, color: 'var(--color-success)' },
         ]"
         :key="item.label"
         class="summary-card data-card"

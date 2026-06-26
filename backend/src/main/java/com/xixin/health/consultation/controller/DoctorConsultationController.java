@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 医生端咨询控制器
+ */
 @RestController
 @RequestMapping("/api/doctor/consultations")
 @PreAuthorize("hasRole('DOCTOR')")
@@ -23,16 +26,19 @@ public class DoctorConsultationController {
         this.consultationService = consultationService;
     }
 
+    /** 查询待处理咨询 */
     @GetMapping("/todo")
     public ApiResult<?> todo() {
         return ApiResult.success(consultationService.doctorTodo());
     }
 
+    /** 查询咨询详情 */
     @GetMapping("/{consultationNo}")
     public ApiResult<?> detail(@PathVariable String consultationNo) {
         return ApiResult.success(consultationService.doctorDetail(consultationNo));
     }
 
+    /** 回复咨询 */
     @PostMapping("/{consultationNo}/reply")
     public ApiResult<?> reply(@PathVariable String consultationNo, @Validated @RequestBody ReplyConsultationRequest request) {
         return ApiResult.success(consultationService.reply(consultationNo, request));

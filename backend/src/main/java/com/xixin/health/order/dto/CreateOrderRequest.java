@@ -5,6 +5,9 @@ import lombok.Data;
 import javax.validation.constraints.NotBlank;
 import java.util.List;
 
+/**
+ * 创建订单请求参数
+ */
 @Data
 public class CreateOrderRequest {
     @NotBlank

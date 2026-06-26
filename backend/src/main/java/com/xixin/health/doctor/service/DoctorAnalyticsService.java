@@ -28,6 +28,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 医生端数据分析服务
+ */
 @Service
 public class DoctorAnalyticsService {
 

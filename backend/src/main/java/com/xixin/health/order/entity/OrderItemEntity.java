@@ -8,6 +8,9 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
+/**
+ * 订单明细实体
+ */
 @Data
 @TableName("order_item")
 public class OrderItemEntity extends BaseEntity {

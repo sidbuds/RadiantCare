@@ -8,6 +8,9 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
+/**
+ * 体检套餐实体
+ */
 @Data
 @TableName("exam_package")
 public class ExamPackageEntity extends BaseEntity {

@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
+/**
+ * JWT令牌服务 - 生成和解析Token
+ */
 @Service
 public class JwtTokenService {
 
@@ -18,6 +21,7 @@ public class JwtTokenService {
         this.jwtProperties = jwtProperties;
     }
 
+    /** 生成JWT令牌 */
     public String generateToken(Long accountId, Long userId, String username, String displayName, RoleType role) {
         long now = System.currentTimeMillis();
         Date issuedAt = new Date(now);
@@ -34,6 +38,7 @@ public class JwtTokenService {
                 .compact();
     }
 
+    /** 解析JWT令牌 */
     public AuthContext.LoginUser parseToken(String token) {
         Claims claims = Jwts.parser()
                 .setSigningKey(jwtProperties.getJwtSecret())

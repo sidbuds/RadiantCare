@@ -38,6 +38,10 @@ CREATE TABLE `staff_account` (
   `bind_user_id` BIGINT NOT NULL COMMENT '绑定用户ID',
   `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1启用 0停用',
   `last_login_at` DATETIME(3) DEFAULT NULL COMMENT '最近登录时间',
+  `department_code` VARCHAR(32) DEFAULT NULL COMMENT '科室编码',
+  `department_name` VARCHAR(128) DEFAULT NULL COMMENT '科室名称',
+  `specialty` VARCHAR(128) DEFAULT NULL COMMENT '专业方向',
+  `center_code` VARCHAR(32) DEFAULT NULL COMMENT '中心编码',
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `created_by` BIGINT DEFAULT NULL,
@@ -47,6 +51,24 @@ CREATE TABLE `staff_account` (
   UNIQUE KEY `uk_staff_account_username` (`username`),
   KEY `idx_bind_user_id` (`bind_user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='后台账号表';
+
+CREATE TABLE `doctor_department_rel` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `doctor_id` BIGINT NOT NULL COMMENT '医生账号ID',
+  `department_code` VARCHAR(32) NOT NULL COMMENT '科室编码',
+  `department_name` VARCHAR(128) NOT NULL COMMENT '科室名称',
+  `center_code` VARCHAR(32) DEFAULT NULL COMMENT '中心编码',
+  `is_primary` TINYINT NOT NULL DEFAULT 0 COMMENT '是否主科室',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `created_by` BIGINT DEFAULT NULL,
+  `updated_by` BIGINT DEFAULT NULL,
+  `is_deleted` TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_doctor_department_rel` (`doctor_id`,`department_code`,`center_code`),
+  KEY `idx_department_code` (`department_code`),
+  KEY `idx_doctor_id` (`doctor_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医生科室关系表';
 
 CREATE TABLE `staff_role_rel` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -328,16 +350,15 @@ CREATE TABLE `order_settlement_detail` (
 
 CREATE TABLE `payment_record` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `payment_no` VARCHAR(32) NOT NULL COMMENT '鏀粯娴佹按鍙?,
-  `order_id` BIGINT NOT NULL COMMENT '璁㈠崟ID',
-  `order_no` VARCHAR(32) NOT NULL COMMENT '璁㈠崟鍙?,
-  `channel` VARCHAR(32) NOT NULL COMMENT '鏀粯娓犻亾',
-  `trade_no` VARCHAR(64) DEFAULT NULL COMMENT '绗笁鏂逛氦鏄撳彿',
-  `pay_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT '鏀粯閲戦',
-  `status` TINYINT NOT NULL DEFAULT 0 COMMENT '鐘舵€侊細0寰呮敮浠?1鎴愬姛 2澶辫触',
-  `pay_time` DATETIME(3) DEFAULT NULL COMMENT '鏀粯鏃堕棿',
-  `callback_time` DATETIME(3) DEFAULT NULL COMMENT '鍥炶皟鏃堕棿',
-  `raw_payload` TEXT COMMENT '鍘熷鍥炶皟鏁版嵁',
+  `payment_no` VARCHAR(32) NOT NULL COMMENT '支付流水号',
+  `order_no` VARCHAR(32) NOT NULL COMMENT '订单号',
+  `user_id` BIGINT NOT NULL COMMENT '用户ID',
+  `pay_method` VARCHAR(32) NOT NULL COMMENT '支付方式',
+  `pay_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT '支付金额',
+  `pay_status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0待支付 1成功 2失败',
+  `pay_time` DATETIME(3) DEFAULT NULL COMMENT '支付时间',
+  `third_party_no` VARCHAR(64) DEFAULT NULL COMMENT '第三方交易号',
+  `remark` VARCHAR(256) DEFAULT NULL COMMENT '备注',
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   `created_by` BIGINT DEFAULT NULL,
@@ -345,7 +366,7 @@ CREATE TABLE `payment_record` (
   `is_deleted` TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_payment_no` (`payment_no`),
-  KEY `idx_payment_order_id` (`order_id`)
+  KEY `idx_order_no` (`order_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='鏀粯娴佹按琛?;
 
 CREATE TABLE `refund_apply` (

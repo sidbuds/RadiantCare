@@ -1,10 +1,8 @@
 package com.xixin.health.order.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.xixin.health.appointment.entity.AppointmentEntity;
 import com.xixin.health.appointment.entity.ExamPackageEntity;
-import com.xixin.health.appointment.mapper.AppointmentMapper;
 import com.xixin.health.appointment.mapper.ExamPackageMapper;
 import com.xixin.health.appointment.service.AppointmentService;
 import com.xixin.health.common.enums.ErrorCode;
@@ -21,11 +19,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 订单服务 - 处理订单创建/支付/查询
+ */
 @Slf4j
 @Service
 public class OrderService {
@@ -33,24 +33,22 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
     private final AppointmentService appointmentService;
-    private final AppointmentMapper appointmentMapper;
     private final ExamPackageMapper examPackageMapper;
     private final PaymentService paymentService;
 
     public OrderService(OrderMapper orderMapper,
                         OrderItemMapper orderItemMapper,
                         AppointmentService appointmentService,
-                        AppointmentMapper appointmentMapper,
                         ExamPackageMapper examPackageMapper,
                         PaymentService paymentService) {
         this.orderMapper = orderMapper;
         this.orderItemMapper = orderItemMapper;
         this.appointmentService = appointmentService;
-        this.appointmentMapper = appointmentMapper;
         this.examPackageMapper = examPackageMapper;
         this.paymentService = paymentService;
     }
 
+    /** 创建订单 */
     @Transactional
     public Map<String, Object> create(CreateOrderRequest request) {
         AppointmentEntity appointment = appointmentService.getByNo(request.getAppointmentNo());
@@ -126,6 +124,7 @@ public class OrderService {
         return result;
     }
 
+    /** 查询订单详情 */
     public OrderEntity detail(String orderNo) {
         OrderEntity order = getByNo(orderNo);
         if (!order.getUserId().equals(AuthContext.getUserId())) {
@@ -134,6 +133,7 @@ public class OrderService {
         return order;
     }
 
+    /** 查询当前用户订单列表 */
     public List<OrderEntity> mine() {
         return orderMapper.selectList(new LambdaQueryWrapper<OrderEntity>()
                 .eq(OrderEntity::getUserId, AuthContext.getUserId())
@@ -141,6 +141,7 @@ public class OrderService {
                 .orderByDesc(OrderEntity::getId));
     }
 
+    /** 订单支付 */
     @Transactional
     public Map<String, Object> pay(String orderNo) {
         OrderEntity order = detail(orderNo);
@@ -151,17 +152,8 @@ public class OrderService {
         Map<String, Object> payResult = paymentService.createPayment(order);
         log.info("Payment created: orderNo={}, transactionNo={}", orderNo, payResult.get("transactionNo"));
 
-        orderMapper.update(null, new LambdaUpdateWrapper<OrderEntity>()
-                .eq(OrderEntity::getOrderNo, orderNo)
-                .eq(OrderEntity::getStatus, 0)
-                .set(OrderEntity::getStatus, 1)
-                .set(OrderEntity::getPayChannel, "MOCK_SANDBOX")
-                .set(OrderEntity::getPayTime, LocalDateTime.now()));
-
-        appointmentMapper.update(null, new LambdaUpdateWrapper<AppointmentEntity>()
-                .eq(AppointmentEntity::getId, order.getAppointmentId())
-                .eq(AppointmentEntity::getStatus, 0)
-                .set(AppointmentEntity::getStatus, 1));
+        paymentService.handlePaymentSuccess(orderNo, (String) payResult.get("transactionNo"),
+                (String) payResult.get("payChannel"));
 
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("orderNo", orderNo);
@@ -186,6 +178,7 @@ public class OrderService {
             case 1: return "PAID";
             case 2: return "REFUNDED";
             case 3: return "REFUNDING";
+            case 4: return "COMPLETED";
             default: return "UNKNOWN";
         }
     }

@@ -8,6 +8,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * 员工账号实体
+ */
 @Data
 @TableName("staff_account")
 public class StaffAccountEntity extends BaseEntity {
@@ -19,4 +22,8 @@ public class StaffAccountEntity extends BaseEntity {
     private Long bindUserId;
     private Integer status;
     private LocalDateTime lastLoginAt;
+    private String departmentCode;
+    private String departmentName;
+    private String specialty;
+    private String centerCode;
 }

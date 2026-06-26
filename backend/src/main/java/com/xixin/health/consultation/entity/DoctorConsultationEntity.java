@@ -8,6 +8,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * 医生咨询实体
+ */
 @Data
 @TableName("doctor_consultation")
 public class DoctorConsultationEntity extends BaseEntity {
@@ -25,6 +28,9 @@ public class DoctorConsultationEntity extends BaseEntity {
     private String consultationContent;
     private Integer consultationStatus;
     private Integer priorityLevel;
+    private String departmentCode;
+    private String departmentName;
+    private Integer healthProfileShared;
     private LocalDateTime latestReplyTime;
     private LocalDateTime closedTime;
 }

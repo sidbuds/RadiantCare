@@ -34,6 +34,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 报告对比服务 - 处理报告对比/趋势分析/健康建议
+ */
 @Service
 public class CompareService {
 
@@ -67,6 +70,7 @@ public class CompareService {
         this.userMapper = userMapper;
     }
 
+    /** 创建对比任务 */
     @Transactional
     public Map<String, Object> createTask(CreateCompareTaskRequest request) {
         if (request.getBaselineReportNo().equals(request.getCompareReportNo())) {
@@ -133,6 +137,7 @@ public class CompareService {
         }
     }
 
+    /** 查询对比任务详情 */
     public Map<String, Object> taskDetail(String taskNo) {
         ReportCompareTaskEntity task = getOwnedTask(taskNo);
         ExamReportEntity baselineReport = examReportMapper.selectById(task.getBaselineReportId());
@@ -147,6 +152,7 @@ public class CompareService {
         return result;
     }
 
+    /** 查询对比结果 */
     public Map<String, Object> taskResults(String taskNo) {
         ReportCompareTaskEntity task = getOwnedTask(taskNo);
         ExamReportEntity baselineReport = examReportMapper.selectById(task.getBaselineReportId());
@@ -173,6 +179,7 @@ public class CompareService {
         return result;
     }
 
+    /** 导出对比结果 */
     public Map<String, Object> export(String taskNo) {
         ReportCompareTaskEntity task = getOwnedTask(taskNo);
         ExamReportEntity baselineReport = examReportMapper.selectById(task.getBaselineReportId());
@@ -203,6 +210,7 @@ public class CompareService {
         return export;
     }
 
+    /** 查询健康建议 */
     public List<HealthAdviceRecordEntity> healthAdvices(String taskNo) {
         ReportCompareTaskEntity task = getOwnedTask(taskNo);
         return listAdvices(task.getId());

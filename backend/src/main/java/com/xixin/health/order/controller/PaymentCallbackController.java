@@ -14,6 +14,10 @@ import java.util.Map;
  * 支付回调接口
  * 生产环境需根据微信/支付宝文档实现签名验证
  */
+/**
+ * 支付回调接口
+ * 生产环境需根据微信/支付宝文档实现签名验证
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/payment")
@@ -25,6 +29,7 @@ public class PaymentCallbackController {
         this.paymentService = paymentService;
     }
 
+    /** 支付回调通知 */
     @PostMapping("/notify")
     public ApiResult<?> notify(@RequestBody Map<String, String> callbackData) {
         log.info("收到支付回调: {}", callbackData);

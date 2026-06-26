@@ -6,6 +6,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.xixin.health.common.model.BaseEntity;
 import lombok.Data;
 
+/**
+ * 员工角色关联实体
+ */
 @Data
 @TableName("staff_role_rel")
 public class StaffRoleRelEntity extends BaseEntity {

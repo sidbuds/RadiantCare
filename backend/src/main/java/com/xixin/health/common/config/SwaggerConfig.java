@@ -9,9 +9,13 @@ import io.swagger.v3.oas.models.Components;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Swagger/OpenAPI文档配置
+ */
 @Configuration
 public class SwaggerConfig {
 
+    /** 配置API文档信息和JWT认证方案 */
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()

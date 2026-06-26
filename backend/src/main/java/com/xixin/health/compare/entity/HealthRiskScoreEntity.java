@@ -8,6 +8,9 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
+/**
+ * 健康风险评分实体
+ */
 @Data
 @TableName("health_risk_score")
 public class HealthRiskScoreEntity extends BaseEntity {

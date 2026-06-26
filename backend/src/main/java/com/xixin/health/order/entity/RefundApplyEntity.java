@@ -8,6 +8,9 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
+/**
+ * 退款申请实体
+ */
 @Data
 @TableName("refund_apply")
 public class RefundApplyEntity extends BaseEntity {

@@ -3,6 +3,9 @@ package com.xixin.health.common.exception;
 import com.xixin.health.common.enums.ErrorCode;
 import lombok.Getter;
 
+/**
+ * 业务异常
+ */
 @Getter
 public class BizException extends RuntimeException {
 

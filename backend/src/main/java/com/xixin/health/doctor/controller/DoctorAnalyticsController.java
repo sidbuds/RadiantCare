@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 
+/**
+ * 医生端数据分析控制器
+ */
 @RestController
 @RequestMapping("/api/doctor/analytics")
 @PreAuthorize("hasRole('DOCTOR')")

@@ -3,6 +3,7 @@ package com.xixin.health.operator.controller;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.xixin.health.common.api.ApiResult;
+import com.xixin.health.appointment.service.AppointmentService;
 import com.xixin.health.common.model.PageResult;
 import com.xixin.health.operator.service.OperatorAppointmentService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -18,6 +19,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 运营端预约控制器
+ */
 @RestController
 @RequestMapping("/api/operator/appointments")
 @PreAuthorize("hasRole('OPERATOR')")
@@ -25,8 +29,12 @@ public class OperatorAppointmentController {
 
     private final OperatorAppointmentService operatorAppointmentService;
 
-    public OperatorAppointmentController(OperatorAppointmentService operatorAppointmentService) {
+    private final AppointmentService appointmentService;
+
+    public OperatorAppointmentController(OperatorAppointmentService operatorAppointmentService,
+                                         AppointmentService appointmentService) {
         this.operatorAppointmentService = operatorAppointmentService;
+        this.appointmentService = appointmentService;
     }
 
     @GetMapping
@@ -52,5 +60,11 @@ public class OperatorAppointmentController {
                                @RequestParam(required = false) String reason) {
         operatorAppointmentService.cancel(appointmentNo, reason);
         return ApiResult.success();
+    }
+
+    @PostMapping("/mark-noshows")
+    public ApiResult<?> markNoShows() {
+        int count = appointmentService.markExpiredNoShows();
+        return ApiResult.success(java.util.Collections.singletonMap("markedCount", count));
     }
 }

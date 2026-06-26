@@ -6,6 +6,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.xixin.health.common.model.BaseEntity;
 import lombok.Data;
 
+/**
+ * 报告模板实体
+ */
 @Data
 @TableName("report_template")
 public class ReportTemplateEntity extends BaseEntity {

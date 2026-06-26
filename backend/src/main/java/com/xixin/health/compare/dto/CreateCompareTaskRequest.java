@@ -4,6 +4,9 @@ import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 
+/**
+ * 创建对比任务请求参数
+ */
 @Data
 public class CreateCompareTaskRequest {
 

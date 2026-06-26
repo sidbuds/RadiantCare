@@ -8,6 +8,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * 检查结果附件实体
+ */
 @Data
 @TableName("exam_result_attachment")
 public class ExamResultAttachmentEntity extends BaseEntity {

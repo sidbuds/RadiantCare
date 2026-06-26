@@ -14,10 +14,19 @@ const statusMap = {
   PENDING: { label: '待支付', type: 'warning' as const },
   PAID: { label: '已支付', type: 'success' as const },
   REFUNDED: { label: '已退款', type: 'danger' as const },
+  REFUNDING: { label: '退款中', type: 'warning' as const },
   COMPLETED: { label: '已完成', type: '' as const },
-  CLOSED: { label: '已关闭', type: 'info' as const },
 }
 const { getLabel, getType } = useStatusTag(statusMap)
+
+function resolveStatus(status: number) {
+  if (status === 0) return 'PENDING'
+  if (status === 1) return 'PAID'
+  if (status === 2) return 'REFUNDED'
+  if (status === 3) return 'REFUNDING'
+  if (status === 4) return 'COMPLETED'
+  return ''
+}
 
 function loadData() {
   execute(async () => {
@@ -26,7 +35,7 @@ function loadData() {
       pageSize: pageSize.value,
     }
     if (filters.value.orderNo) params.orderNo = filters.value.orderNo
-    if (filters.value.status) params.status = filters.value.status
+    if (filters.value.status !== '') params.status = filters.value.status
     const res = await getOperatorOrders(params)
     orders.value = res.data?.list || []
     total.value = res.data?.total || 0
@@ -80,7 +89,7 @@ loadData()
         </el-table-column>
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="getType(row.order?.status === 0 ? 'PENDING' : row.order?.status === 1 ? 'PAID' : '')">{{ getLabel(row.order?.status === 0 ? 'PENDING' : row.order?.status === 1 ? 'PAID' : '') }}</el-tag>
+            <el-tag :type="getType(resolveStatus(row.order?.status))">{{ getLabel(resolveStatus(row.order?.status)) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="创建时间" width="180">

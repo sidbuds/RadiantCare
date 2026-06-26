@@ -84,7 +84,11 @@ loadData()
 
     <div class="filter-bar" :class="{ 'is-mounted': mounted }">
       <el-select v-model="filters.applyStatus" placeholder="状态" style="width: 120px;" clearable>
-        <el-option label="待审核" :value="0" /><el-option label="已通过" :value="1" /><el-option label="已驳回" :value="2" />
+        <el-option label="待审核" :value="0" />
+        <el-option label="已通过" :value="1" />
+        <el-option label="已驳回" :value="2" />
+        <el-option label="退款中" :value="3" />
+        <el-option label="已退款" :value="4" />
       </el-select>
       <el-button type="primary" @click="loadData">查询</el-button>
     </div>

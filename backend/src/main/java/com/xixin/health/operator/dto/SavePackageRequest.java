@@ -9,6 +9,9 @@ import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * 保存套餐请求参数
+ */
 @Data
 public class SavePackageRequest {
     @NotBlank(message = "packageCode不能为空")

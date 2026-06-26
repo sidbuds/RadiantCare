@@ -29,4 +29,6 @@ public interface PaymentService {
      * @return 处理结果
      */
     boolean handleCallback(Map<String, String> callbackData);
+
+    void handlePaymentSuccess(String orderNo, String transactionNo, String payChannel);
 }

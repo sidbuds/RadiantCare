@@ -9,6 +9,7 @@ import com.xixin.health.appointment.mapper.ResourceCapacityMapper;
 import com.xixin.health.appointment.service.AppointmentService;
 import com.xixin.health.common.exception.BizException;
 import com.xixin.health.common.util.AuthContext;
+import com.xixin.health.exam.mapper.ExamTaskMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,6 +39,9 @@ class AppointmentServiceTest {
 
     @Mock
     private ResourceCapacityMapper resourceCapacityMapper;
+
+    @Mock
+    private ExamTaskMapper examTaskMapper;
 
     @InjectMocks
     private AppointmentService appointmentService;
@@ -75,7 +80,7 @@ class AppointmentServiceTest {
 
             when(examPackageMapper.selectById(1001L)).thenReturn(packageEntity);
             when(appointmentMapper.selectCount(any())).thenReturn(0L);
-            when(resourceCapacityMapper.selectOne(any())).thenReturn(capacity);
+            when(resourceCapacityMapper.selectList(any())).thenReturn(Collections.singletonList(capacity));
             when(appointmentMapper.insert(any())).thenReturn(1);
             when(resourceCapacityMapper.update(any(), any())).thenReturn(1);
 
@@ -109,7 +114,7 @@ class AppointmentServiceTest {
 
             when(examPackageMapper.selectById(1001L)).thenReturn(packageEntity);
             when(appointmentMapper.selectCount(any())).thenReturn(0L);
-            when(resourceCapacityMapper.selectOne(any())).thenReturn(capacity);
+            when(resourceCapacityMapper.selectList(any())).thenReturn(Collections.singletonList(capacity));
 
             assertThrows(BizException.class, () -> appointmentService.create(createRequest));
         }

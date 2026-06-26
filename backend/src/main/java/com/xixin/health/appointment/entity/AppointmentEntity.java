@@ -1,6 +1,7 @@
 package com.xixin.health.appointment.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.xixin.health.common.model.BaseEntity;
@@ -8,6 +9,9 @@ import lombok.Data;
 
 import java.time.LocalDate;
 
+/**
+ * 预约实体
+ */
 @Data
 @TableName("appointment")
 public class AppointmentEntity extends BaseEntity {
@@ -22,4 +26,6 @@ public class AppointmentEntity extends BaseEntity {
     private Integer status;
     private String cancelReason;
     private String remark;
+    @TableField(exist = false)
+    private String taskNo;
 }

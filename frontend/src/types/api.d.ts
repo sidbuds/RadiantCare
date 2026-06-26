@@ -98,6 +98,7 @@ export interface FaqItem {
 export interface Appointment {
   id: number
   appointmentNo: string
+  taskNo?: string
   userId: number
   packageId: number
   packageName: string
@@ -239,6 +240,7 @@ export interface ExamReport {
   packageId: number
   packageName: string
   templateCode: string
+  reportDate?: string
   reportStatus: number
   reportStatusText: string
   conclusion: string
@@ -341,10 +343,10 @@ export interface ConsultationReply {
 // ==================== 运营分析 ====================
 
 export interface DashboardData {
-  todayAppointments: number
-  todayOrders: number
-  todayRevenue: number
-  pendingRefunds: number
+  appointmentCount: number
+  paidOrderCount: number
+  refundCount: number
+  publishedReportCount: number
   appointmentTrend: TrendItem[]
   orderConversion: ConversionItem[]
   packageAnalysis: PackageAnalysisItem[]
@@ -352,16 +354,17 @@ export interface DashboardData {
 
 export interface TrendItem {
   date: string
-  count: number
+  count?: number
+  createdCount?: number
   cancelCount?: number
 }
 
 export interface ConversionItem {
-  date: string
   appointmentCount: number
   orderCount: number
   paidCount: number
-  conversionRate: number
+  refundCount?: number
+  conversionRate?: number
 }
 
 export interface PackageAnalysisItem {

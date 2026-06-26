@@ -6,6 +6,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.xixin.health.common.model.BaseEntity;
 import lombok.Data;
 
+/**
+ * 报告对比任务实体
+ */
 @Data
 @TableName("report_compare_task")
 public class ReportCompareTaskEntity extends BaseEntity {

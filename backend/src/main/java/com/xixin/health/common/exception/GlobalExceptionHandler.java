@@ -20,16 +20,21 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import javax.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
 
+/**
+ * 全局异常处理器
+ */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /** 业务异常 */
     @ExceptionHandler(BizException.class)
     public ApiResult<Void> handleBiz(BizException ex) {
         log.warn("业务异常: code={}, message={}", ex.getCode(), ex.getMessage());
         return ApiResult.fail(ex.getCode(), ex.getMessage());
     }
 
+    /** 参数校验异常 */
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
     public ApiResult<Void> handleValidate(Exception ex) {
         String fieldErrors;
@@ -49,6 +54,7 @@ public class GlobalExceptionHandler {
                 ErrorCode.PARAM_INVALID.getMessage() + " - " + fieldErrors);
     }
 
+    /** 缺少请求参数 */
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ApiResult<Void> handleMissingParam(MissingServletRequestParameterException ex) {
         log.warn("缺少请求参数: {}", ex.getParameterName());
@@ -56,6 +62,7 @@ public class GlobalExceptionHandler {
                 "缺少必要参数: " + ex.getParameterName());
     }
 
+    /** 请求参数异常 */
     @ExceptionHandler({
             ConstraintViolationException.class,
             MethodArgumentTypeMismatchException.class,
@@ -67,6 +74,7 @@ public class GlobalExceptionHandler {
         return ApiResult.fail(ErrorCode.PARAM_INVALID.getCode(), ErrorCode.PARAM_INVALID.getMessage());
     }
 
+    /** 访问被拒绝 */
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ApiResult<Void> handleAccessDenied(AccessDeniedException ex) {
@@ -74,6 +82,7 @@ public class GlobalExceptionHandler {
         return ApiResult.fail(ErrorCode.FORBIDDEN.getCode(), ErrorCode.FORBIDDEN.getMessage());
     }
 
+    /** 认证失败 */
     @ExceptionHandler(AuthenticationException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiResult<Void> handleAuthentication(AuthenticationException ex) {
@@ -81,12 +90,14 @@ public class GlobalExceptionHandler {
         return ApiResult.fail(ErrorCode.UNAUTHORIZED.getCode(), ErrorCode.UNAUTHORIZED.getMessage());
     }
 
+    /** 不支持的请求方法 */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ApiResult<Void> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         log.warn("不支持的请求方法: {}", ex.getMethod());
         return ApiResult.fail(1004, "不支持的请求方法: " + ex.getMethod());
     }
 
+    /** 系统异常 */
     @ExceptionHandler(Exception.class)
     public ApiResult<Void> handleOther(Exception ex) {
         log.error("系统异常", ex);

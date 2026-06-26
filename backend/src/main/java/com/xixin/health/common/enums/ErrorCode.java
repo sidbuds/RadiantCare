@@ -2,6 +2,9 @@ package com.xixin.health.common.enums;
 
 import lombok.Getter;
 
+/**
+ * 错误码枚举
+ */
 @Getter
 public enum ErrorCode {
     PARAM_INVALID(1001, "参数校验失败"),

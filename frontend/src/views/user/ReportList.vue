@@ -1,33 +1,27 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getReport } from '@/api/report'
-import { ElMessage } from 'element-plus'
+import { getMyReports } from '@/api/report'
 
 const router = useRouter()
-const reportNo = ref('')
-const loading = ref(false)
+const reports = ref<any[]>([])
+const loading = ref(true)
 const mounted = ref(false)
 
-onMounted(() => {
+onMounted(async () => {
   mounted.value = true
-})
-
-async function handleView() {
-  if (!reportNo.value) {
-    ElMessage.warning('请输入报告编号')
-    return
-  }
-
-  loading.value = true
   try {
-    await getReport(reportNo.value)
-    router.push(`/user/reports/${reportNo.value}`)
+    const res: any = await getMyReports()
+    reports.value = res.data || []
   } catch {
     // handled by interceptor
   } finally {
     loading.value = false
   }
+})
+
+function openReport(reportNo: string) {
+  router.push(`/user/reports/${reportNo}`)
 }
 </script>
 
@@ -36,36 +30,38 @@ async function handleView() {
     <div class="page-header">
       <div>
         <span class="section-eyebrow">REPORT CENTER</span>
-        <h2>体检报告</h2>
+        <h2>我的报告</h2>
       </div>
-      <p>输入报告编号后直接查看详情，后续可以继续对比历年结果。</p>
+      <p>已发布的体检报告会直接出现在这里，可随时查看详情、对比历史结果或发起咨询。</p>
     </div>
 
-    <section class="report-entry glass-panel" :class="{ 'is-mounted': mounted }">
-      <div class="report-copy">
-        <strong>查看体检报告</strong>
-        <span>输入报告编号，即可查看详细的体检结果与指标分析。</span>
-      </div>
+    <section class="report-shell data-card" :class="{ 'is-mounted': mounted }">
+      <el-table :data="reports" v-loading="loading">
+        <el-table-column prop="reportNo" label="报告编号" min-width="180">
+          <template #default="{ row }">
+            <span class="mono-text">{{ row.reportNo }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="reportDate" label="报告日期" min-width="120" />
+        <el-table-column prop="publishedAt" label="发布时间" min-width="180" />
+        <el-table-column prop="overallConclusion" label="结论摘要" min-width="280" show-overflow-tooltip />
+        <el-table-column label="操作" width="120" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" link @click="openReport(row.reportNo)">查看报告</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-      <div class="report-form">
-        <el-input v-model="reportNo" placeholder="请输入报告编号" size="large" />
-        <el-button type="primary" size="large" :loading="loading" @click="handleView">
-          查看报告
-          <el-icon class="btn-arrow"><ArrowRight /></el-icon>
-        </el-button>
+      <div v-if="!loading && !reports.length" class="empty-state">
+        <el-empty description="暂无已发布报告" />
       </div>
     </section>
   </div>
 </template>
 
 <style scoped lang="scss">
-.report-entry {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 28px;
-  padding: 36px;
-  position: relative;
-  overflow: hidden;
+.report-shell {
+  padding: 20px;
   opacity: 0;
   transform: translateY(16px);
   transition: opacity 0.4s var(--ease-out-expo), transform 0.4s var(--ease-out-expo);
@@ -76,54 +72,7 @@ async function handleView() {
   }
 }
 
-.report-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  position: relative;
-
-  strong {
-    font-family: var(--font-display);
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--color-ink);
-    background: linear-gradient(135deg, var(--color-ink) 0%, rgba(240, 236, 228, 0.7) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  span {
-    color: var(--color-ink-muted);
-    line-height: 1.8;
-    font-size: 14px;
-  }
-}
-
-.report-form {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 420px;
-  position: relative;
-
-  .btn-arrow {
-    transition: transform 0.3s var(--ease-out-expo);
-  }
-
-  .el-button:hover .btn-arrow {
-    transform: translateX(3px);
-  }
-}
-
-@media (max-width: 960px) {
-  .report-entry,
-  .report-form {
-    grid-template-columns: 1fr;
-  }
-
-  .report-form {
-    min-width: 0;
-  }
+.empty-state {
+  padding: 28px 0 8px;
 }
 </style>

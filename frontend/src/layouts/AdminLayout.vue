@@ -19,6 +19,7 @@ const menuItems = computed(() => {
     case 'DOCTOR':
       return [
         { path: '/doctor/exam-tasks', icon: 'Document', title: '待检任务' },
+        { path: '/doctor/reports/review', icon: 'Notebook', title: '报告审核' },
         { path: '/doctor/consultations', icon: 'ChatDotRound', title: '咨询回复' },
         { path: '/doctor/analytics/abnormal', icon: 'Warning', title: '异常分析' },
         { path: '/doctor/analytics/workload', icon: 'DataAnalysis', title: '工作量统计' },
@@ -26,6 +27,7 @@ const menuItems = computed(() => {
     case 'OPERATOR':
       return [
         { path: '/operator/packages', icon: 'Goods', title: '套餐管理' },
+        { path: '/operator/centers', icon: 'OfficeBuilding', title: '体检中心' },
         { path: '/operator/schedules', icon: 'Calendar', title: '排班管理' },
         { path: '/operator/appointments', icon: 'Ticket', title: '预约管理' },
         { path: '/operator/orders', icon: 'List', title: '订单管理' },
@@ -34,9 +36,15 @@ const menuItems = computed(() => {
       ]
     case 'ADMIN':
       return [
+        { path: '/admin/doctors', icon: 'User', title: '医生管理' },
+        { path: '/admin/roles', icon: 'Key', title: '角色管理' },
+        { path: '/admin/users', icon: 'UserFilled', title: '用户管理' },
         { path: '/admin/exam-tasks', icon: 'Tickets', title: '任务生成' },
         { path: '/admin/reports', icon: 'Notebook', title: '报告发布' },
         { path: '/admin/consultations', icon: 'User', title: '咨询分配' },
+        { path: '/admin/dicts', icon: 'Collection', title: '字典管理' },
+        { path: '/admin/configs', icon: 'Setting', title: '系统配置' },
+        { path: '/admin/audit-logs', icon: 'Tickets', title: '审计日志' },
         { path: '/admin/doctor-analytics', icon: 'TrendCharts', title: '医生分析' },
       ]
     default:

@@ -4,6 +4,9 @@ import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 
+/**
+ * 套餐检查项请求参数
+ */
 @Data
 public class PackageItemRequest {
     @NotBlank(message = "itemCode不能为空")

@@ -39,7 +39,7 @@ onMounted(async () => {
           v-for="(item, index) in guide"
           :key="index"
           class="timeline-step"
-          :class="{ 'is-mounted': mounted }"
+          :class="{ 'is-mounted': mounted, 'is-completed': item.itemStatus === 2, 'is-in-progress': item.itemStatus === 1 }"
           :style="{ '--delay': `${0.2 + index * 0.1}s` }"
         >
           <div class="step-marker">
@@ -49,6 +49,9 @@ onMounted(async () => {
           <div class="step-card">
             <div class="step-header">
               <h4>{{ item.departmentName }}</h4>
+                            <el-tag v-if="item.itemStatus === 2" type="success" size="small">已完成</el-tag>
+              <el-tag v-else-if="item.itemStatus === 1" type="warning" size="small">进行中</el-tag>
+              <el-tag v-else type="info" size="small">待检</el-tag>
               <el-tag v-if="item.needEmptyStomach" type="warning" size="small">需空腹</el-tag>
             </div>
             <p class="step-item">{{ item.itemName }}</p>
@@ -233,6 +236,25 @@ onMounted(async () => {
   background: var(--color-warning-light);
   color: var(--color-warning);
   border: none;
+}
+
+.timeline-step.is-completed {
+  .step-number {
+    background: linear-gradient(135deg, var(--color-success), #16a34a);
+  }
+  .step-card {
+    opacity: 0.6;
+  }
+}
+
+.timeline-step.is-in-progress {
+  .step-number {
+    background: linear-gradient(135deg, var(--color-warning), #d97706);
+    box-shadow: 0 2px 12px rgba(217, 119, 6, 0.3);
+  }
+  .step-card {
+    border-color: var(--color-warning);
+  }
 }
 
 @media (max-width: 768px) {

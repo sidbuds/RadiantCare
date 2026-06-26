@@ -4,13 +4,13 @@ import { getDashboard, getAppointmentTrend, getOrderConversion, getPackageAnalys
 import * as echarts from 'echarts'
 
 const dashboard = ref<any>({})
+const filterDept = ref('')
 const loading = ref(true)
 const mounted = ref(false)
 const trendChart = ref<HTMLElement>()
 const conversionChart = ref<HTMLElement>()
 const packageChart = ref<HTMLElement>()
 
-// Dark theme chart defaults
 const chartTheme = {
   backgroundColor: 'transparent',
   textStyle: { color: '#9d9aaf', fontFamily: 'Outfit, sans-serif' },
@@ -24,14 +24,15 @@ const chartTheme = {
   grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
 }
 
-onMounted(async () => {
-  mounted.value = true
+async function loadData() {
+  loading.value = true
   try {
+    const deptParam = filterDept.value ? { departmentCode: filterDept.value } : undefined
     const [dash, trend, conv, pkg]: any = await Promise.all([
-      getDashboard(),
-      getAppointmentTrend(),
-      getOrderConversion(),
-      getPackageAnalysis(),
+      getDashboard(deptParam),
+      getAppointmentTrend(deptParam),
+      getOrderConversion(deptParam),
+      getPackageAnalysis(deptParam),
     ])
 
     dashboard.value = dash.data || {}
@@ -57,7 +58,7 @@ onMounted(async () => {
           name: '预约数',
           type: 'line',
           smooth: true,
-          data: trend.data.map((t: any) => t.count),
+          data: trend.data.map((t: any) => t.createdCount ?? t.count ?? 0),
           lineStyle: { color: '#6a9a92', width: 2 },
           itemStyle: { color: '#6a9a92' },
           areaStyle: {
@@ -70,15 +71,14 @@ onMounted(async () => {
       })
     }
 
-    if (conversionChart.value && conv.data?.length) {
+    if (conversionChart.value && conv.data) {
       const chart = echarts.init(conversionChart.value)
       chart.setOption({
         ...chartTheme,
         title: { text: '预约到订单转化', ...chartTheme.title },
         tooltip: { ...chartTheme.tooltip, trigger: 'axis' },
-        legend: { ...chartTheme.legend, data: ['预约数', '订单数'] },
         xAxis: {
-          data: conv.data.map((c: any) => c.date),
+          data: ['预约数', '订单数', '支付数', '退款数'],
           axisLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } },
           axisLabel: { color: '#5c5a6e' },
         },
@@ -87,22 +87,17 @@ onMounted(async () => {
           splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } },
           axisLabel: { color: '#5c5a6e' },
         },
-        series: [
-          {
-            name: '预约数',
-            type: 'bar',
-            data: conv.data.map((c: any) => c.appointmentCount),
-            itemStyle: { color: '#6a9a92', borderRadius: [4, 4, 0, 0] },
-            barWidth: '35%',
-          },
-          {
-            name: '订单数',
-            type: 'bar',
-            data: conv.data.map((c: any) => c.orderCount),
-            itemStyle: { color: '#b87070', borderRadius: [4, 4, 0, 0] },
-            barWidth: '35%',
-          },
-        ],
+        series: [{
+          name: '数量',
+          type: 'bar',
+          data: [
+            { value: conv.data.appointmentCount || 0, itemStyle: { color: '#6a9a92', borderRadius: [4, 4, 0, 0] } },
+            { value: conv.data.orderCount || 0, itemStyle: { color: '#b87070', borderRadius: [4, 4, 0, 0] } },
+            { value: conv.data.paidCount || 0, itemStyle: { color: '#22c55e', borderRadius: [4, 4, 0, 0] } },
+            { value: conv.data.refundCount || 0, itemStyle: { color: '#f59e0b', borderRadius: [4, 4, 0, 0] } },
+          ],
+          barWidth: '45%',
+        }],
       })
     }
 
@@ -131,10 +126,14 @@ onMounted(async () => {
       })
     }
   } catch {
-    // handled by interceptor
   } finally {
     loading.value = false
   }
+}
+
+onMounted(async () => {
+  mounted.value = true
+  await loadData()
 })
 </script>
 
@@ -148,13 +147,18 @@ onMounted(async () => {
       <p>实时查看预约、订单与收入数据，掌握运营动态。</p>
     </div>
 
+    <div class="filter-bar" :class="{ 'is-mounted': mounted }">
+      <el-input v-model="filterDept" placeholder="科室编码筛选" style="width: 180px;" clearable />
+      <el-button type="primary" @click="loadData">筛选</el-button>
+    </div>
+
     <section class="metrics-grid" v-loading="loading">
       <article
         v-for="(item, idx) in [
-          { label: '今日预约', value: dashboard.todayAppointments || 0, icon: 'Calendar', color: '#6a9a92' },
-          { label: '今日订单', value: dashboard.todayOrders || 0, icon: 'List', color: '#b87070' },
-          { label: '今日收入', value: `¥${dashboard.todayRevenue || 0}`, icon: 'Money', color: '#22c55e' },
-          { label: '待处理退款', value: dashboard.pendingRefunds || 0, icon: 'RefreshLeft', color: '#f59e0b' },
+          { label: '预约数', value: dashboard.appointmentCount || 0, icon: 'Calendar', color: '#6a9a92' },
+          { label: '已支付订单', value: dashboard.paidOrderCount || 0, icon: 'List', color: '#b87070' },
+          { label: '已发布报告', value: dashboard.publishedReportCount || 0, icon: 'Document', color: '#22c55e' },
+          { label: '退款数', value: dashboard.refundCount || 0, icon: 'RefreshLeft', color: '#f59e0b' },
         ]"
         :key="item.label"
         class="metric-card data-card"
@@ -186,6 +190,12 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -294,6 +304,10 @@ onMounted(async () => {
 @media (max-width: 640px) {
   .metrics-grid {
     grid-template-columns: 1fr;
+  }
+
+  .filter-bar {
+    flex-direction: column;
   }
 }
 </style>

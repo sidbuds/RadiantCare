@@ -1,27 +1,33 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getReport } from '@/api/report'
+import { getReport, getReportItems } from '@/api/report'
 
 const route = useRoute()
 const router = useRouter()
 const report = ref<any>(null)
+const items = ref<any[]>([])
 const loading = ref(true)
 const mounted = ref(false)
 
-const statusMap: Record<string, { label: string; type: string }> = {
-  DRAFT: { label: '草稿', type: 'info' },
-  REVIEWING: { label: '审核中', type: 'warning' },
-  REVIEWED: { label: '已审核', type: 'success' },
-  PUBLISHED: { label: '已发布', type: '' },
+const statusMap: Record<number, { label: string; type: string }> = {
+  1: { label: '待审核', type: 'warning' },
+  3: { label: '已发布', type: 'success' },
+  4: { label: '管理员处理', type: 'danger' },
 }
 
 onMounted(async () => {
   mounted.value = true
   try {
-    const res: any = await getReport(route.params.reportNo as string)
-    report.value = res.data
-  } catch {} finally { loading.value = false }
+    const reportRes: any = await getReport(route.params.reportNo as string)
+    report.value = reportRes.data
+    const itemsRes: any = await getReportItems(route.params.reportNo as string)
+    items.value = itemsRes.data || []
+  } catch {
+    // handled by interceptor
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
@@ -51,35 +57,32 @@ onMounted(async () => {
             <el-tag :type="statusMap[report.status]?.type as any">{{ statusMap[report.status]?.label }}</el-tag>
           </div>
           <div class="info-item">
-            <span class="info-label">用户</span>
-            <span class="info-value">{{ report.userName }}</span>
+            <span class="info-label">报告日期</span>
+            <span class="info-value">{{ report.reportDate }}</span>
           </div>
           <div class="info-item">
-            <span class="info-label">套餐</span>
-            <span class="info-value">{{ report.packageName }}</span>
+            <span class="info-label">发布时间</span>
+            <span class="info-value">{{ report.publishedAt || '-' }}</span>
           </div>
-          <div class="info-item">
-            <span class="info-label">体检日期</span>
-            <span class="info-value">{{ report.taskDate }}</span>
-          </div>
-          <div class="info-item full-width" v-if="report.conclusion">
-            <span class="info-label">总检结论</span>
-            <span class="info-value">{{ report.conclusion }}</span>
+          <div class="info-item full-width">
+            <span class="info-label">总体结论</span>
+            <span class="info-value">{{ report.overallConclusion }}</span>
           </div>
         </div>
       </div>
 
-      <div v-if="report.items && report.items.length" class="items-card glass-panel" :class="{ 'is-mounted': mounted }">
+      <div v-if="items.length" class="items-card glass-panel" :class="{ 'is-mounted': mounted }">
         <h3 class="items-heading">检查指标</h3>
-        <el-table :data="report.items">
-          <el-table-column prop="metricName" label="指标名称" />
-          <el-table-column prop="resultValue" label="结果" />
+        <el-table :data="items">
+          <el-table-column prop="itemName" label="指标名称" min-width="180" />
+          <el-table-column prop="resultValue" label="结果" min-width="160" />
           <el-table-column prop="unit" label="单位" width="100" />
-          <el-table-column prop="refRange" label="参考范围" width="140" />
-          <el-table-column label="异常" width="80">
+          <el-table-column prop="refRange" label="参考范围" min-width="160" />
+          <el-table-column label="异常" width="90">
             <template #default="{ row }">
-              <el-tag v-if="row.abnormal" type="danger" size="small">异常</el-tag>
-              <span v-else class="normal-text">正常</span>
+              <el-tag :type="row.isAbnormal ? 'danger' : 'success'" size="small">
+                {{ row.isAbnormal ? '异常' : '正常' }}
+              </el-tag>
             </template>
           </el-table-column>
         </el-table>
@@ -116,20 +119,15 @@ onMounted(async () => {
   background: var(--color-panel) !important;
   border: 1px solid var(--color-line) !important;
   color: var(--color-ink-soft) !important;
-
-  &:hover {
-    border-color: var(--color-line-strong) !important;
-    color: var(--color-ink) !important;
-  }
 }
 
-.info-card {
-  padding: 36px;
+.info-card,
+.items-card {
+  padding: 32px;
   margin-bottom: 20px;
   opacity: 0;
   transform: translateY(16px);
   transition: opacity 0.4s var(--ease-out-expo), transform 0.4s var(--ease-out-expo);
-  transition-delay: 0.1s;
 
   &.is-mounted {
     opacity: 1;
@@ -138,18 +136,13 @@ onMounted(async () => {
 }
 
 .card-header {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 
   h2 {
     font-family: var(--font-display);
     font-size: 28px;
-    font-weight: 700;
-    color: var(--color-ink);
     margin-top: 12px;
-    background: linear-gradient(135deg, var(--color-ink) 0%, rgba(240, 236, 228, 0.7) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--color-ink);
   }
 }
 
@@ -167,61 +160,26 @@ onMounted(async () => {
   &.full-width {
     grid-column: 1 / -1;
   }
-
-  .info-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--color-ink-faint);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-
-  .info-value {
-    font-size: 15px;
-    color: var(--color-ink);
-    font-weight: 500;
-  }
 }
 
-.items-card {
-  padding: 32px;
-  margin-bottom: 20px;
-  opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 0.4s var(--ease-out-expo), transform 0.4s var(--ease-out-expo);
-  transition-delay: 0.2s;
+.info-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-ink-faint);
+  text-transform: uppercase;
+}
 
-  &.is-mounted {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.info-value {
+  font-size: 15px;
+  color: var(--color-ink);
+  font-weight: 500;
 }
 
 .items-heading {
   font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 700;
-  color: var(--color-ink);
   margin: 0 0 20px;
-  padding-left: 16px;
-  position: relative;
-
-  &::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 4px;
-    bottom: 4px;
-    width: 4px;
-    border-radius: 2px;
-    background: linear-gradient(180deg, var(--color-brand), var(--color-accent));
-  }
-}
-
-.normal-text {
-  color: var(--color-success);
-  font-size: 13px;
-  font-weight: 500;
+  color: var(--color-ink);
 }
 
 .action-bar {
@@ -230,40 +188,11 @@ onMounted(async () => {
   opacity: 0;
   transform: translateY(12px);
   transition: opacity 0.4s var(--ease-out-expo), transform 0.4s var(--ease-out-expo);
-  transition-delay: 0.3s;
 
   &.is-mounted {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-:deep(.el-tag) {
-  border-radius: 999px;
-}
-
-:deep(.el-tag--success) {
-  background: var(--color-success-light);
-  color: var(--color-success);
-  border: none;
-}
-
-:deep(.el-tag--warning) {
-  background: var(--color-warning-light);
-  color: var(--color-warning);
-  border: none;
-}
-
-:deep(.el-tag--info) {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--color-ink-muted);
-  border: none;
-}
-
-:deep(.el-tag--danger) {
-  background: var(--color-danger-light);
-  color: var(--color-danger);
-  border: none;
 }
 
 @media (max-width: 640px) {

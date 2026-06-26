@@ -9,6 +9,9 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * 支付记录实体
+ */
 @Data
 @TableName("payment_record")
 public class PaymentRecordEntity extends BaseEntity {

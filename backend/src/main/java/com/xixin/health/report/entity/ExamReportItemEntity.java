@@ -8,6 +8,9 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
+/**
+ * 报告检查项实体
+ */
 @Data
 @TableName("exam_report_item")
 public class ExamReportItemEntity extends BaseEntity {

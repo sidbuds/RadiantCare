@@ -8,6 +8,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * 咨询回复实体
+ */
 @Data
 @TableName("doctor_consultation_reply")
 public class DoctorConsultationReplyEntity extends BaseEntity {
@@ -20,5 +23,7 @@ public class DoctorConsultationReplyEntity extends BaseEntity {
     private String replyUserName;
     private String replyContent;
     private String attachmentUrl;
+    private String messageType;
+    private String refReportNo;
     private LocalDateTime replyTime;
 }

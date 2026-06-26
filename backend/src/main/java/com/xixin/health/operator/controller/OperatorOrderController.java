@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 运营端订单控制器
+ */
 @RestController
 @RequestMapping("/api/operator/orders")
 @PreAuthorize("hasRole('OPERATOR')")

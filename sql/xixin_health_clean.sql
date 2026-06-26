@@ -1,8 +1,8 @@
-DROP DATABASE IF EXISTS `xixin_health`;
+﻿DROP DATABASE IF EXISTS `xixin_health`;
 CREATE DATABASE `xixin_health` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `xixin_health`;
 
--- ============ 用户 & 认证 ============
+-- ============ 鐢ㄦ埛 & 璁よ瘉 ============
 
 CREATE TABLE `user` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -60,6 +60,24 @@ CREATE TABLE `staff_role_rel` (
   KEY `idx_staff_account` (`staff_account_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `doctor_department_rel` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `doctor_id` BIGINT NOT NULL COMMENT '医生账号ID（staff_account.id）',
+  `department_code` VARCHAR(32) NOT NULL COMMENT '科室编码',
+  `department_name` VARCHAR(64) DEFAULT NULL COMMENT '科室名称',
+  `center_code` VARCHAR(32) DEFAULT NULL COMMENT '所属中心编码',
+  `is_primary` TINYINT NOT NULL DEFAULT 0 COMMENT '是否主科室 0否 1是',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `created_by` BIGINT DEFAULT NULL,
+  `updated_by` BIGINT DEFAULT NULL,
+  `is_deleted` TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_doctor_department` (`doctor_id`,`department_code`,`is_deleted`),
+  KEY `idx_department` (`department_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 CREATE TABLE `health_profile` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT NOT NULL,
@@ -78,7 +96,7 @@ CREATE TABLE `health_profile` (
   KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============ 套餐 & 中心 ============
+-- ============ 濂楅 & 涓績 ============
 
 CREATE TABLE `exam_package` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -132,7 +150,7 @@ CREATE TABLE `exam_center` (
   UNIQUE KEY `uk_center_code` (`center_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============ 预约 & 资源 ============
+-- ============ 棰勭害 & 璧勬簮 ============
 
 CREATE TABLE `appointment` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -187,6 +205,8 @@ CREATE TABLE `resource_capacity` (
   `time_slot_code` VARCHAR(32) NOT NULL,
   `resource_type` VARCHAR(32) NOT NULL,
   `resource_code` VARCHAR(64) NOT NULL,
+  `department_code` VARCHAR(32) DEFAULT NULL COMMENT '科室编码',
+  `department_name` VARCHAR(64) DEFAULT NULL COMMENT '科室名称',
   `capacity_total` INT NOT NULL DEFAULT 0,
   `capacity_used` INT NOT NULL DEFAULT 0,
   `capacity_locked` INT NOT NULL DEFAULT 0,
@@ -241,7 +261,7 @@ CREATE TABLE `schedule_resource_bind` (
   UNIQUE KEY `uk_schedule_resource_bind` (`center_code`,`time_slot_code`,`package_id`,`item_code`,`resource_type`,`resource_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============ 订单 & 支付 & 退款 ============
+-- ============ 璁㈠崟 & 鏀粯 & 閫€娆?============
 
 CREATE TABLE `order` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -394,7 +414,7 @@ CREATE TABLE `refund_record` (
   KEY `idx_order_no` (`order_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============ 体检任务 & 结果 ============
+-- ============ 浣撴浠诲姟 & 缁撴灉 ============
 
 CREATE TABLE `exam_task` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -530,7 +550,7 @@ CREATE TABLE `exam_result_attachment` (
   KEY `idx_result_id` (`result_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============ 报告 ============
+-- ============ 鎶ュ憡 ============
 
 CREATE TABLE `report_template` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -654,7 +674,7 @@ CREATE TABLE `doctor_review_record` (
   KEY `idx_reviewer_id` (`reviewer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============ 对比 & 健康建议 ============
+-- ============ 瀵规瘮 & 鍋ュ悍寤鸿 ============
 
 CREATE TABLE `report_compare_task` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -769,7 +789,7 @@ CREATE TABLE `health_advice_record` (
   KEY `idx_user_compare` (`user_id`,`compare_task_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============ 咨询 ============
+-- ============ 鍜ㄨ ============
 
 CREATE TABLE `doctor_consultation` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -785,6 +805,9 @@ CREATE TABLE `doctor_consultation` (
   `consultation_content` TEXT,
   `consultation_status` VARCHAR(32) NOT NULL DEFAULT 'PENDING',
   `priority_level` TINYINT NOT NULL DEFAULT 0,
+  `department_code` VARCHAR(32) DEFAULT NULL COMMENT '科室编码',
+  `department_name` VARCHAR(64) DEFAULT NULL COMMENT '科室名称',
+  `health_profile_shared` TINYINT DEFAULT 0 COMMENT '是否已共享健康档案 0否 1是',
   `latest_reply_time` DATETIME(3) DEFAULT NULL,
   `closed_time` DATETIME(3) DEFAULT NULL,
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -807,6 +830,8 @@ CREATE TABLE `doctor_consultation_reply` (
   `reply_user_name` VARCHAR(64) DEFAULT NULL,
   `reply_content` TEXT,
   `attachment_url` VARCHAR(512) DEFAULT NULL,
+  `message_type` VARCHAR(32) DEFAULT 'TEXT' COMMENT '消息类型: TEXT/HEALTH_PROFILE/REPORT_REF',
+  `ref_report_no` VARCHAR(32) DEFAULT NULL COMMENT '引用报告编号',
   `reply_time` DATETIME(3) DEFAULT NULL,
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
@@ -817,7 +842,7 @@ CREATE TABLE `doctor_consultation_reply` (
   KEY `idx_consultation_no` (`consultation_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============ 系统 ============
+-- ============ 绯荤粺 ============
 
 CREATE TABLE `stat_daily_report` (
   `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -888,4 +913,21 @@ CREATE TABLE `notification_record` (
   `is_deleted` TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `idx_user_read` (`user_id`,`read_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE `system_config` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `config_key` VARCHAR(128) NOT NULL COMMENT '配置键',
+  `config_value` TEXT COMMENT '配置值',
+  `data_type` VARCHAR(16) DEFAULT 'STRING' COMMENT '值类型: STRING/INT/BOOLEAN/JSON',
+  `config_group` VARCHAR(64) DEFAULT NULL COMMENT '配置分组',
+  `remark` VARCHAR(256) DEFAULT NULL COMMENT '备注',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `created_by` BIGINT DEFAULT NULL,
+  `updated_by` BIGINT DEFAULT NULL,
+  `is_deleted` TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_config_key` (`config_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

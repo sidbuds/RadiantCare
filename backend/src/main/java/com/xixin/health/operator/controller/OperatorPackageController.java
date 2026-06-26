@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 运营端套餐控制器
+ */
 @RestController
 @RequestMapping("/api/operator/packages")
 @PreAuthorize("hasRole('OPERATOR')")
@@ -55,5 +59,12 @@ public class OperatorPackageController {
     @PutMapping("/{id}")
     public ApiResult<?> update(@PathVariable Long id, @Validated @RequestBody SavePackageRequest request) {
         return ApiResult.success(operatorPackageService.update(id, request));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ApiResult<?> updateStatus(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Number status = (Number) body.get("status");
+        operatorPackageService.updateStatus(id, status == null ? null : status.intValue());
+        return ApiResult.success(null);
     }
 }

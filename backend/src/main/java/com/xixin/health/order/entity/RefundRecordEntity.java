@@ -9,6 +9,9 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * 退款记录实体
+ */
 @Data
 @TableName("refund_record")
 public class RefundRecordEntity extends BaseEntity {

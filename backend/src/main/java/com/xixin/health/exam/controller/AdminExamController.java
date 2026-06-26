@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 管理端体检任务控制器
+ */
+@Deprecated
 @RestController
 @RequestMapping("/api/admin/exam-tasks")
 @PreAuthorize("hasRole('ADMIN')")
@@ -21,6 +25,7 @@ public class AdminExamController {
         this.examService = examService;
     }
 
+    /** 生成体检任务 */
     @PostMapping("/generate")
     public ApiResult<?> generate(@Validated @RequestBody GenerateExamTaskRequest request) {
         return ApiResult.success(examService.generateTask(request));

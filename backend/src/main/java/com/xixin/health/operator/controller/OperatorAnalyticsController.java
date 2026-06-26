@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 
+/**
+ * 运营端数据分析控制器
+ */
 @RestController
 @RequestMapping("/api/operator/analytics")
 @PreAuthorize("hasRole('OPERATOR')")
@@ -23,26 +26,30 @@ public class OperatorAnalyticsController {
     }
 
     @GetMapping("/dashboard")
-    public ApiResult<?> dashboard(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+    public ApiResult<?> dashboard(@RequestParam(required = false) String departmentCode,
+                                  @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                   @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-        return ApiResult.success(operatorAnalyticsService.dashboard(startDate, endDate));
+        return ApiResult.success(operatorAnalyticsService.dashboard(departmentCode, startDate, endDate));
     }
 
     @GetMapping("/appointment-trend")
-    public ApiResult<?> appointmentTrend(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+    public ApiResult<?> appointmentTrend(@RequestParam(required = false) String departmentCode,
+                                         @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                          @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-        return ApiResult.success(operatorAnalyticsService.appointmentTrend(startDate, endDate));
+        return ApiResult.success(operatorAnalyticsService.appointmentTrend(departmentCode, startDate, endDate));
     }
 
     @GetMapping("/order-conversion")
-    public ApiResult<?> orderConversion(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+    public ApiResult<?> orderConversion(@RequestParam(required = false) String departmentCode,
+                                        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                         @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-        return ApiResult.success(operatorAnalyticsService.orderConversion(startDate, endDate));
+        return ApiResult.success(operatorAnalyticsService.orderConversion(departmentCode, startDate, endDate));
     }
 
     @GetMapping("/package-analysis")
-    public ApiResult<?> packageAnalysis(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+    public ApiResult<?> packageAnalysis(@RequestParam(required = false) String departmentCode,
+                                        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                         @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-        return ApiResult.success(operatorAnalyticsService.packageAnalysis(startDate, endDate));
+        return ApiResult.success(operatorAnalyticsService.packageAnalysis(departmentCode, startDate, endDate));
     }
 }

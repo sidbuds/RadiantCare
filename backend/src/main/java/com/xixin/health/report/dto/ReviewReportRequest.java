@@ -4,6 +4,9 @@ import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 
+/**
+ * 审核报告请求参数
+ */
 @Data
 public class ReviewReportRequest {
     @NotBlank

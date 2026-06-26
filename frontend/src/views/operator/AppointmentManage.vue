@@ -19,15 +19,20 @@ async function loadData() {
     if (filters.value.centerCode) params.centerCode = filters.value.centerCode
     if (filters.value.status !== '') params.status = filters.value.status
     const res: any = await getOperatorAppointments(params)
-    appointments.value = res.data?.list || res.data || []
-  } catch {} finally { loading.value = false }
+    appointments.value = res.data?.list || []
+  } catch {
+    // handled by interceptor
+  } finally {
+    loading.value = false
+  }
 }
 
 const statusMap: Record<number, { label: string; type: string }> = {
-  0: { label: '待确认', type: 'info' },
-  1: { label: '已确认', type: 'success' },
-  2: { label: '已完成', type: '' },
-  3: { label: '已取消', type: 'danger' },
+  0: { label: '待支付', type: 'info' },
+  1: { label: '待体检', type: 'success' },
+  2: { label: '已体检', type: '' },
+  3: { label: '已关闭', type: 'danger' },
+  4: { label: '爽约', type: 'danger' },
 }
 </script>
 
@@ -38,14 +43,17 @@ const statusMap: Record<number, { label: string; type: string }> = {
         <span class="section-eyebrow">APPOINTMENT</span>
         <h2>预约管理</h2>
       </div>
-      <p>查看和管理所有预约记录，按中心和状态筛选。</p>
+      <p>查看与管理所有预约记录，按体检中心和状态筛选。</p>
     </div>
 
     <div class="filter-bar" :class="{ 'is-mounted': mounted }">
       <el-input v-model="filters.centerCode" placeholder="中心编码" style="width: 150px;" clearable />
       <el-select v-model="filters.status" placeholder="状态" style="width: 120px;" clearable>
-        <el-option label="待确认" :value="0" /><el-option label="已确认" :value="1" />
-        <el-option label="已完成" :value="2" /><el-option label="已取消" :value="3" />
+        <el-option label="待支付" :value="0" />
+        <el-option label="待体检" :value="1" />
+        <el-option label="已体检" :value="2" />
+        <el-option label="已关闭" :value="3" />
+        <el-option label="爽约" :value="4" />
       </el-select>
       <el-button type="primary" @click="loadData">查询</el-button>
     </div>
@@ -62,7 +70,7 @@ const statusMap: Record<number, { label: string; type: string }> = {
             {{ row.userName || row.appointment?.userId }}
           </template>
         </el-table-column>
-        <el-table-column label="套餐ID" width="100">
+        <el-table-column label="套餐 ID" width="100">
           <template #default="{ row }">
             {{ row.appointment?.packageId }}
           </template>

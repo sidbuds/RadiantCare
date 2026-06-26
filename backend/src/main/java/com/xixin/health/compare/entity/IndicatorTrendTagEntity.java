@@ -6,6 +6,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.xixin.health.common.model.BaseEntity;
 import lombok.Data;
 
+/**
+ * 指标趋势标签实体
+ */
 @Data
 @TableName("indicator_trend_tag")
 public class IndicatorTrendTagEntity extends BaseEntity {

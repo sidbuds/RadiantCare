@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 
+/**
+ * 管理端医生数据分析控制器
+ */
+@Deprecated
 @RestController
 @RequestMapping("/api/admin/doctor-analytics")
 @PreAuthorize("hasRole('ADMIN')")

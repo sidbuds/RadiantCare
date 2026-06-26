@@ -21,6 +21,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 运营端数据分析服务
+ */
 @Service
 public class OperatorAnalyticsService {
 
@@ -42,7 +45,7 @@ public class OperatorAnalyticsService {
         this.examPackageMapper = examPackageMapper;
     }
 
-    public Map<String, Object> dashboard(LocalDate startDate, LocalDate endDate) {
+    public Map<String, Object> dashboard(String departmentCode, LocalDate startDate, LocalDate endDate) {
         LocalDate start = startDate == null ? LocalDate.now().minusDays(29) : startDate;
         LocalDate end = endDate == null ? LocalDate.now() : endDate;
         long appointmentCount = appointmentMapper.selectCount(new LambdaQueryWrapper<AppointmentEntity>()
@@ -75,7 +78,7 @@ public class OperatorAnalyticsService {
         return result;
     }
 
-    public List<Map<String, Object>> appointmentTrend(LocalDate startDate, LocalDate endDate) {
+    public List<Map<String, Object>> appointmentTrend(String departmentCode, LocalDate startDate, LocalDate endDate) {
         LocalDate start = startDate == null ? LocalDate.now().minusDays(6) : startDate;
         LocalDate end = endDate == null ? LocalDate.now() : endDate;
         List<AppointmentEntity> appointments = appointmentMapper.selectList(new LambdaQueryWrapper<AppointmentEntity>()
@@ -99,7 +102,7 @@ public class OperatorAnalyticsService {
         return new ArrayList<Map<String, Object>>(grouped.values());
     }
 
-    public Map<String, Object> orderConversion(LocalDate startDate, LocalDate endDate) {
+    public Map<String, Object> orderConversion(String departmentCode, LocalDate startDate, LocalDate endDate) {
         LocalDate start = startDate == null ? LocalDate.now().minusDays(29) : startDate;
         LocalDate end = endDate == null ? LocalDate.now() : endDate;
         long appointmentCount = appointmentMapper.selectCount(new LambdaQueryWrapper<AppointmentEntity>()
@@ -129,7 +132,7 @@ public class OperatorAnalyticsService {
         return result;
     }
 
-    public List<Map<String, Object>> packageAnalysis(LocalDate startDate, LocalDate endDate) {
+    public List<Map<String, Object>> packageAnalysis(String departmentCode, LocalDate startDate, LocalDate endDate) {
         LocalDate start = startDate == null ? LocalDate.now().minusDays(29) : startDate;
         LocalDate end = endDate == null ? LocalDate.now() : endDate;
         List<ExamPackageEntity> packages = examPackageMapper.selectList(new LambdaQueryWrapper<ExamPackageEntity>()

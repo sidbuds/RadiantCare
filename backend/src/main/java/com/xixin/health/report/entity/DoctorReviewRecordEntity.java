@@ -8,6 +8,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * 医生审核记录实体
+ */
 @Data
 @TableName("doctor_review_record")
 public class DoctorReviewRecordEntity extends BaseEntity {

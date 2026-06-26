@@ -8,6 +8,9 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
+/**
+ * 报告对比结果实体
+ */
 @Data
 @TableName("report_compare_result")
 public class ReportCompareResultEntity extends BaseEntity {

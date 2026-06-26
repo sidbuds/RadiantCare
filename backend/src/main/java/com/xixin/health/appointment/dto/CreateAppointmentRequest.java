@@ -6,6 +6,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 
+/**
+ * 创建预约请求参数
+ */
 @Data
 public class CreateAppointmentRequest {
     @NotNull

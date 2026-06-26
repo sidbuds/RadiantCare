@@ -21,11 +21,25 @@ onMounted(async () => {
   mounted.value = true
   try {
     const res: any = await getDoctorExamItem(taskNo, taskItemNo)
-    item.value = res.data
-    resultEntries.value = [
-      { metricCode: '', metricName: '', resultValue: '', resultNumber: null, unit: '', refRange: '', abnormal: false, abnormalLevel: 0 },
-    ]
-  } catch {} finally { loading.value = false }
+    const data = res.data || {}
+    item.value = data.item || data
+    const presets = data.presetMetrics?.length
+      ? data.presetMetrics
+      : [{ metricCode: item.value.itemCode, metricName: item.value.itemName, unit: '', refRange: '' }]
+    resultEntries.value = presets.map((preset: any) => ({
+      metricCode: preset.metricCode,
+      metricName: preset.metricName,
+      unit: preset.unit || '',
+      refRange: preset.refRange || '',
+      resultNumber: null,
+      abnormal: false,
+      abnormalLevel: 0,
+    }))
+  } catch {
+    // handled by interceptor
+  } finally {
+    loading.value = false
+  }
 })
 
 async function handleStart() {
@@ -33,31 +47,38 @@ async function handleStart() {
     await startExamItem(taskNo, taskItemNo)
     ElMessage.success('已开始')
     item.value.itemStatus = 1
-  } catch {}
-}
-
-function addRow() {
-  resultEntries.value.push({ metricCode: '', metricName: '', resultValue: '', resultNumber: null, unit: '', refRange: '', abnormal: false, abnormalLevel: 0 })
-}
-
-function removeRow(index: number) {
-  resultEntries.value.splice(index, 1)
+  } catch {
+    // handled by interceptor
+  }
 }
 
 async function handleSubmitResults() {
-  if (!resultEntries.value.length || resultEntries.value.some(e => !e.metricCode || !e.metricName || !e.resultValue)) {
-    ElMessage.warning('请填写完整的指标信息')
+  if (!resultEntries.value.length || resultEntries.value.some(e => e.resultNumber === null || e.resultNumber === undefined || e.resultNumber === '')) {
+    ElMessage.warning('请填写检查数值')
     return
   }
   submitting.value = true
   try {
     await submitExamResults(taskNo, taskItemNo, {
       itemCode: item.value.itemCode,
-      resultEntries: resultEntries.value,
+      resultEntries: resultEntries.value.map(entry => ({
+        metricCode: entry.metricCode,
+        metricName: entry.metricName,
+        resultValue: String(entry.resultNumber),
+        resultNumber: entry.resultNumber,
+        unit: entry.unit,
+        refRange: entry.refRange,
+        abnormal: entry.abnormal,
+        abnormalLevel: entry.abnormal ? entry.abnormalLevel : 0,
+      })),
       conclusion: conclusion.value,
     })
     ElMessage.success('结果已提交')
-  } catch {} finally { submitting.value = false }
+  } catch {
+    // handled by interceptor
+  } finally {
+    submitting.value = false
+  }
 }
 
 async function handleComplete() {
@@ -65,7 +86,9 @@ async function handleComplete() {
     await completeExamItem(taskNo, taskItemNo)
     ElMessage.success('已完成')
     router.push('/doctor/exam-tasks')
-  } catch {}
+  } catch {
+    // handled by interceptor
+  }
 }
 </script>
 
@@ -94,8 +117,8 @@ async function handleComplete() {
             <span class="info-value">{{ item.itemName }} ({{ item.itemCode }})</span>
           </div>
           <div class="info-item">
-            <span class="info-label">用户</span>
-            <span class="info-value">{{ item.userName }}</span>
+            <span class="info-label">科室</span>
+            <span class="info-value">{{ item.departmentName || '-' }}</span>
           </div>
         </div>
         <div class="status-action">
@@ -108,28 +131,38 @@ async function handleComplete() {
       <section v-if="item.itemStatus === 1" class="entry-card glass-panel" :class="{ 'is-mounted': mounted }">
         <div class="entry-header">
           <h3>检查指标</h3>
-          <el-button size="small" type="primary" @click="addRow">
-            <el-icon><Plus /></el-icon>
-            添加指标
-          </el-button>
         </div>
 
-        <div v-for="(entry, index) in resultEntries" :key="index" class="entry-row">
-          <el-input v-model="entry.metricCode" placeholder="编码" style="width: 120px;" />
-          <el-input v-model="entry.metricName" placeholder="名称" style="width: 140px;" />
-          <el-input v-model="entry.resultValue" placeholder="结果值" style="width: 120px;" />
-          <el-input-number v-model="entry.resultNumber" placeholder="数值" style="width: 120px;" :controls="false" />
-          <el-input v-model="entry.unit" placeholder="单位" style="width: 100px;" />
-          <el-input v-model="entry.refRange" placeholder="参考范围" style="width: 120px;" />
-          <el-checkbox v-model="entry.abnormal">异常</el-checkbox>
-          <el-select v-model="entry.abnormalLevel" style="width: 100px;" :disabled="!entry.abnormal">
-            <el-option :value="0" label="正常" />
-            <el-option :value="1" label="轻度" />
-            <el-option :value="2" label="中度" />
-            <el-option :value="3" label="重度" />
-          </el-select>
-          <el-button type="danger" :icon="'Delete'" circle size="small" @click="removeRow(index)" />
-        </div>
+        <el-table :data="resultEntries" class="metric-table">
+          <el-table-column prop="metricCode" label="编码" min-width="120" />
+          <el-table-column prop="metricName" label="名称" min-width="160" />
+          <el-table-column prop="unit" label="单位" width="100">
+            <template #default="{ row }">{{ row.unit || '-' }}</template>
+          </el-table-column>
+          <el-table-column prop="refRange" label="参考范围" min-width="140">
+            <template #default="{ row }">{{ row.refRange || '-' }}</template>
+          </el-table-column>
+          <el-table-column label="数值" min-width="160">
+            <template #default="{ row }">
+              <el-input-number v-model="row.resultNumber" :controls="false" placeholder="填写数值" style="width: 140px;" />
+            </template>
+          </el-table-column>
+          <el-table-column label="异常" width="90">
+            <template #default="{ row }">
+              <el-checkbox v-model="row.abnormal" />
+            </template>
+          </el-table-column>
+          <el-table-column label="异常等级" width="130">
+            <template #default="{ row }">
+              <el-select v-model="row.abnormalLevel" :disabled="!row.abnormal">
+                <el-option :value="0" label="正常" />
+                <el-option :value="1" label="轻度" />
+                <el-option :value="2" label="中度" />
+                <el-option :value="3" label="重度" />
+              </el-select>
+            </template>
+          </el-table-column>
+        </el-table>
 
         <el-input v-model="conclusion" type="textarea" :rows="3" placeholder="结论备注" class="conclusion-input" />
 
@@ -229,21 +262,8 @@ async function handleComplete() {
   }
 }
 
-.entry-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 12px;
-  padding: 14px 16px;
-  border-radius: var(--radius-md);
-  background: var(--color-panel);
-  border: 1px solid var(--color-line);
-  flex-wrap: wrap;
-  transition: border-color 0.2s ease;
-
-  &:hover {
-    border-color: var(--color-line-strong);
-  }
+.metric-table {
+  margin-bottom: 18px;
 }
 
 .conclusion-input {
@@ -275,15 +295,6 @@ async function handleComplete() {
 @media (max-width: 768px) {
   .info-grid {
     grid-template-columns: 1fr;
-  }
-
-  .entry-row {
-    flex-direction: column;
-    align-items: stretch;
-
-    > * {
-      width: 100% !important;
-    }
   }
 }
 </style>

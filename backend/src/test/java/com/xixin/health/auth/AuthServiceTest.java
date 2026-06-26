@@ -103,6 +103,7 @@ class AuthServiceTest {
         when(staffAccountMapper.selectOne(any())).thenReturn(null);
         when(userMapper.selectOne(any())).thenReturn(userEntity);
 
-        assertThrows(BizException.class, () -> authService.login(loginRequest));
+        BizException exception = assertThrows(BizException.class, () -> authService.login(loginRequest));
+        assertEquals("账号已被封禁", exception.getMessage());
     }
 }

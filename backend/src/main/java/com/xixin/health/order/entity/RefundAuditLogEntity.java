@@ -6,6 +6,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.xixin.health.common.model.BaseEntity;
 import lombok.Data;
 
+/**
+ * 退款审核日志实体
+ */
 @Data
 @TableName("refund_audit_log")
 public class RefundAuditLogEntity extends BaseEntity {

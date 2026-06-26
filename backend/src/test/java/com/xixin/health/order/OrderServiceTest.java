@@ -25,9 +25,13 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OrderService 单元测试")
@@ -110,8 +114,10 @@ class OrderServiceTest {
 
             when(appointmentService.getByNo("APT001")).thenReturn(appointment);
             when(orderMapper.selectCount(any())).thenReturn(1L);
+            when(orderMapper.selectOne(any())).thenReturn(order);
 
-            assertThrows(BizException.class, () -> orderService.create(createRequest));
+            Map<String, Object> result = orderService.create(createRequest);
+            assertEquals("ORD001", result.get("orderNo"));
         }
     }
 
@@ -123,15 +129,16 @@ class OrderServiceTest {
 
             Map<String, Object> payResult = new HashMap<>();
             payResult.put("transactionNo", "MOCK_123");
+            payResult.put("payChannel", "MOCK_SANDBOX");
 
             when(orderMapper.selectOne(any())).thenReturn(order);
             when(paymentService.createPayment(any())).thenReturn(payResult);
-            when(orderMapper.update(any(), any())).thenReturn(1);
 
             Map<String, Object> result = orderService.pay("ORD001");
 
             assertNotNull(result);
             assertEquals("PAID", result.get("status"));
+            verify(paymentService).handlePaymentSuccess("ORD001", "MOCK_123", "MOCK_SANDBOX");
         }
     }
 
@@ -141,7 +148,7 @@ class OrderServiceTest {
         try (MockedStatic<AuthContext> authContext = mockStatic(AuthContext.class)) {
             authContext.when(AuthContext::getUserId).thenReturn(1L);
 
-            order.setStatus(1); // 已支付
+            order.setStatus(1);
             when(orderMapper.selectOne(any())).thenReturn(order);
 
             assertThrows(BizException.class, () -> orderService.pay("ORD001"));

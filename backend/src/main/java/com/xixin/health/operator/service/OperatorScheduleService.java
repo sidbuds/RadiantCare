@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * 运营端排班服务
+ */
 @Service
 public class OperatorScheduleService {
 
@@ -23,9 +26,10 @@ public class OperatorScheduleService {
         this.resourceCapacityMapper = resourceCapacityMapper;
     }
 
-    public List<ResourceCapacityEntity> list(String centerCode, LocalDate startDate, LocalDate endDate) {
+    public List<ResourceCapacityEntity> list(String centerCode, String departmentCode, LocalDate startDate, LocalDate endDate) {
         return resourceCapacityMapper.selectList(new LambdaQueryWrapper<ResourceCapacityEntity>()
                 .eq(centerCode != null && centerCode.trim().length() > 0, ResourceCapacityEntity::getCenterCode, centerCode)
+                .eq(departmentCode != null && departmentCode.trim().length() > 0, ResourceCapacityEntity::getDepartmentCode, departmentCode)
                 .ge(startDate != null, ResourceCapacityEntity::getAppointDate, startDate)
                 .le(endDate != null, ResourceCapacityEntity::getAppointDate, endDate)
                 .eq(ResourceCapacityEntity::getIsDeleted, 0)
@@ -45,6 +49,8 @@ public class OperatorScheduleService {
         entity.setCapacityTotal(request.getCapacityTotal());
         entity.setCapacityUsed(0);
         entity.setCapacityLocked(0);
+        entity.setDepartmentCode(request.getDepartmentCode());
+        entity.setDepartmentName(request.getDepartmentName());
         entity.setStatus(request.getStatus());
         entity.setVersionNo(1);
         entity.setCreatedBy(AuthContext.getUserId());
@@ -70,6 +76,8 @@ public class OperatorScheduleService {
                 .set(ResourceCapacityEntity::getTimeSlotCode, request.getTimeSlotCode())
                 .set(ResourceCapacityEntity::getResourceType, request.getResourceType())
                 .set(ResourceCapacityEntity::getResourceCode, request.getResourceCode())
+                .set(ResourceCapacityEntity::getDepartmentCode, request.getDepartmentCode())
+                .set(ResourceCapacityEntity::getDepartmentName, request.getDepartmentName())
                 .set(ResourceCapacityEntity::getCapacityTotal, request.getCapacityTotal())
                 .set(ResourceCapacityEntity::getStatus, request.getStatus())
                 .set(ResourceCapacityEntity::getUpdatedBy, AuthContext.getUserId()));

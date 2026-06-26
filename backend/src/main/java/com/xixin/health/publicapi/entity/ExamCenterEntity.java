@@ -6,6 +6,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.xixin.health.common.model.BaseEntity;
 import lombok.Data;
 
+/**
+ * 体检中心实体
+ */
 @Data
 @TableName("exam_center")
 public class ExamCenterEntity extends BaseEntity {

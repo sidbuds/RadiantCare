@@ -17,6 +17,7 @@ const quickActions = computed(() => {
   if (isLoggedIn.value) {
     return [
       { label: '我的预约', description: '查看预约进度与到检信息', icon: 'Calendar', action: () => router.push('/user/appointments') },
+      { label: '导检路线', description: '查看体检引导与科室路线', icon: 'Guide', action: () => router.push('/user/appointments') },
       { label: '体检报告', description: '查看结果与历年对比', icon: 'Document', action: () => router.push('/user/reports') },
       { label: '咨询医生', description: '针对异常指标在线咨询', icon: 'ChatDotRound', action: () => router.push('/user/consultations') },
     ]
