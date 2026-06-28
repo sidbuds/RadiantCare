@@ -1,179 +1,344 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import {
+  Box,
+  Calendar,
+  ChatDotRound,
+  CircleCheck,
+  Document,
+  Goods,
+  Location,
+  MapLocation,
+  Right,
+  Tickets,
+  UserFilled,
+} from '@element-plus/icons-vue'
 import { listPackages } from '@/api/public'
+import { getMyAppointments } from '@/api/appointment'
+import { getMyReports } from '@/api/report'
+import { getMyConsultations } from '@/api/consultation'
 import { useUserStore } from '@/stores/user'
+import type { Appointment, Consultation, ExamReport, PackageItem } from '@/types/api'
+
+interface StatusSummary {
+  key: string
+  title: string
+  value: string
+  detail: string
+  actionText: string
+  route: string
+  icon: typeof Calendar
+}
 
 const router = useRouter()
 const userStore = useUserStore()
-const packages = ref<any[]>([])
-const loading = ref(true)
+
+const packages = ref<PackageItem[]>([])
+const appointments = ref<Appointment[]>([])
+const reports = ref<ExamReport[]>([])
+const consultations = ref<Consultation[]>([])
+const packageLoading = ref(true)
+const summaryLoading = ref(false)
 const mounted = ref(false)
 
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 const displayName = computed(() => userStore.userInfo?.displayName || '用户')
 
 const flowSteps = [
-  { title: '浏览套餐', desc: '先看适合自己的体检方案' },
-  { title: '选择中心', desc: '按体检中心查看可用套餐' },
-  { title: '选择时间', desc: '挑选合适的日期与时段' },
-  { title: '确认预约', desc: '提交预约并完成后续安排' },
-  { title: '查看任务与报告', desc: '完成体检后持续跟进结果' },
+  { title: '浏览套餐', desc: '按年龄、预算和检查重点确定体检方案', icon: Box },
+  { title: '选择中心', desc: '确认体检地点、服务时间和可预约资源', icon: MapLocation },
+  { title: '选择时间', desc: '挑选合适日期与时段，避开行程冲突', icon: Calendar },
+  { title: '确认预约', desc: '提交预约信息，后续可随时查看进度', icon: CircleCheck },
+  { title: '查看报告', desc: '体检完成后跟进导检任务、报告和咨询', icon: Tickets },
 ]
 
-const quickActions = computed(() => {
-  if (isLoggedIn.value) {
-    return [
-      { label: '我的预约', description: '查看预约进度与到检信息', icon: 'Calendar', action: () => router.push('/user/appointments') },
-      { label: '导检路线', description: '查看体检引导与科室路线', icon: 'Guide', action: () => router.push('/user/exam-tasks') },
-      { label: '体检报告', description: '查看结果与历年对比', icon: 'Document', action: () => router.push('/user/reports') },
-      { label: '咨询医生', description: '针对异常指标在线咨询', icon: 'ChatDotRound', action: () => router.push('/user/consultations') },
-    ]
-  }
-  return [
-    { label: '浏览套餐', description: '按需求挑选适合的体检方案', icon: 'Goods', action: () => router.push('/packages') },
-    { label: '查看中心', description: '了解体检地点与服务时间', icon: 'OfficeBuilding', action: () => router.push('/centers') },
-    { label: '登录进入', description: '登录后管理预约与报告', icon: 'User', action: () => router.push('/login') },
-  ]
-})
+const guestSummaries = computed<StatusSummary[]>(() => [
+  {
+    key: 'appointment',
+    title: '我的预约',
+    value: '登录后同步',
+    detail: '预约成功后，这里会显示最近一次体检安排。',
+    actionText: '去登录',
+    route: '/login',
+    icon: Calendar,
+  },
+  {
+    key: 'report',
+    title: '体检报告',
+    value: '集中查看',
+    detail: '报告发布后可查看结论、指标明细和历史对比。',
+    actionText: '浏览套餐',
+    route: '/packages',
+    icon: Document,
+  },
+  {
+    key: 'consultation',
+    title: '医生咨询',
+    value: '报告后跟进',
+    detail: '发现异常指标时，可围绕报告发起在线咨询。',
+    actionText: '查看流程',
+    route: '/guide',
+    icon: ChatDotRound,
+  },
+])
 
-const serviceNotes = computed(() => {
-  if (isLoggedIn.value) {
-    return [
-      { title: '预约安排', value: '随时查看', detail: '日期、时段、到检信息集中展示' },
-      { title: '报告结果', value: '统一管理', detail: '体检报告与历年对比同入口查看' },
-      { title: '后续咨询', value: '继续跟进', detail: '发现异常后可直接发起在线咨询' },
-    ]
+const statusSummaries = computed<StatusSummary[]>(() => {
+  if (!isLoggedIn.value) {
+    return guestSummaries.value
   }
+
+  const latestAppointment = firstByTime(appointments.value, 'createdAt')
+  const latestReport = firstByTime(reports.value, 'publishedAt', 'createdAt')
+  const latestConsultation = firstByTime(consultations.value, 'createdAt')
+
   return [
-    { title: '服务流程', value: '清晰透明', detail: '从选套餐到查报告，每一步都可跟着走' },
-    { title: '体检中心', value: '提前了解', detail: '确认地点、服务时间和到检须知' },
-    { title: '报告管理', value: '随时查阅', detail: '登录后查看报告、对比历年结果' },
+    {
+      key: 'appointment',
+      title: '最近预约',
+      value: latestAppointment?.statusText || '暂无预约',
+      detail: latestAppointment
+        ? `${latestAppointment.centerName || '体检中心'} · ${formatDate(latestAppointment.appointDate)} ${latestAppointment.timeSlotName || ''}`.trim()
+        : '选择套餐后即可提交预约，这里会同步最新安排。',
+      actionText: latestAppointment ? '查看预约' : '去预约',
+      route: latestAppointment ? '/user/appointments' : '/packages',
+      icon: Calendar,
+    },
+    {
+      key: 'report',
+      title: '最新报告',
+      value: latestReport?.reportStatusText || '暂无报告',
+      detail: latestReport
+        ? `${latestReport.packageName || '体检报告'} · ${formatDate(latestReport.publishedAt || latestReport.reportDate || latestReport.createdAt)}`
+        : '报告发布后会在这里提示，方便继续查看详情。',
+      actionText: latestReport ? '查看报告' : '报告列表',
+      route: '/user/reports',
+      icon: Document,
+    },
+    {
+      key: 'consultation',
+      title: '最近咨询',
+      value: latestConsultation?.consultationStatusText || '暂无咨询',
+      detail: latestConsultation
+        ? `${latestConsultation.consultationTitle || '报告咨询'} · ${formatDate(latestConsultation.createdAt)}`
+        : '有报告疑问时，可以从报告页发起医生咨询。',
+      actionText: latestConsultation ? '查看咨询' : '去咨询',
+      route: '/user/consultations',
+      icon: ChatDotRound,
+    },
   ]
 })
 
 onMounted(async () => {
+  await replayEntrance()
+  await Promise.all([loadPackages(), loadStatusSummary()])
+})
+
+async function replayEntrance() {
+  mounted.value = false
+  await nextTick()
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve())
+  })
   mounted.value = true
+}
+
+async function loadPackages() {
+  packageLoading.value = true
   try {
-    const res: any = await listPackages()
+    const res = await listPackages()
     packages.value = (res.data || []).slice(0, 3)
   } catch {
     packages.value = []
   } finally {
-    loading.value = false
+    packageLoading.value = false
   }
-})
+}
+
+async function loadStatusSummary() {
+  if (!isLoggedIn.value) {
+    return
+  }
+
+  summaryLoading.value = true
+  try {
+    const [appointmentRes, reportRes, consultationRes] = await Promise.allSettled([
+      getMyAppointments(),
+      getMyReports(),
+      getMyConsultations(),
+    ])
+
+    appointments.value = appointmentRes.status === 'fulfilled' ? appointmentRes.value.data || [] : []
+    reports.value = reportRes.status === 'fulfilled' ? reportRes.value.data || [] : []
+    consultations.value = consultationRes.status === 'fulfilled' ? consultationRes.value.data || [] : []
+  } finally {
+    summaryLoading.value = false
+  }
+}
+
+function firstByTime<T extends Record<string, any>>(items: T[], ...fields: string[]) {
+  return [...items].sort((a, b) => {
+    const timeA = pickTime(a, fields)
+    const timeB = pickTime(b, fields)
+    return timeB - timeA
+  })[0]
+}
+
+function pickTime(item: Record<string, any>, fields: string[]) {
+  for (const field of fields) {
+    if (item[field]) {
+      const time = new Date(item[field]).getTime()
+      if (!Number.isNaN(time)) {
+        return time
+      }
+    }
+  }
+  return 0
+}
+
+function formatDate(value?: string) {
+  if (!value) {
+    return '时间待确认'
+  }
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
 
 function goPackage(code: string) {
   router.push(`/packages/${code}`)
+}
+
+function goRoute(route: string) {
+  router.push(route)
 }
 </script>
 
 <template>
   <div class="home-page">
-    <section class="hero">
-      <div class="hero-content glass-panel" :class="{ 'is-mounted': mounted }">
-        <span class="section-eyebrow">{{ isLoggedIn ? 'WELCOME BACK' : 'HEALTH CHECK' }}</span>
-        <h1 class="hero-title">{{ isLoggedIn ? `${displayName}，欢迎回来` : '科学体检，守护健康' }}</h1>
-        <p class="hero-desc">
-          {{ isLoggedIn
-            ? '你的预约、报告和健康咨询都在这里统一管理。'
-            : '专业体检套餐、便捷预约流程、详细报告解读，让健康管理更简单。'
-          }}
-        </p>
+    <section class="hero-board" :class="{ 'is-mounted': mounted }">
+      <div class="hero-board__main">
+        <div class="hero-copy">
+          <h1>{{ isLoggedIn ? `${displayName}，欢迎回来` : '科学体检，从清楚下一步开始' }}</h1>
+          <p>
+            {{ isLoggedIn
+              ? '您的预约、报告和咨询集中在首页同步，回到平台就能继续处理下一步。'
+              : '从选套餐到查报告，按一条明确路径走。少一点跳转，多一点确定感。'
+            }}
+          </p>
+        </div>
 
-        <div class="flow-card">
-          <div class="flow-card__head">
-            <span class="flow-eyebrow">用户操作主链路</span>
-            <strong>按这个顺序走，预约更顺手</strong>
+        <div class="flow-panel" aria-label="用户操作主链路">
+          <div class="flow-panel__head">
+            <h2>您的健康管理流程</h2>
           </div>
-          <ol class="flow-list">
-            <li v-for="step in flowSteps" :key="step.title">
-              <span>{{ step.title }}</span>
+          <div class="flow-line" aria-hidden="true">
+            <span v-for="(_, index) in flowSteps" :key="index">{{ index + 1 }}</span>
+          </div>
+          <ol class="flow-card-list">
+            <li
+              v-for="(step, index) in flowSteps"
+              :key="step.title"
+              class="flow-card"
+              :style="{ '--delay': `${0.28 + index * 0.08}s` }"
+            >
+              <span class="flow-icon">
+                <el-icon :size="26"><component :is="step.icon" /></el-icon>
+              </span>
+              <strong>{{ step.title }}</strong>
               <small>{{ step.desc }}</small>
             </li>
           </ol>
         </div>
+      </div>
 
-        <div class="hero-actions">
+      <aside class="summary-panel" :class="{ 'is-mounted': mounted }" aria-label="首页状态摘要">
+        <div class="summary-head">
+          <div>
+            <h2>{{ isLoggedIn ? '任务状态摘要' : '登录后查看个人进度' }}</h2>
+          </div>
+          <span class="summary-state">{{ summaryLoading ? '同步中' : '已就绪' }}</span>
+        </div>
+
+        <div class="summary-list">
           <button
-            v-for="(item, idx) in quickActions"
-            :key="item.label"
-            class="action-item"
-            :class="{ 'is-mounted': mounted }"
-            :style="{ '--delay': `${0.3 + idx * 0.1}s` }"
+            v-for="item in statusSummaries"
+            :key="item.key"
+            class="summary-card"
             type="button"
-            @click="item.action"
+            @click="goRoute(item.route)"
           >
-            <span class="action-icon">
+            <span class="summary-icon">
               <el-icon :size="18"><component :is="item.icon" /></el-icon>
             </span>
-            <div class="action-text">
-              <strong>{{ item.label }}</strong>
-              <span>{{ item.description }}</span>
-            </div>
-            <span class="action-arrow">
-              <el-icon :size="14"><ArrowRight /></el-icon>
+            <span class="summary-content">
+              <span class="summary-title">{{ item.title }}</span>
+              <strong>{{ item.value }}</strong>
+              <small>{{ item.detail }}</small>
+            </span>
+            <span class="summary-action">
+              {{ item.actionText }}
+              <el-icon :size="13"><Right /></el-icon>
             </span>
           </button>
         </div>
-      </div>
-
-      <div class="hero-side" :class="{ 'is-mounted': mounted }">
-        <div class="status-panel">
-          <div class="status-header">
-            <span class="status-label">{{ isLoggedIn ? '快捷入口' : '开始体检' }}</span>
-            <div class="status-dot"></div>
-          </div>
-          <strong>{{ isLoggedIn ? '继续上次的健康管理' : '三步完成预约' }}</strong>
-          <p>{{ isLoggedIn ? '直接进入预约、报告和咨询流程。' : '选套餐、选中心、确认预约，流程一目了然。' }}</p>
-        </div>
-
-        <div class="service-grid">
-          <article
-            v-for="(item, idx) in serviceNotes"
-            :key="item.title"
-            class="service-card"
-            :class="{ 'is-mounted': mounted }"
-            :style="{ '--delay': `${0.5 + idx * 0.12}s` }"
-          >
-            <span class="service-label">{{ item.title }}</span>
-            <strong>{{ item.value }}</strong>
-            <p>{{ item.detail }}</p>
-          </article>
-        </div>
-      </div>
+      </aside>
     </section>
 
     <section class="packages-section" :class="{ 'is-mounted': mounted }">
       <div class="section-head">
         <div>
-          <h2>{{ isLoggedIn ? '精选体检套餐' : '热门体检套餐' }}</h2>
+          <span class="section-eyebrow">PACKAGE</span>
+          <h2>{{ isLoggedIn ? '继续选择体检套餐' : '热门体检套餐' }}</h2>
         </div>
-        <p>{{ isLoggedIn ? '根据自身需求，选择或更换更适合的体检方案。' : '覆盖常规筛查与专项检查，适合不同人群的健康管理需求。' }}</p>
+        <button class="text-link" type="button" @click="goRoute('/packages')">
+          查看全部
+          <el-icon :size="14"><Right /></el-icon>
+        </button>
       </div>
 
-      <div v-loading="loading" class="package-grid">
+      <div v-if="packageLoading" class="package-grid">
+        <article v-for="index in 3" :key="index" class="package-card package-card--loading">
+          <span />
+          <strong />
+          <p />
+        </article>
+      </div>
+
+      <div v-else class="package-grid">
         <article
           v-for="(pkg, idx) in packages"
           :key="pkg.id"
           class="package-card data-card"
           :class="{ 'is-mounted': mounted }"
-          :style="{ '--delay': `${0.6 + idx * 0.15}s` }"
+          :style="{ '--delay': `${0.2 + idx * 0.08}s` }"
           @click="goPackage(pkg.packageCode)"
         >
           <div class="package-card__top">
-            <span class="package-tag">{{ pkg.category || '精选套餐' }}</span>
-            <span class="package-price">¥{{ pkg.price }}</span>
+            <span class="package-tag">
+              <el-icon :size="13"><Goods /></el-icon>
+              {{ pkg.category || '精选套餐' }}
+            </span>
+            <span class="package-price">￥{{ pkg.price }}</span>
           </div>
           <h3>{{ pkg.packageName }}</h3>
           <p class="remark">{{ pkg.remark || '覆盖常规检查项目，适合年度健康体检。' }}</p>
           <div class="package-card__foot">
-            <span class="metric-chip">{{ isLoggedIn ? '查看详情' : '可在线预约' }}</span>
-            <el-button type="primary" size="small">{{ isLoggedIn ? '查看方案' : '了解套餐' }}</el-button>
+            <span>
+              <el-icon :size="13"><Location /></el-icon>
+              可在线预约
+            </span>
+            <el-button type="primary" size="small">查看套餐</el-button>
           </div>
         </article>
-        <el-empty v-if="!loading && packages.length === 0" description="暂无可展示套餐" />
+
+        <div v-if="packages.length === 0" class="empty-state">
+          <el-icon :size="24"><UserFilled /></el-icon>
+          <strong>暂无可展示套餐</strong>
+          <span>可以稍后再来，或先查看体检中心与检查流程。</span>
+        </div>
       </div>
     </section>
   </div>
@@ -183,337 +348,498 @@ function goPackage(code: string) {
 .home-page {
   width: min(var(--content-width), calc(100% - 48px));
   margin: 0 auto;
-  padding: 36px 0 72px;
+  padding: 32px 0 64px;
 }
 
-.hero {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 24px;
-  margin-bottom: 32px;
-  position: relative;
-}
-
-.hero-content {
-  padding: 44px;
-  display: flex;
-  flex-direction: column;
+.hero-board,
+.summary-panel,
+.packages-section {
   opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.5s var(--ease-out-expo), transform 0.5s var(--ease-out-expo);
+  transform: translateY(18px);
+  transition: opacity 0.58s var(--ease-out-expo), transform 0.58s var(--ease-out-expo);
 
   &.is-mounted {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.hero-copy,
+.flow-panel,
+.flow-card,
+.summary-card {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.5s var(--ease-out-expo),
+    transform 0.5s var(--ease-out-expo),
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.hero-board.is-mounted {
+  .hero-copy {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.08s;
+  }
+
+  .flow-panel {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.18s;
+  }
+
+  .flow-card {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: var(--delay);
+  }
+
+  .summary-card {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .summary-card:nth-child(1) {
+    transition-delay: 0.18s;
+  }
+
+  .summary-card:nth-child(2) {
+    transition-delay: 0.28s;
+  }
+
+  .summary-card:nth-child(3) {
+    transition-delay: 0.38s;
+  }
+
+  .flow-card:hover,
+  .flow-card:focus-within {
+    transform: translateY(-6px);
+  }
+
+  .summary-card:hover,
+  .summary-card:focus-visible {
+    transform: translateY(-4px);
+  }
+}
+
+.hero-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 390px;
+  gap: 24px;
+  min-height: 650px;
+  margin-bottom: 24px;
+  padding: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at 10% 12%, rgba(218, 241, 235, 0.82), transparent 34%),
+    radial-gradient(circle at 86% 16%, rgba(228, 237, 244, 0.72), transparent 32%),
+    linear-gradient(135deg, rgba(248, 252, 250, 0.92), rgba(231, 241, 240, 0.9));
+  box-shadow: 0 24px 70px rgba(34, 57, 57, 0.12);
+  overflow: hidden;
+}
+
+.hero-board__main {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 30px;
+  padding: 20px 0 0 22px;
+}
+
+.hero-copy {
+  padding-top: 18px;
 
   h1 {
-    margin-top: 18px;
+    max-width: 500px;
+    margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(30px, 3.8vw, 48px);
-    line-height: 1.1;
+    font-size: clamp(38px, 4.2vw, 58px);
+    line-height: 1.12;
     font-weight: 900;
     letter-spacing: 0;
-    background: linear-gradient(135deg, var(--color-ink) 0%, rgba(240, 236, 228, 0.7) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-}
-
-.hero-desc {
-  max-width: 480px;
-  margin-top: 16px;
-  color: var(--color-ink-soft);
-  font-size: 14px;
-  line-height: 1.8;
-}
-
-.flow-card {
-  margin-top: 22px;
-  padding: 18px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.flow-card__head {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 14px;
-
-  strong {
-    font-size: 15px;
-    color: var(--color-ink);
-    line-height: 1.3;
-  }
-}
-
-.flow-eyebrow {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-ink-faint);
-}
-
-.flow-list {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-
-  li {
-    min-width: 0;
-    padding: 12px 10px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-line);
-    background: var(--color-panel);
-  }
-
-  span {
-    display: block;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--color-ink);
-    line-height: 1.3;
-  }
-
-  small {
-    display: block;
-    margin-top: 6px;
-    color: var(--color-ink-muted);
-    font-size: 11px;
-    line-height: 1.45;
-  }
-}
-
-.hero-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 24px;
-}
-
-.action-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
-  background: var(--color-panel);
-  cursor: pointer;
-  text-align: left;
-  opacity: 0;
-  transform: translateX(-16px);
-  transition: opacity 0.4s var(--ease-out-expo), transform 0.4s var(--ease-out-expo), border-color 0.15s ease, background 0.15s ease;
-
-  &.is-mounted {
-    opacity: 1;
-    transform: translateX(0);
-    transition-delay: var(--delay);
-  }
-}
-
-.action-text {
-  flex: 1;
-
-  strong {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--color-ink);
-    line-height: 1.3;
-  }
-
-  span {
-    color: var(--color-ink-muted);
-    font-size: 12px;
-  }
-}
-
-.action-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-sm);
-  background: var(--color-brand-light);
-  color: var(--color-brand);
-  flex-shrink: 0;
-}
-
-.action-arrow {
-  color: var(--color-brand);
-}
-
-.hero-side {
-  display: grid;
-  gap: 14px;
-  align-content: start;
-  opacity: 0;
-  transform: translateX(20px);
-  transition: opacity 0.5s var(--ease-out-expo), transform 0.5s var(--ease-out-expo);
-  transition-delay: 0.15s;
-
-  &.is-mounted {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.status-panel {
-  padding: 28px;
-  border-radius: var(--radius-xl);
-  background: linear-gradient(145deg, #1a4a3e, #0d3b33);
-  border: 1px solid rgba(58, 143, 133, 0.2);
-  color: #f0ece4;
-}
-
-.status-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.status-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(240, 236, 228, 0.5);
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-success);
-}
-
-.status-panel strong {
-  display: block;
-  margin: 12px 0 8px;
-  font-family: var(--font-display);
-  font-size: 22px;
-  line-height: 1.25;
-  color: #ffffff;
-}
-
-.status-panel p {
-  color: rgba(240, 236, 228, 0.7);
-  font-size: 12px;
-  line-height: 1.7;
-}
-
-.service-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.service-card {
-  padding: 16px 14px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
-  background: var(--color-panel);
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 0.4s var(--ease-out-expo), transform 0.4s var(--ease-out-expo), border-color 0.15s ease;
-
-  &.is-mounted {
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: var(--delay);
-  }
-
-  .service-label {
-    display: block;
-    color: var(--color-ink-faint);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  strong {
-    display: block;
-    margin: 8px 0 4px;
-    font-family: var(--font-display);
-    font-size: 16px;
-    line-height: 1.2;
-    color: var(--color-ink);
+    color: #192322;
   }
 
   p {
-    color: var(--color-ink-muted);
-    font-size: 11px;
-    line-height: 1.65;
+    max-width: 520px;
+    margin: 20px 0 0;
+    color: rgba(25, 35, 34, 0.72);
+    font-size: 17px;
+    line-height: 1.85;
   }
 }
 
+.flow-panel {
+  margin-top: auto;
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.28)),
+    rgba(229, 243, 240, 0.32);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 18px 46px rgba(56, 82, 82, 0.08);
+}
+
+.flow-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+
+  h2 {
+    margin: 0;
+    color: #192322;
+    font-family: var(--font-display);
+    font-size: 30px;
+    line-height: 1.2;
+  }
+
+  span {
+    color: rgba(23, 25, 29, 0.76);
+    font-size: 16px;
+    font-weight: 700;
+  }
+}
+
+.flow-line {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  margin: 18px 0 24px;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 50%;
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(79, 137, 130, 0.16), rgba(79, 137, 130, 0.7), rgba(79, 137, 130, 0.16));
+    transform: translateY(-50%);
+  }
+
+  span {
+    position: relative;
+    z-index: 1;
+    justify-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background: #4f8982;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 800;
+  }
+}
+
+.flow-card-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(118px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flow-card {
+  position: relative;
+  min-height: 204px;
+  padding: 28px 14px 18px;
+  border: 1px solid rgba(79, 137, 130, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 14px 28px rgba(49, 78, 78, 0.1);
+  text-align: center;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    background: inherit;
+    border-left: 1px solid rgba(79, 137, 130, 0.18);
+    border-top: 1px solid rgba(79, 137, 130, 0.18);
+    transform: translateX(-50%) rotate(45deg);
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  &:hover,
+  &:focus-within {
+    transform: translateY(-6px);
+    border-color: rgba(79, 137, 130, 0.34);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 22px 40px rgba(49, 78, 78, 0.14);
+  }
+
+  &:hover::before,
+  &:focus-within::before {
+    border-color: rgba(79, 137, 130, 0.34);
+    background: rgba(255, 255, 255, 0.96);
+  }
+
+  &:hover .flow-icon,
+  &:focus-within .flow-icon {
+    color: #fff;
+    background: #4f8982;
+    transform: translateY(-3px) scale(1.04);
+    box-shadow: 0 12px 24px rgba(79, 137, 130, 0.22);
+  }
+
+  strong,
+  small {
+    display: block;
+  }
+
+  strong {
+    margin-top: 16px;
+    color: #16201f;
+    font-size: clamp(16px, 1.05vw, 18px);
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  small {
+    margin-top: 8px;
+    color: rgba(22, 32, 31, 0.66);
+    font-size: 14px;
+    line-height: 1.62;
+  }
+}
+
+.flow-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: linear-gradient(145deg, rgba(79, 137, 130, 0.16), rgba(79, 137, 130, 0.07));
+  color: #4f8982;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.summary-panel {
+  display: flex;
+  flex-direction: column;
+  align-self: end;
+  gap: 20px;
+  padding: 28px;
+  min-height: 0;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 100% 100%, rgba(218, 241, 235, 0.55), transparent 22%),
+    linear-gradient(145deg, rgba(250, 253, 252, 0.82), rgba(233, 242, 240, 0.78));
+  color: #192322;
+  transition-delay: 0.1s;
+  transform: none;
+  box-shadow: 0 18px 48px rgba(45, 68, 68, 0.1);
+}
+
+.summary-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+
+  h2 {
+    max-width: 280px;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 30px;
+    line-height: 1.25;
+    color: #192322;
+  }
+}
+
+.summary-state {
+  color: rgba(25, 35, 34, 0.52);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.summary-state {
+  height: fit-content;
+  padding: 7px 12px;
+  border: 1px solid rgba(79, 137, 130, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.44);
+  white-space: nowrap;
+}
+
+.summary-list {
+  display: grid;
+  gap: 14px;
+}
+
+.summary-card {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 16px;
+  width: 100%;
+  min-height: 124px;
+  padding: 20px;
+  border: 1px solid rgba(79, 137, 130, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 12px 26px rgba(52, 73, 73, 0.08);
+  transition: opacity 0.5s var(--ease-out-expo), transform 0.5s var(--ease-out-expo), background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-4px);
+    border-color: rgba(79, 137, 130, 0.28);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 18px 32px rgba(52, 73, 73, 0.12);
+    outline: none;
+  }
+
+  &:hover .summary-icon,
+  &:focus-visible .summary-icon {
+    color: #fff;
+    background: #4f8982;
+    transform: scale(1.05);
+  }
+
+  &:hover .summary-action,
+  &:focus-visible .summary-action {
+    gap: 8px;
+  }
+}
+
+.summary-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(79, 137, 130, 0.14);
+  color: #4f8982;
+  transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.summary-content {
+  min-width: 0;
+
+  .summary-title,
+  strong,
+  small {
+    display: block;
+  }
+
+  .summary-title {
+    color: rgba(25, 35, 34, 0.48);
+    font-size: 14px;
+  }
+
+  strong {
+    margin-top: 4px;
+    color: #16201f;
+    font-size: 20px;
+    line-height: 1.25;
+  }
+
+  small {
+    margin-top: 6px;
+    color: rgba(22, 32, 31, 0.7);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+}
+
+.summary-action {
+  grid-column: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  color: #4f8982;
+  font-size: 13px;
+  font-weight: 700;
+  transition: gap 0.18s ease;
+}
+
 .packages-section {
-  padding: 40px;
+  padding: 28px;
   border: 1px solid var(--color-line);
   border-radius: var(--radius-xl);
   background: var(--color-panel);
   box-shadow: var(--shadow-sm);
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.5s var(--ease-out-expo), transform 0.5s var(--ease-out-expo);
-  transition-delay: 0.3s;
-
-  &.is-mounted {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  transition-delay: 0.18s;
 }
 
 .section-head {
   display: flex;
-  justify-content: space-between;
   align-items: flex-end;
-  gap: 24px;
-  margin-bottom: 28px;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+
+  h2 {
+    margin: 6px 0 0;
+    font-family: var(--font-display);
+    font-size: clamp(22px, 2.2vw, 30px);
+    line-height: 1.2;
+    color: var(--color-ink);
+  }
 }
 
-.section-head h2 {
-  font-family: var(--font-display);
-  font-size: clamp(24px, 2.5vw, 32px);
-  line-height: 1.15;
-  font-weight: 700;
-  letter-spacing: 0;
-}
-
-.section-head p {
-  max-width: 380px;
-  color: var(--color-ink-muted);
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-brand);
   font-size: 13px;
-  line-height: 1.75;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.18s ease, gap 0.18s ease, transform 0.18s ease;
+
+  &:hover,
+  &:focus-visible {
+    gap: 9px;
+    color: var(--color-brand-deep);
+    transform: translateX(2px);
+    outline: none;
+  }
 }
 
 .package-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
 .package-card {
   display: flex;
   flex-direction: column;
-  min-height: 260px;
-  padding: 28px;
+  min-height: 210px;
+  padding: 22px;
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
   opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 0.45s var(--ease-out-expo), transform 0.45s var(--ease-out-expo), border-color 0.2s ease, box-shadow 0.2s ease;
+  transform: translateY(12px);
+  transition: opacity 0.35s var(--ease-out-expo), transform 0.35s var(--ease-out-expo), border-color 0.18s ease, box-shadow 0.18s ease;
 
   &.is-mounted {
     opacity: 1;
@@ -521,13 +847,52 @@ function goPackage(code: string) {
     transition-delay: var(--delay);
   }
 
+  &:hover {
+    transform: translateY(-3px);
+    border-color: var(--color-brand-muted);
+    box-shadow: var(--shadow-xl);
+  }
+
   h3 {
-    margin: 16px 0 10px;
-    font-family: var(--font-display);
-    font-size: 19px;
-    line-height: 1.3;
-    font-weight: 700;
+    margin: 16px 0 8px;
     color: var(--color-ink);
+    font-family: var(--font-display);
+    font-size: 18px;
+    line-height: 1.3;
+  }
+}
+
+.package-card--loading {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-panel);
+  opacity: 1;
+  transform: none;
+  cursor: default;
+
+  span,
+  strong,
+  p {
+    display: block;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  span {
+    width: 42%;
+    height: 24px;
+  }
+
+  strong {
+    width: 70%;
+    height: 26px;
+    margin-top: 22px;
+  }
+
+  p {
+    width: 100%;
+    height: 54px;
+    margin-top: 14px;
   }
 }
 
@@ -539,81 +904,139 @@ function goPackage(code: string) {
   gap: 12px;
 }
 
-.package-tag {
+.package-tag,
+.package-card__foot span {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  gap: 5px;
+}
+
+.package-tag {
+  min-width: 0;
+  padding: 5px 10px;
+  border: 1px solid var(--color-line);
   border-radius: 999px;
   background: var(--color-brand-light);
   color: var(--color-brand);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  border: 1px solid var(--color-line);
 }
 
 .package-price {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 900;
+  flex-shrink: 0;
   color: var(--color-brand);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
 }
 
 .remark {
+  flex: 1;
+  margin: 0;
   color: var(--color-ink-muted);
   font-size: 12px;
-  line-height: 1.75;
-  flex: 1;
+  line-height: 1.7;
 }
 
 .package-card__foot {
-  margin-top: auto;
-  padding-top: 16px;
+  margin-top: 18px;
+  padding-top: 14px;
   border-top: 1px solid var(--color-line);
+
+  span {
+    color: var(--color-ink-muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
 }
 
-@media (max-width: 1100px) {
-  .hero {
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px;
+  border: 1px dashed var(--color-line);
+  border-radius: var(--radius-lg);
+  color: var(--color-ink-muted);
+
+  strong {
+    color: var(--color-ink);
+  }
+}
+
+@media (max-width: 1180px) {
+  .hero-board {
     grid-template-columns: 1fr;
   }
 
-  .flow-list {
-    grid-template-columns: 1fr 1fr;
+  .hero-board__main {
+    padding: 36px;
+  }
+
+  .summary-panel {
+    align-self: stretch;
+    border-left: 0;
+  }
+
+  .flow-card-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flow-line {
+    display: none;
+  }
+
+  .flow-card::before {
+    display: none;
   }
 
   .package-grid {
     grid-template-columns: 1fr;
   }
+}
 
-  .service-grid {
+@media (max-width: 760px) {
+  .home-page {
+    width: min(calc(100% - 24px), var(--content-width));
+    padding: 22px 0 44px;
+  }
+
+  .hero-board__main,
+  .summary-panel,
+  .packages-section {
+    padding: 22px;
+  }
+
+  .hero-copy h1 {
+    font-size: 32px;
+  }
+
+  .flow-card-list,
+  .package-grid {
     grid-template-columns: 1fr;
   }
 
-  .section-head {
-    flex-direction: column;
+  .section-head,
+  .summary-head {
     align-items: flex-start;
+    flex-direction: column;
   }
 }
 
-@media (max-width: 768px) {
-  .home-page {
-    width: min(calc(100% - 24px), var(--content-width));
-    padding: 24px 0 48px;
-  }
-
-  .hero-content {
-    padding: 28px;
-  }
-
-  .packages-section {
-    padding: 24px;
-  }
-
-  .flow-list {
-    grid-template-columns: 1fr;
-  }
-
-  .hero-content h1 {
-    font-size: 30px;
+@media (prefers-reduced-motion: reduce) {
+  .hero-board,
+  .summary-panel,
+  .packages-section,
+  .hero-copy,
+  .flow-panel,
+  .flow-card,
+  .summary-card,
+  .package-card {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }
 </style>

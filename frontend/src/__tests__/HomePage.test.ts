@@ -12,11 +12,28 @@ vi.mock('@/api/public', () => ({
   }),
 }))
 
+vi.mock('@/api/appointment', () => ({
+  getMyAppointments: vi.fn().mockResolvedValue({ data: [] }),
+}))
+
+vi.mock('@/api/report', () => ({
+  getMyReports: vi.fn().mockResolvedValue({ data: [] }),
+}))
+
+vi.mock('@/api/consultation', () => ({
+  getMyConsultations: vi.fn().mockResolvedValue({ data: [] }),
+}))
+
 describe('HomePage', () => {
-  it('shows main user flow on homepage', async () => {
+  it('shows the homepage flow and task status summary', async () => {
     const router = createRouter({
       history: createMemoryHistory(),
-      routes: [{ path: '/', component: Home }],
+      routes: [
+        { path: '/', component: Home },
+        { path: '/login', component: { template: '<div />' } },
+        { path: '/packages', component: { template: '<div />' } },
+        { path: '/guide', component: { template: '<div />' } },
+      ],
     })
     router.push('/')
     await router.isReady()
@@ -27,14 +44,22 @@ describe('HomePage', () => {
         stubs: {
           'el-icon': true,
           'el-button': true,
-          'el-empty': true,
-          teleport: true,
         },
       },
     })
 
-    expect(wrapper.text()).toContain('用户操作主链路')
-    expect(wrapper.text()).toContain('浏览套餐')
-    expect(wrapper.text()).toContain('确认预约')
+    const text = wrapper.text()
+    expect(text).toContain('您的健康管理流程')
+    expect(text).toContain('浏览套餐')
+    expect(text).toContain('选择中心')
+    expect(text).toContain('选择时间')
+    expect(text).toContain('确认预约')
+    expect(text).toContain('查看报告')
+    expect(wrapper.find('.flow-badge').exists()).toBe(false)
+    expect(text).toContain('登录后查看个人进度')
+    expect(text).toContain('我的预约')
+    expect(text).toContain('体检报告')
+    expect(text).toContain('医生咨询')
+    expect(text).not.toContain('用户操作主链路')
   })
 })
