@@ -51,7 +51,7 @@ function openGrant() {
 
 async function handleBind() {
   await post('/admin/roles/bind', bindForm.value)
-  ElMessage.success('绑定成功')
+  ElMessage.success('身份已设置')
   bindDialog.value = false
   loadAccounts()
 }
@@ -69,7 +69,7 @@ async function handleGrant() {
 
 async function handleUnbind(accountId: number, roleCode: string) {
   await post('/admin/roles/unbind', { staffAccountId: accountId, roleCode })
-  ElMessage.success('解绑成功')
+  ElMessage.success('身份已移除')
   loadAccounts()
 }
 
@@ -81,7 +81,7 @@ onMounted(loadAccounts)
     <div class="page-header">
       <div>
         <span class="section-eyebrow">ROLE MANAGE</span>
-        <h2>角色管理</h2>
+        <h2>身份管理</h2>
       </div>
       <el-button type="primary" @click="openGrant">赋予用户身份</el-button>
     </div>
@@ -90,7 +90,7 @@ onMounted(loadAccounts)
       <el-table :data="accounts">
         <el-table-column prop="username" label="账号" width="140" />
         <el-table-column prop="displayName" label="姓名" width="140" />
-        <el-table-column label="角色" min-width="260">
+        <el-table-column label="当前身份" min-width="260">
           <template #default="{ row }">
             <el-tag
               v-for="role in row.roles || []"
@@ -101,15 +101,15 @@ onMounted(loadAccounts)
             >
               {{ role }}
             </el-tag>
-            <el-button type="primary" link size="small" @click="openBind(row.id)">+ 绑定角色</el-button>
+            <el-button v-if="!(row.roles || []).length" type="primary" link size="small" @click="openBind(row.id)">设置身份</el-button>
           </template>
         </el-table-column>
       </el-table>
     </section>
 
-    <el-dialog v-model="bindDialog" title="绑定角色" width="400px">
+    <el-dialog v-model="bindDialog" title="设置身份" width="400px">
       <el-form label-width="80px">
-        <el-form-item label="角色">
+        <el-form-item label="身份">
           <el-select v-model="bindForm.roleCode" style="width: 100%;">
             <el-option v-for="r in roleOptions" :key="r.value" :label="r.label" :value="r.value" />
           </el-select>
@@ -125,12 +125,7 @@ onMounted(loadAccounts)
       <el-form label-width="90px">
         <el-form-item label="用户">
           <el-select v-model="grantForm.userId" filterable style="width: 100%;">
-            <el-option
-              v-for="user in users"
-              :key="user.id"
-              :label="`${user.name || user.userNo}（${user.userNo}）`"
-              :value="user.id"
-            />
+            <el-option v-for="user in users" :key="user.id" :label="`${user.name || user.userNo} / ${user.userNo}`" :value="user.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="身份">

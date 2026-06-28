@@ -3,6 +3,7 @@ package com.xixin.health.admin.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xixin.health.common.entity.SystemConfigEntity;
 import com.xixin.health.common.mapper.SystemConfigMapper;
+import com.xixin.health.common.service.AuditLogService;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -13,9 +14,11 @@ import java.util.Map;
 public class AdminConfigService {
 
     private final SystemConfigMapper systemConfigMapper;
+    private final AuditLogService auditLogService;
 
-    public AdminConfigService(SystemConfigMapper systemConfigMapper) {
+    public AdminConfigService(SystemConfigMapper systemConfigMapper, AuditLogService auditLogService) {
         this.systemConfigMapper = systemConfigMapper;
+        this.auditLogService = auditLogService;
     }
 
     public Map<String, Object> listConfigs(String configGroup, int pageNum, int pageSize) {
@@ -40,6 +43,27 @@ public class AdminConfigService {
         if (entity != null) {
             entity.setConfigValue(configValue);
             systemConfigMapper.updateById(entity);
+            auditLogService.record("CONFIG", "UPDATE", "SYSTEM_CONFIG", id);
+        }
+    }
+
+    public String getValue(String configKey, String defaultValue) {
+        SystemConfigEntity entity = systemConfigMapper.selectOne(new LambdaQueryWrapper<SystemConfigEntity>()
+                .eq(SystemConfigEntity::getConfigKey, configKey)
+                .eq(SystemConfigEntity::getIsDeleted, 0)
+                .last("limit 1"));
+        return entity == null || entity.getConfigValue() == null ? defaultValue : entity.getConfigValue();
+    }
+
+    public Integer getIntValue(String configKey, Integer defaultValue) {
+        String value = getValue(configKey, defaultValue == null ? null : String.valueOf(defaultValue));
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException ex) {
+            return defaultValue;
         }
     }
 }

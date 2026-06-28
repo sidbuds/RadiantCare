@@ -8,26 +8,21 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 
-/**
- * 保存排班请求参数
- */
 @Data
 public class SaveScheduleRequest {
-    @NotBlank(message = "centerCode不能为空")
+    @NotBlank(message = "centerCode cannot be blank")
     private String centerCode;
-    @NotNull(message = "appointDate不能为空")
+    @NotNull(message = "appointDate cannot be null")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate appointDate;
-    @NotBlank(message = "timeSlotCode不能为空")
+    @NotBlank(message = "timeSlotCode cannot be blank")
     private String timeSlotCode;
-    @NotBlank(message = "resourceType不能为空")
     private String resourceType;
-    @NotBlank(message = "resourceCode不能为空")
     private String resourceCode;
-    @NotNull(message = "capacityTotal不能为空")
-    @Min(value = 0, message = "capacityTotal不能小于0")
+    @NotNull(message = "capacityTotal cannot be null")
+    @Min(value = 0, message = "capacityTotal cannot be less than 0")
     private Integer capacityTotal;
-    @NotNull(message = "status不能为空")
+    @NotNull(message = "status cannot be null")
     private Integer status;
     private String departmentCode;
     private String departmentName;

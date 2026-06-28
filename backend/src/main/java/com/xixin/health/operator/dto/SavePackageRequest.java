@@ -26,6 +26,7 @@ public class SavePackageRequest {
     private Integer status;
     private String remark;
     private String templateCode;
+    private List<String> centerCodes;
     @Valid
     private List<PackageItemRequest> items;
 }

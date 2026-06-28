@@ -73,16 +73,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/layouts/AdminLayout.vue'),
     meta: { requiresAuth: true, role: 'ADMIN' },
     children: [
-      { path: 'exam-tasks', name: 'ExamTaskGenerate', component: () => import('@/views/admin/ExamTaskGenerate.vue') },
-      { path: 'reports', name: 'ReportPublish', component: () => import('@/views/admin/ReportPublish.vue') },
-      { path: 'consultations', name: 'ConsultationAssign', component: () => import('@/views/admin/ConsultationAssign.vue') },
       { path: 'doctors', name: 'DoctorManage', component: () => import('@/views/admin/DoctorManage.vue') },
       { path: 'roles', name: 'RoleManage', component: () => import('@/views/admin/RoleManage.vue') },
       { path: 'users', name: 'UserManage', component: () => import('@/views/admin/UserManage.vue') },
       { path: 'dicts', name: 'DictManage', component: () => import('@/views/admin/DictManage.vue') },
       { path: 'configs', name: 'SystemConfig', component: () => import('@/views/admin/SystemConfig.vue') },
       { path: 'audit-logs', name: 'AuditLog', component: () => import('@/views/admin/AuditLog.vue') },
-      { path: 'doctor-analytics', name: 'DoctorAnalytics', component: () => import('@/views/admin/DoctorAnalytics.vue') },
     ],
   },
 ]
@@ -96,7 +92,7 @@ const roleHomeMap: Record<string, string> = {
   USER: '/',
   DOCTOR: '/doctor/exam-tasks',
   OPERATOR: '/operator/packages',
-  ADMIN: '/admin/exam-tasks',
+  ADMIN: '/admin/doctors',
 }
 
 router.beforeEach((to, _from, next) => {

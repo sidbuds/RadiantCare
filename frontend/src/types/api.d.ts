@@ -52,6 +52,8 @@ export interface PackageItem {
   status: number
   remark: string
   templateCode: string
+  centerCodes?: string[]
+  centers?: Array<{ centerCode: string; centerName: string; status: number }>
   items?: ExamPackageItem[]
 }
 

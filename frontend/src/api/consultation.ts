@@ -1,4 +1,4 @@
-import { get, post } from './request'
+import { download, get, post } from './request'
 import type { Consultation } from '@/types/api'
 
 export interface CreateConsultationData {
@@ -22,7 +22,12 @@ export function getMyConsultation(consultationNo: string) {
   return get<{ consultation: Consultation; replies: any[] }>(`/doctor-consultations/${consultationNo}`)
 }
 
-export function sendConsultationMessage(consultationNo: string, data: { replyContent: string; attachmentUrl?: string }) {
+export function sendConsultationMessage(consultationNo: string, data: {
+  replyContent: string
+  attachmentUrl?: string
+  messageType?: string
+  refReportNo?: string
+}) {
   return post<void>(`/doctor-consultations/${consultationNo}/messages`, data)
 }
 
@@ -40,6 +45,10 @@ export function getDoctorConsultation(consultationNo: string) {
 
 export function replyConsultation(consultationNo: string, data: { replyContent: string; attachmentUrl?: string }) {
   return post<void>(`/doctor/consultations/${consultationNo}/reply`, data)
+}
+
+export function downloadDoctorSharedReportPdf(consultationNo: string, reportNo: string) {
+  return download(`/doctor/consultations/${consultationNo}/reports/${reportNo}/pdf/download`)
 }
 
 export function assignConsultation(consultationNo: string, data: { doctorId: number }) {

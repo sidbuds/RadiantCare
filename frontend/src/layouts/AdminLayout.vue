@@ -39,13 +39,9 @@ const menuItems = computed(() => {
         { path: '/admin/doctors', icon: 'User', title: '医生管理' },
         { path: '/admin/roles', icon: 'Key', title: '角色管理' },
         { path: '/admin/users', icon: 'UserFilled', title: '用户管理' },
-        { path: '/admin/exam-tasks', icon: 'Tickets', title: '任务生成' },
-        { path: '/admin/reports', icon: 'Notebook', title: '报告发布' },
-        { path: '/admin/consultations', icon: 'User', title: '咨询分配' },
         { path: '/admin/dicts', icon: 'Collection', title: '字典管理' },
         { path: '/admin/configs', icon: 'Setting', title: '系统配置' },
         { path: '/admin/audit-logs', icon: 'Tickets', title: '审计日志' },
-        { path: '/admin/doctor-analytics', icon: 'TrendCharts', title: '医生分析' },
       ]
     default:
       return []

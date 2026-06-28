@@ -8,6 +8,7 @@ import com.xixin.health.auth.mapper.StaffAccountMapper;
 import com.xixin.health.auth.mapper.StaffRoleRelMapper;
 import com.xixin.health.common.enums.ErrorCode;
 import com.xixin.health.common.exception.BizException;
+import com.xixin.health.common.service.AuditLogService;
 import com.xixin.health.user.entity.UserEntity;
 import com.xixin.health.user.mapper.UserMapper;
 import org.springframework.stereotype.Service;
@@ -24,13 +25,16 @@ public class AdminRoleService {
     private final StaffAccountMapper staffAccountMapper;
     private final StaffRoleRelMapper staffRoleRelMapper;
     private final UserMapper userMapper;
+    private final AuditLogService auditLogService;
 
     public AdminRoleService(StaffAccountMapper staffAccountMapper,
                             StaffRoleRelMapper staffRoleRelMapper,
-                            UserMapper userMapper) {
+                            UserMapper userMapper,
+                            AuditLogService auditLogService) {
         this.staffAccountMapper = staffAccountMapper;
         this.staffRoleRelMapper = staffRoleRelMapper;
         this.userMapper = userMapper;
+        this.auditLogService = auditLogService;
     }
 
     public List<Map<String, Object>> listAccounts() {
@@ -70,19 +74,16 @@ public class AdminRoleService {
         if (account == null || Integer.valueOf(1).equals(account.getIsDeleted())) {
             throw new BizException(ErrorCode.DATA_NOT_FOUND.getCode(), "账号不存在");
         }
-        StaffRoleRelEntity existing = staffRoleRelMapper.selectOne(new LambdaQueryWrapper<StaffRoleRelEntity>()
-                .eq(StaffRoleRelEntity::getStaffAccountId, staffAccountId)
-                .eq(StaffRoleRelEntity::getRoleCode, roleCode)
-                .eq(StaffRoleRelEntity::getIsDeleted, 0)
-                .last("limit 1"));
+        StaffRoleRelEntity existing = getActiveRole(staffAccountId);
         if (existing != null) {
-            throw new BizException(ErrorCode.OPERATION_CONFLICT.getCode(), "角色已绑定");
+            throw new BizException(ErrorCode.OPERATION_CONFLICT.getCode(), "该账号已设置身份，请先解绑后再设置");
         }
         StaffRoleRelEntity rel = new StaffRoleRelEntity();
         rel.setStaffAccountId(staffAccountId);
-        rel.setRoleCode(roleCode);
+        rel.setRoleCode(roleCode.trim().toUpperCase());
         rel.setIsDeleted(0);
         staffRoleRelMapper.insert(rel);
+        auditLogService.record("ROLE", "BIND", "STAFF_ACCOUNT", staffAccountId);
     }
 
     @Transactional
@@ -98,6 +99,7 @@ public class AdminRoleService {
         if (updated == 0) {
             throw new BizException(ErrorCode.DATA_NOT_FOUND.getCode(), "角色绑定不存在");
         }
+        auditLogService.record("ROLE", "UNBIND", "STAFF_ACCOUNT", staffAccountId);
     }
 
     @Transactional
@@ -133,11 +135,10 @@ public class AdminRoleService {
             staffAccountMapper.updateById(account);
         }
 
-        StaffRoleRelEntity existing = staffRoleRelMapper.selectOne(new LambdaQueryWrapper<StaffRoleRelEntity>()
-                .eq(StaffRoleRelEntity::getStaffAccountId, account.getId())
-                .eq(StaffRoleRelEntity::getRoleCode, normalizedRole)
-                .eq(StaffRoleRelEntity::getIsDeleted, 0)
-                .last("limit 1"));
+        StaffRoleRelEntity existing = getActiveRole(account.getId());
+        if (existing != null && !normalizedRole.equals(existing.getRoleCode())) {
+            throw new BizException(ErrorCode.OPERATION_CONFLICT.getCode(), "该账号已设置其他身份，请先解绑后再设置");
+        }
         if (existing == null) {
             StaffRoleRelEntity rel = new StaffRoleRelEntity();
             rel.setStaffAccountId(account.getId());
@@ -145,11 +146,19 @@ public class AdminRoleService {
             rel.setIsDeleted(0);
             staffRoleRelMapper.insert(rel);
         }
+        auditLogService.record("ROLE", "BIND", "STAFF_ACCOUNT", account.getId());
 
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("staffAccountId", account.getId());
         result.put("userId", userId);
         result.put("roleCode", normalizedRole);
         return result;
+    }
+
+    private StaffRoleRelEntity getActiveRole(Long staffAccountId) {
+        return staffRoleRelMapper.selectOne(new LambdaQueryWrapper<StaffRoleRelEntity>()
+                .eq(StaffRoleRelEntity::getStaffAccountId, staffAccountId)
+                .eq(StaffRoleRelEntity::getIsDeleted, 0)
+                .last("limit 1"));
     }
 }

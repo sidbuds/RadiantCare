@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 public class ExamPackageEntity extends BaseEntity {
     @TableId(type = IdType.AUTO)
     private Long id;
+    //
     private String packageCode;
     private String packageName;
     private String category;

@@ -7,6 +7,7 @@ export interface UserProfile {
   birthDate: string | null
   idType: number | null
   idNo: string
+  idNoSet: boolean
   mobile: string
   email: string | null
   address: string | null
@@ -18,6 +19,7 @@ export interface UpdateProfileData {
   name: string
   gender?: number | null
   birthDate?: string | null
+  idNo?: string | null
   email?: string | null
   address?: string | null
   emergencyContact?: string | null

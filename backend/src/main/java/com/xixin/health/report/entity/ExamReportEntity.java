@@ -27,6 +27,7 @@ public class ExamReportEntity extends BaseEntity {
     private String overallConclusion;
     private Integer status;
     private String pdfUrl;
+    private String pdfObjectKey;
     private Integer versionNo;
     private LocalDateTime publishedAt;
 }

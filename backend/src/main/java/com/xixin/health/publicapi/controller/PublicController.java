@@ -26,14 +26,15 @@ public class PublicController {
 
     /** 查询套餐列表 */
     @GetMapping("/packages")
-    public ApiResult<?> listPackages() {
-        return ApiResult.success(publicService.listPackages());
+    public ApiResult<?> listPackages(@RequestParam(required = false) String centerCode) {
+        return ApiResult.success(publicService.listPackages(centerCode));
     }
 
     /** 查询套餐详情 */
     @GetMapping("/packages/{packageCode}")
-    public ApiResult<?> getPackageDetail(@PathVariable String packageCode) {
-        Object detail = publicService.getPackageDetail(packageCode);
+    public ApiResult<?> getPackageDetail(@PathVariable String packageCode,
+                                         @RequestParam(required = false) String centerCode) {
+        Object detail = publicService.getPackageDetail(packageCode, centerCode);
         if (detail == null) {
             return ApiResult.fail(1002, "套餐不存在");
         }

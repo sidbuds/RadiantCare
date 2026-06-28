@@ -22,6 +22,7 @@ import com.xixin.health.exam.mapper.ExamDepartmentRouteMapper;
 import com.xixin.health.exam.mapper.ExamResultMapper;
 import com.xixin.health.exam.mapper.ExamTaskItemMapper;
 import com.xixin.health.exam.mapper.ExamTaskMapper;
+import com.xixin.health.operator.service.OperatorPackageService;
 import com.xixin.health.order.entity.OrderEntity;
 import com.xixin.health.order.mapper.OrderMapper;
 import com.xixin.health.report.service.ReportService;
@@ -53,6 +54,7 @@ public class ExamService {
     private final ExamResultMapper examResultMapper;
     private final DoctorAssignmentService doctorAssignmentService;
     private final ReportService reportService;
+    private final OperatorPackageService operatorPackageService;
 
     public ExamService(OrderMapper orderMapper,
                        AppointmentMapper appointmentMapper,
@@ -62,7 +64,8 @@ public class ExamService {
                        ExamDepartmentRouteMapper examDepartmentRouteMapper,
                        ExamResultMapper examResultMapper,
                        DoctorAssignmentService doctorAssignmentService,
-                       ReportService reportService) {
+                       ReportService reportService,
+                       OperatorPackageService operatorPackageService) {
         this.orderMapper = orderMapper;
         this.appointmentMapper = appointmentMapper;
         this.examTaskMapper = examTaskMapper;
@@ -72,12 +75,12 @@ public class ExamService {
         this.examResultMapper = examResultMapper;
         this.doctorAssignmentService = doctorAssignmentService;
         this.reportService = reportService;
+        this.operatorPackageService = operatorPackageService;
     }
 
     @Transactional
     public Map<String, Object> generateTask(GenerateExamTaskRequest request) {
-        OrderEntity order = getOrderByNo(request.getOrderNo());
-        return generateTaskForPaidOrder(order);
+        return generateTaskForPaidOrder(getOrderByNo(request.getOrderNo()));
     }
 
     @Transactional
@@ -85,7 +88,6 @@ public class ExamService {
         if (order.getStatus() == null || order.getStatus() != 1) {
             throw new BizException(ErrorCode.ORDER_STATUS_INVALID.getCode(), "订单未支付，不能生成体检任务");
         }
-
         ExamTaskEntity existing = examTaskMapper.selectOne(new LambdaQueryWrapper<ExamTaskEntity>()
                 .eq(ExamTaskEntity::getOrderId, order.getId())
                 .eq(ExamTaskEntity::getIsDeleted, 0)
@@ -101,6 +103,22 @@ public class ExamService {
         }
 
         AppointmentEntity appointment = appointmentMapper.selectById(order.getAppointmentId());
+        if (appointment == null) {
+            throw new BizException(ErrorCode.DATA_NOT_FOUND.getCode(), "预约不存在");
+        }
+        if (!operatorPackageService.isPackageAvailableAtCenter(order.getPackageId(), appointment.getCenterCode())) {
+            throw new BizException(ErrorCode.PARAM_INVALID.getCode(), "套餐不适用于预约体检中心");
+        }
+        List<ExamPackageItemEntity> packageItems = examPackageItemMapper.selectList(new LambdaQueryWrapper<ExamPackageItemEntity>()
+                .eq(ExamPackageItemEntity::getPackageId, order.getPackageId())
+                .eq(ExamPackageItemEntity::getIsDeleted, 0)
+                .orderByAsc(ExamPackageItemEntity::getSortNo));
+        if (packageItems.isEmpty()) {
+            throw new BizException(ErrorCode.PACKAGE_ITEM_REQUIRED);
+        }
+        Map<String, ExamDepartmentRouteEntity> routeByItemCode =
+                loadAndValidateRoutes(appointment.getCenterCode(), order.getPackageId(), packageItems);
+
         ExamTaskEntity task = new ExamTaskEntity();
         task.setTaskNo(NoGenerator.next("ET"));
         task.setAppointmentId(appointment.getId());
@@ -117,29 +135,10 @@ public class ExamService {
         task.setIsDeleted(0);
         examTaskMapper.insert(task);
 
-        List<ExamPackageItemEntity> packageItems = examPackageItemMapper.selectList(new LambdaQueryWrapper<ExamPackageItemEntity>()
-                .eq(ExamPackageItemEntity::getPackageId, order.getPackageId())
-                .eq(ExamPackageItemEntity::getIsDeleted, 0)
-                .orderByAsc(ExamPackageItemEntity::getSortNo));
-        if (packageItems.isEmpty()) {
-            throw new BizException(ErrorCode.PACKAGE_ITEM_REQUIRED);
-        }
-
         int sort = 1;
         Set<Long> assignedDoctorIds = new LinkedHashSet<Long>();
         for (ExamPackageItemEntity packageItem : packageItems) {
-            ExamDepartmentRouteEntity route = examDepartmentRouteMapper.selectOne(new LambdaQueryWrapper<ExamDepartmentRouteEntity>()
-                    .eq(ExamDepartmentRouteEntity::getCenterCode, appointment.getCenterCode())
-                    .eq(ExamDepartmentRouteEntity::getPackageId, order.getPackageId())
-                    .eq(ExamDepartmentRouteEntity::getItemCode, packageItem.getItemCode())
-                    .eq(ExamDepartmentRouteEntity::getStatus, 1)
-                    .eq(ExamDepartmentRouteEntity::getIsDeleted, 0)
-                    .last("limit 1"));
-            if (route == null) {
-                throw new BizException(ErrorCode.DOCTOR_ASSIGN_INVALID.getCode(),
-                        "检查项未配置科室路线: " + packageItem.getItemCode());
-            }
-
+            ExamDepartmentRouteEntity route = routeByItemCode.get(packageItem.getItemCode());
             Map<String, Object> doctorAssignment = doctorAssignmentService.assignFromRoute(route, assignedDoctorIds);
             Long assignedDoctorId = ((Number) doctorAssignment.get("doctorId")).longValue();
             assignedDoctorIds.add(assignedDoctorId);
@@ -215,7 +214,6 @@ public class ExamService {
         for (ExamDepartmentRouteEntity route : routes) {
             routeMap.put(route.getItemCode(), route);
         }
-
         List<GuideItemVO> result = new ArrayList<GuideItemVO>();
         for (ExamTaskItemEntity item : items) {
             GuideItemVO vo = new GuideItemVO();
@@ -225,7 +223,6 @@ public class ExamService {
             vo.setItemName(item.getItemName());
             vo.setDoctorName(item.getDoctorName());
             vo.setItemStatus(item.getItemStatus());
-
             ExamDepartmentRouteEntity route = routeMap.get(item.getItemCode());
             if (route != null) {
                 vo.setDepartmentCode(route.getDepartmentCode());
@@ -240,10 +237,10 @@ public class ExamService {
                 vo.setDepartmentCode(item.getDepartmentCode());
                 vo.setDepartmentName(item.getDepartmentName());
                 vo.setRoomNo(item.getRoomNo());
+                vo.setRouteSort(item.getRouteSort());
             }
             result.add(vo);
         }
-
         result.sort((left, right) -> {
             Integer leftSort = left.getRouteSort() == null ? Integer.MAX_VALUE : left.getRouteSort();
             Integer rightSort = right.getRouteSort() == null ? Integer.MAX_VALUE : right.getRouteSort();
@@ -268,13 +265,11 @@ public class ExamService {
                 .eq(ExamPackageItemEntity::getItemCode, item.getItemCode())
                 .eq(ExamPackageItemEntity::getIsDeleted, 0)
                 .last("limit 1"));
-
         Map<String, Object> preset = new HashMap<String, Object>();
         preset.put("metricCode", packageItem == null ? item.getItemCode() : packageItem.getItemCode());
         preset.put("metricName", packageItem == null ? item.getItemName() : packageItem.getItemName());
         preset.put("unit", packageItem == null ? null : packageItem.getUnit());
         preset.put("refRange", packageItem == null ? null : packageItem.getRefRange());
-
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("item", item);
         result.put("presetMetrics", Collections.singletonList(preset));
@@ -326,7 +321,6 @@ public class ExamService {
         examTaskItemMapper.update(null, new LambdaUpdateWrapper<ExamTaskItemEntity>()
                 .eq(ExamTaskItemEntity::getId, item.getId())
                 .set(ExamTaskItemEntity::getEntryStatus, 2));
-
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("taskItemNo", taskItemNo);
         result.put("entryStatus", "SAVED");
@@ -342,12 +336,10 @@ public class ExamService {
         if (resultCount == 0) {
             throw new BizException(ErrorCode.OPERATION_CONFLICT.getCode(), "请先录入检查结果");
         }
-
         examTaskItemMapper.update(null, new LambdaUpdateWrapper<ExamTaskItemEntity>()
                 .eq(ExamTaskItemEntity::getId, item.getId())
                 .set(ExamTaskItemEntity::getItemStatus, 2)
                 .set(ExamTaskItemEntity::getCompleteTime, LocalDateTime.now()));
-
         long remain = examTaskItemMapper.selectCount(new LambdaQueryWrapper<ExamTaskItemEntity>()
                 .eq(ExamTaskItemEntity::getTaskId, item.getTaskId())
                 .eq(ExamTaskItemEntity::getIsDeleted, 0)
@@ -371,6 +363,32 @@ public class ExamService {
             throw new BizException(ErrorCode.EXAM_TASK_NOT_FOUND);
         }
         return task;
+    }
+
+    private Map<String, ExamDepartmentRouteEntity> loadAndValidateRoutes(String centerCode,
+                                                                         Long packageId,
+                                                                         List<ExamPackageItemEntity> packageItems) {
+        List<ExamDepartmentRouteEntity> routes = examDepartmentRouteMapper.selectList(new LambdaQueryWrapper<ExamDepartmentRouteEntity>()
+                .eq(ExamDepartmentRouteEntity::getCenterCode, centerCode)
+                .eq(ExamDepartmentRouteEntity::getPackageId, packageId)
+                .eq(ExamDepartmentRouteEntity::getStatus, 1)
+                .eq(ExamDepartmentRouteEntity::getIsDeleted, 0)
+                .orderByAsc(ExamDepartmentRouteEntity::getRouteSort));
+        Map<String, ExamDepartmentRouteEntity> routeByItemCode = new HashMap<String, ExamDepartmentRouteEntity>();
+        for (ExamDepartmentRouteEntity route : routes) {
+            routeByItemCode.put(route.getItemCode(), route);
+        }
+        List<String> missing = new ArrayList<String>();
+        for (ExamPackageItemEntity packageItem : packageItems) {
+            if (!routeByItemCode.containsKey(packageItem.getItemCode())) {
+                missing.add(packageItem.getItemCode());
+            }
+        }
+        if (!missing.isEmpty()) {
+            throw new BizException(ErrorCode.DOCTOR_ASSIGN_INVALID.getCode(),
+                    "该中心套餐导引路线未配置完整：" + centerCode + " 缺少 " + missing);
+        }
+        return routeByItemCode;
     }
 
     private OrderEntity getOrderByNo(String orderNo) {

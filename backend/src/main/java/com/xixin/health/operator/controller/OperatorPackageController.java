@@ -5,6 +5,7 @@ import com.github.pagehelper.PageInfo;
 import com.xixin.health.common.api.ApiResult;
 import com.xixin.health.common.model.PageResult;
 import com.xixin.health.operator.dto.SavePackageRequest;
+import com.xixin.health.operator.dto.SavePackageRouteRequest;
 import com.xixin.health.operator.service.OperatorPackageService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -66,5 +67,15 @@ public class OperatorPackageController {
         Number status = (Number) body.get("status");
         operatorPackageService.updateStatus(id, status == null ? null : status.intValue());
         return ApiResult.success(null);
+    }
+
+    @GetMapping("/{id}/routes")
+    public ApiResult<?> routes(@PathVariable Long id, @RequestParam String centerCode) {
+        return ApiResult.success(operatorPackageService.routes(id, centerCode));
+    }
+
+    @PutMapping("/{id}/routes")
+    public ApiResult<?> saveRoutes(@PathVariable Long id, @Validated @RequestBody SavePackageRouteRequest request) {
+        return ApiResult.success(operatorPackageService.saveRoutes(id, request));
     }
 }

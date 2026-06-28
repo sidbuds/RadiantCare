@@ -1,5 +1,6 @@
 package com.xixin.health.appointment;
 
+import com.xixin.health.TestMybatisPlusSupport;
 import com.xixin.health.appointment.dto.CreateAppointmentRequest;
 import com.xixin.health.appointment.entity.ExamPackageEntity;
 import com.xixin.health.appointment.entity.ResourceCapacityEntity;
@@ -10,6 +11,7 @@ import com.xixin.health.appointment.service.AppointmentService;
 import com.xixin.health.common.exception.BizException;
 import com.xixin.health.common.util.AuthContext;
 import com.xixin.health.exam.mapper.ExamTaskMapper;
+import com.xixin.health.operator.service.OperatorPackageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,6 +45,9 @@ class AppointmentServiceTest {
     @Mock
     private ExamTaskMapper examTaskMapper;
 
+    @Mock
+    private OperatorPackageService operatorPackageService;
+
     @InjectMocks
     private AppointmentService appointmentService;
 
@@ -52,6 +57,7 @@ class AppointmentServiceTest {
 
     @BeforeEach
     void setUp() {
+        TestMybatisPlusSupport.initTableInfo(ResourceCapacityEntity.class);
         createRequest = new CreateAppointmentRequest();
         createRequest.setPackageId(1001L);
         createRequest.setCenterCode("C001");
@@ -79,6 +85,7 @@ class AppointmentServiceTest {
             authContext.when(AuthContext::getUserId).thenReturn(1L);
 
             when(examPackageMapper.selectById(1001L)).thenReturn(packageEntity);
+            when(operatorPackageService.isPackageAvailableAtCenter(1001L, "C001")).thenReturn(true);
             when(appointmentMapper.selectCount(any())).thenReturn(0L);
             when(resourceCapacityMapper.selectList(any())).thenReturn(Collections.singletonList(capacity));
             when(appointmentMapper.insert(any())).thenReturn(1);
@@ -113,6 +120,7 @@ class AppointmentServiceTest {
             capacity.setCapacityUsed(20); // 已满
 
             when(examPackageMapper.selectById(1001L)).thenReturn(packageEntity);
+            when(operatorPackageService.isPackageAvailableAtCenter(1001L, "C001")).thenReturn(true);
             when(appointmentMapper.selectCount(any())).thenReturn(0L);
             when(resourceCapacityMapper.selectList(any())).thenReturn(Collections.singletonList(capacity));
 

@@ -16,6 +16,7 @@ import com.xixin.health.common.util.AuthContext;
 import com.xixin.health.common.util.NoGenerator;
 import com.xixin.health.exam.entity.ExamTaskEntity;
 import com.xixin.health.exam.mapper.ExamTaskMapper;
+import com.xixin.health.operator.service.OperatorPackageService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,23 +36,28 @@ public class AppointmentService {
     private final ExamPackageMapper examPackageMapper;
     private final ResourceCapacityMapper resourceCapacityMapper;
     private final ExamTaskMapper examTaskMapper;
+    private final OperatorPackageService operatorPackageService;
 
     public AppointmentService(AppointmentMapper appointmentMapper,
                               ExamPackageMapper examPackageMapper,
                               ResourceCapacityMapper resourceCapacityMapper,
-                              ExamTaskMapper examTaskMapper) {
+                              ExamTaskMapper examTaskMapper,
+                              OperatorPackageService operatorPackageService) {
         this.appointmentMapper = appointmentMapper;
         this.examPackageMapper = examPackageMapper;
         this.resourceCapacityMapper = resourceCapacityMapper;
         this.examTaskMapper = examTaskMapper;
+        this.operatorPackageService = operatorPackageService;
     }
 
     /** 查询可用预约时段 */
     public List<ResourceCapacityEntity> availableSlots(String centerCode, Long packageId, LocalDate date) {
         examPackageExists(packageId);
+        assertPackageAvailableAtCenter(packageId, centerCode);
         return resourceCapacityMapper.selectList(new LambdaQueryWrapper<ResourceCapacityEntity>()
                 .eq(ResourceCapacityEntity::getCenterCode, centerCode)
                 .eq(ResourceCapacityEntity::getAppointDate, date)
+                .eq(ResourceCapacityEntity::getResourceType, "CENTER_SLOT")
                 .eq(ResourceCapacityEntity::getStatus, 1)
                 .eq(ResourceCapacityEntity::getIsDeleted, 0)
                 .orderByAsc(ResourceCapacityEntity::getTimeSlotCode));
@@ -61,6 +67,7 @@ public class AppointmentService {
     @Transactional
     public Map<String, Object> create(CreateAppointmentRequest request) {
         examPackageExists(request.getPackageId());
+        assertPackageAvailableAtCenter(request.getPackageId(), request.getCenterCode());
         Long userId = AuthContext.getUserId();
         long duplicateCount = appointmentMapper.selectCount(new LambdaQueryWrapper<AppointmentEntity>()
                 .eq(AppointmentEntity::getUserId, userId)
@@ -76,6 +83,7 @@ public class AppointmentService {
                 .eq(ResourceCapacityEntity::getCenterCode, request.getCenterCode())
                 .eq(ResourceCapacityEntity::getAppointDate, request.getAppointDate())
                 .eq(ResourceCapacityEntity::getTimeSlotCode, request.getTimeSlotCode())
+                .eq(ResourceCapacityEntity::getResourceType, "CENTER_SLOT")
                 .eq(ResourceCapacityEntity::getStatus, 1)
                 .eq(ResourceCapacityEntity::getIsDeleted, 0));
         if (!capacities.isEmpty()) {
@@ -230,6 +238,12 @@ public class AppointmentService {
                 .last("limit 1"));
         if (task != null) {
             appointment.setTaskNo(task.getTaskNo());
+        }
+    }
+
+    private void assertPackageAvailableAtCenter(Long packageId, String centerCode) {
+        if (!operatorPackageService.isPackageAvailableAtCenter(packageId, centerCode)) {
+            throw new BizException(ErrorCode.PARAM_INVALID.getCode(), "该套餐不适用于所选体检中心");
         }
     }
 }

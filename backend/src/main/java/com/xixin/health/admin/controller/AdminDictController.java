@@ -25,14 +25,17 @@ public class AdminDictController {
     }
 
     @GetMapping("/types")
-    public ApiResult<?> listTypes(@RequestParam(defaultValue = "1") int pageNum,
+    public ApiResult<?> listTypes(@RequestParam(required = false) String keyword,
+                                  @RequestParam(defaultValue = "1") int pageNum,
                                   @RequestParam(defaultValue = "20") int pageSize) {
-        return ApiResult.success(adminDictService.listDictTypes(pageNum, pageSize));
+        return ApiResult.success(adminDictService.listDictTypes(keyword, pageNum, pageSize));
     }
 
     @GetMapping("/items")
-    public ApiResult<?> listItems(@RequestParam String dictType) {
-        return ApiResult.success(adminDictService.listDictItems(dictType));
+    public ApiResult<?> listItems(@RequestParam String dictType,
+                                  @RequestParam(required = false) Integer status,
+                                  @RequestParam(required = false) String keyword) {
+        return ApiResult.success(adminDictService.listDictItems(dictType, status, keyword));
     }
 
     @PostMapping("/items")

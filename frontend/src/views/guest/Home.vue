@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { listPackages } from '@/api/public'
 import { useUserStore } from '@/stores/user'
@@ -11,13 +11,21 @@ const loading = ref(true)
 const mounted = ref(false)
 
 const isLoggedIn = computed(() => userStore.isLoggedIn)
-const displayName = computed(() => userStore.userInfo?.displayName || '您')
+const displayName = computed(() => userStore.userInfo?.displayName || '用户')
+
+const flowSteps = [
+  { title: '浏览套餐', desc: '先看适合自己的体检方案' },
+  { title: '选择中心', desc: '按体检中心查看可用套餐' },
+  { title: '选择时间', desc: '挑选合适的日期与时段' },
+  { title: '确认预约', desc: '提交预约并完成后续安排' },
+  { title: '查看任务与报告', desc: '完成体检后持续跟进结果' },
+]
 
 const quickActions = computed(() => {
   if (isLoggedIn.value) {
     return [
       { label: '我的预约', description: '查看预约进度与到检信息', icon: 'Calendar', action: () => router.push('/user/appointments') },
-      { label: '导检路线', description: '查看体检引导与科室路线', icon: 'Guide', action: () => router.push('/user/appointments') },
+      { label: '导检路线', description: '查看体检引导与科室路线', icon: 'Guide', action: () => router.push('/user/exam-tasks') },
       { label: '体检报告', description: '查看结果与历年对比', icon: 'Document', action: () => router.push('/user/reports') },
       { label: '咨询医生', description: '针对异常指标在线咨询', icon: 'ChatDotRound', action: () => router.push('/user/consultations') },
     ]
@@ -32,15 +40,15 @@ const quickActions = computed(() => {
 const serviceNotes = computed(() => {
   if (isLoggedIn.value) {
     return [
-      { title: '预约安排', value: '随时查看', detail: '日期、时段、到检信息集中展示。' },
-      { title: '报告结果', value: '统一管理', detail: '体检报告与年度对比在同一入口查看。' },
-      { title: '后续咨询', value: '继续跟进', detail: '发现异常后可直接发起在线咨询。' },
+      { title: '预约安排', value: '随时查看', detail: '日期、时段、到检信息集中展示' },
+      { title: '报告结果', value: '统一管理', detail: '体检报告与历年对比同入口查看' },
+      { title: '后续咨询', value: '继续跟进', detail: '发现异常后可直接发起在线咨询' },
     ]
   }
   return [
-    { title: '服务流程', value: '清晰透明', detail: '从选套餐到查看报告，每一步都有指引。' },
-    { title: '体检中心', value: '提前了解', detail: '确认地点、服务时间和到检须知。' },
-    { title: '报告管理', value: '随时查阅', detail: '登录后查看报告、对比历年结果。' },
+    { title: '服务流程', value: '清晰透明', detail: '从选套餐到查报告，每一步都可跟着走' },
+    { title: '体检中心', value: '提前了解', detail: '确认地点、服务时间和到检须知' },
+    { title: '报告管理', value: '随时查阅', detail: '登录后查看报告、对比历年结果' },
   ]
 })
 
@@ -49,25 +57,43 @@ onMounted(async () => {
   try {
     const res: any = await listPackages()
     packages.value = (res.data || []).slice(0, 3)
-  } catch {} finally { loading.value = false }
+  } catch {
+    packages.value = []
+  } finally {
+    loading.value = false
+  }
 })
 
-function goPackage(code: string) { router.push(`/packages/${code}`) }
+function goPackage(code: string) {
+  router.push(`/packages/${code}`)
+}
 </script>
 
 <template>
   <div class="home-page">
-    <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content glass-panel" :class="{ 'is-mounted': mounted }">
         <span class="section-eyebrow">{{ isLoggedIn ? 'WELCOME BACK' : 'HEALTH CHECK' }}</span>
         <h1 class="hero-title">{{ isLoggedIn ? `${displayName}，欢迎回来` : '科学体检，守护健康' }}</h1>
         <p class="hero-desc">
           {{ isLoggedIn
-            ? '您的预约、报告和健康咨询，都在这里统一管理。'
+            ? '你的预约、报告和健康咨询都在这里统一管理。'
             : '专业体检套餐、便捷预约流程、详细报告解读，让健康管理更简单。'
           }}
         </p>
+
+        <div class="flow-card">
+          <div class="flow-card__head">
+            <span class="flow-eyebrow">用户操作主链路</span>
+            <strong>按这个顺序走，预约更顺手</strong>
+          </div>
+          <ol class="flow-list">
+            <li v-for="step in flowSteps" :key="step.title">
+              <span>{{ step.title }}</span>
+              <small>{{ step.desc }}</small>
+            </li>
+          </ol>
+        </div>
 
         <div class="hero-actions">
           <button
@@ -99,8 +125,8 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
             <span class="status-label">{{ isLoggedIn ? '快捷入口' : '开始体检' }}</span>
             <div class="status-dot"></div>
           </div>
-          <strong>{{ isLoggedIn ? '选择功能继续' : '三步完成预约' }}</strong>
-          <p>{{ isLoggedIn ? '查看预约状态、获取体检报告、在线咨询医生。' : '选择套餐、选择中心、确认预约。' }}</p>
+          <strong>{{ isLoggedIn ? '继续上次的健康管理' : '三步完成预约' }}</strong>
+          <p>{{ isLoggedIn ? '直接进入预约、报告和咨询流程。' : '选套餐、选中心、确认预约，流程一目了然。' }}</p>
         </div>
 
         <div class="service-grid">
@@ -119,7 +145,6 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
       </div>
     </section>
 
-    <!-- Packages Section -->
     <section class="packages-section" :class="{ 'is-mounted': mounted }">
       <div class="section-head">
         <div>
@@ -142,7 +167,7 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
             <span class="package-price">¥{{ pkg.price }}</span>
           </div>
           <h3>{{ pkg.packageName }}</h3>
-          <p class="remark">{{ pkg.remark || '涵盖常规检查项目，适合年度健康体检。' }}</p>
+          <p class="remark">{{ pkg.remark || '覆盖常规检查项目，适合年度健康体检。' }}</p>
           <div class="package-card__foot">
             <span class="metric-chip">{{ isLoggedIn ? '查看详情' : '可在线预约' }}</span>
             <el-button type="primary" size="small">{{ isLoggedIn ? '查看方案' : '了解套餐' }}</el-button>
@@ -160,10 +185,6 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   margin: 0 auto;
   padding: 36px 0 72px;
 }
-
-/* ═══════════════════════════════════════════════════════════
-   HERO SECTION
-   ═══════════════════════════════════════════════════════════ */
 
 .hero {
   display: grid;
@@ -192,16 +213,10 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
     font-size: clamp(30px, 3.8vw, 48px);
     line-height: 1.1;
     font-weight: 900;
-    letter-spacing: -0.03em;
+    letter-spacing: 0;
     background: linear-gradient(135deg, var(--color-ink) 0%, rgba(240, 236, 228, 0.7) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  :global([data-theme="light"]) & h1 {
-    background: linear-gradient(135deg, #2C2925 0%, #3A8F85 100%);
-    -webkit-background-clip: text;
     background-clip: text;
   }
 }
@@ -214,11 +229,73 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   line-height: 1.8;
 }
 
+.flow-card {
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.flow-card__head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+
+  strong {
+    font-size: 15px;
+    color: var(--color-ink);
+    line-height: 1.3;
+  }
+}
+
+.flow-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+
+.flow-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    min-width: 0;
+    padding: 12px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-line);
+    background: var(--color-panel);
+  }
+
+  span {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-ink);
+    line-height: 1.3;
+  }
+
+  small {
+    display: block;
+    margin-top: 6px;
+    color: var(--color-ink-muted);
+    font-size: 11px;
+    line-height: 1.45;
+  }
+}
+
 .hero-actions {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 32px;
+  margin-top: 24px;
 }
 
 .action-item {
@@ -239,26 +316,6 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
     opacity: 1;
     transform: translateX(0);
     transition-delay: var(--delay);
-  }
-
-  &:hover {
-    border-color: var(--color-brand-muted);
-    background: var(--color-brand-light);
-    transform: translateX(3px);
-
-    .action-arrow {
-      opacity: 1;
-      transform: translateX(0);
-    }
-
-    .action-icon {
-      background: var(--color-brand-muted);
-      color: var(--color-brand-deep);
-    }
-  }
-
-  &:active {
-    transform: translateX(4px) scale(0.99);
   }
 }
 
@@ -289,19 +346,11 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   background: var(--color-brand-light);
   color: var(--color-brand);
   flex-shrink: 0;
-  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .action-arrow {
   color: var(--color-brand);
-  opacity: 0;
-  transform: translateX(-6px);
-  transition: opacity 0.2s ease, transform 0.2s var(--ease-out-expo);
 }
-
-/* ═══════════════════════════════════════════════════════════
-   HERO SIDEBAR
-   ═══════════════════════════════════════════════════════════ */
 
 .hero-side {
   display: grid;
@@ -324,47 +373,12 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   background: linear-gradient(145deg, #1a4a3e, #0d3b33);
   border: 1px solid rgba(58, 143, 133, 0.2);
   color: #f0ece4;
-  box-shadow: var(--shadow-lg);
-  position: relative;
-  overflow: hidden;
-
-  :global([data-theme="light"]) & {
-    background: linear-gradient(145deg, #1a4a3e, #0d3b33);
-    color: #f0ece4;
-    box-shadow: 0 4px 20px rgba(13, 59, 51, 0.3);
-  }
-
-  strong {
-    display: block;
-    margin: 12px 0 8px;
-    font-family: var(--font-display);
-    font-size: 22px;
-    line-height: 1.25;
-    position: relative;
-    color: #ffffff;
-
-    :global([data-theme="light"]) & {
-      color: #ffffff;
-    }
-  }
-
-  p {
-    color: rgba(240, 236, 228, 0.7);
-    font-size: 12px;
-    line-height: 1.7;
-    position: relative;
-
-    :global([data-theme="light"]) & {
-      color: rgba(240, 236, 228, 0.7);
-    }
-  }
 }
 
 .status-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: relative;
 }
 
 .status-label {
@@ -380,8 +394,21 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   height: 8px;
   border-radius: 50%;
   background: var(--color-success);
-  box-shadow: 0 0 12px var(--color-success-glow);
-  animation: pulse 2s ease-in-out infinite;
+}
+
+.status-panel strong {
+  display: block;
+  margin: 12px 0 8px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.25;
+  color: #ffffff;
+}
+
+.status-panel p {
+  color: rgba(240, 236, 228, 0.7);
+  font-size: 12px;
+  line-height: 1.7;
 }
 
 .service-grid {
@@ -403,11 +430,6 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
     opacity: 1;
     transform: translateY(0);
     transition-delay: var(--delay);
-  }
-
-  &:hover {
-    border-color: var(--color-line-strong);
-    transform: translateY(-2px);
   }
 
   .service-label {
@@ -435,18 +457,12 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   PACKAGES SECTION
-   ═══════════════════════════════════════════════════════════ */
-
 .packages-section {
   padding: 40px;
   border: 1px solid var(--color-line);
   border-radius: var(--radius-xl);
   background: var(--color-panel);
   box-shadow: var(--shadow-sm);
-  position: relative;
-  overflow: hidden;
   opacity: 0;
   transform: translateY(20px);
   transition: opacity 0.5s var(--ease-out-expo), transform 0.5s var(--ease-out-expo);
@@ -456,16 +472,6 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
     opacity: 1;
     transform: translateY(0);
   }
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--color-line-strong), transparent);
-  }
 }
 
 .section-head {
@@ -474,31 +480,21 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   align-items: flex-end;
   gap: 24px;
   margin-bottom: 28px;
+}
 
-  h2 {
-    font-family: var(--font-display);
-    font-size: clamp(24px, 2.5vw, 32px);
-    line-height: 1.15;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, var(--color-ink) 0%, rgba(240, 236, 228, 0.7) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+.section-head h2 {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 2.5vw, 32px);
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: 0;
+}
 
-    :global([data-theme="light"]) & {
-      background: linear-gradient(135deg, #2C2925 0%, #3A8F85 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-    }
-  }
-
-  p {
-    max-width: 380px;
-    color: var(--color-ink-muted);
-    font-size: 13px;
-    line-height: 1.75;
-  }
+.section-head p {
+  max-width: 380px;
+  color: var(--color-ink-muted);
+  font-size: 13px;
+  line-height: 1.75;
 }
 
 .package-grid {
@@ -525,28 +521,6 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
     transition-delay: var(--delay);
   }
 
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--color-brand), var(--color-accent));
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--color-brand-muted);
-
-    &::before {
-      opacity: 1;
-    }
-  }
-
   h3 {
     margin: 16px 0 10px;
     font-family: var(--font-display);
@@ -563,7 +537,6 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  position: relative;
 }
 
 .package-tag {
@@ -575,7 +548,6 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   color: var(--color-brand);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.04em;
   border: 1px solid var(--color-line);
 }
 
@@ -584,7 +556,6 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   font-size: 26px;
   font-weight: 900;
   color: var(--color-brand);
-  letter-spacing: -0.02em;
 }
 
 .remark {
@@ -592,7 +563,6 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   font-size: 12px;
   line-height: 1.75;
   flex: 1;
-  position: relative;
 }
 
 .package-card__foot {
@@ -601,13 +571,13 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
   border-top: 1px solid var(--color-line);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   RESPONSIVE
-   ═══════════════════════════════════════════════════════════ */
-
 @media (max-width: 1100px) {
   .hero {
     grid-template-columns: 1fr;
+  }
+
+  .flow-list {
+    grid-template-columns: 1fr 1fr;
   }
 
   .package-grid {
@@ -636,6 +606,10 @@ function goPackage(code: string) { router.push(`/packages/${code}`) }
 
   .packages-section {
     padding: 24px;
+  }
+
+  .flow-list {
+    grid-template-columns: 1fr;
   }
 
   .hero-content h1 {

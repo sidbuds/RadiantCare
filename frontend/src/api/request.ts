@@ -31,6 +31,9 @@ request.interceptors.request.use((config) => {
 
 request.interceptors.response.use(
   (response) => {
+    if (response.config.responseType === 'blob') {
+      return response
+    }
     const res = response.data as ApiResult
     if (res.code !== 0) {
       ElMessage.error(res.message || '请求失败')
@@ -66,6 +69,10 @@ export function get<T>(url: string, config?: AxiosRequestConfig): Promise<ApiRes
 
 export function post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResult<T>> {
   return request.post(url, data, config) as unknown as Promise<ApiResult<T>>
+}
+
+export function download(url: string, config?: AxiosRequestConfig): Promise<Blob> {
+  return request.get(url, { ...config, responseType: 'blob' }).then((response: any) => response.data as Blob)
 }
 
 export function put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResult<T>> {

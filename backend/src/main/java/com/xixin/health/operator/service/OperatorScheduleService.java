@@ -6,6 +6,7 @@ import com.xixin.health.appointment.entity.ResourceCapacityEntity;
 import com.xixin.health.appointment.mapper.ResourceCapacityMapper;
 import com.xixin.health.common.enums.ErrorCode;
 import com.xixin.health.common.exception.BizException;
+import com.xixin.health.common.service.AuditLogService;
 import com.xixin.health.common.util.AuthContext;
 import com.xixin.health.operator.dto.SaveScheduleRequest;
 import org.springframework.stereotype.Service;
@@ -14,24 +15,25 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * 运营端排班服务
- */
 @Service
 public class OperatorScheduleService {
 
-    private final ResourceCapacityMapper resourceCapacityMapper;
+    private static final String CENTER_SLOT = "CENTER_SLOT";
 
-    public OperatorScheduleService(ResourceCapacityMapper resourceCapacityMapper) {
+    private final ResourceCapacityMapper resourceCapacityMapper;
+    private final AuditLogService auditLogService;
+
+    public OperatorScheduleService(ResourceCapacityMapper resourceCapacityMapper, AuditLogService auditLogService) {
         this.resourceCapacityMapper = resourceCapacityMapper;
+        this.auditLogService = auditLogService;
     }
 
     public List<ResourceCapacityEntity> list(String centerCode, String departmentCode, LocalDate startDate, LocalDate endDate) {
         return resourceCapacityMapper.selectList(new LambdaQueryWrapper<ResourceCapacityEntity>()
                 .eq(centerCode != null && centerCode.trim().length() > 0, ResourceCapacityEntity::getCenterCode, centerCode)
-                .eq(departmentCode != null && departmentCode.trim().length() > 0, ResourceCapacityEntity::getDepartmentCode, departmentCode)
                 .ge(startDate != null, ResourceCapacityEntity::getAppointDate, startDate)
                 .le(endDate != null, ResourceCapacityEntity::getAppointDate, endDate)
+                .eq(ResourceCapacityEntity::getResourceType, CENTER_SLOT)
                 .eq(ResourceCapacityEntity::getIsDeleted, 0)
                 .orderByAsc(ResourceCapacityEntity::getAppointDate)
                 .orderByAsc(ResourceCapacityEntity::getTimeSlotCode));
@@ -40,29 +42,32 @@ public class OperatorScheduleService {
     @Transactional
     public ResourceCapacityEntity create(SaveScheduleRequest request) {
         validateCapacity(request);
+        assertUniqueCenterSlot(null, request);
         ResourceCapacityEntity entity = new ResourceCapacityEntity();
         entity.setCenterCode(request.getCenterCode());
         entity.setAppointDate(request.getAppointDate());
         entity.setTimeSlotCode(request.getTimeSlotCode());
-        entity.setResourceType(request.getResourceType());
-        entity.setResourceCode(request.getResourceCode());
+        entity.setResourceType(CENTER_SLOT);
+        entity.setResourceCode(request.getCenterCode());
         entity.setCapacityTotal(request.getCapacityTotal());
         entity.setCapacityUsed(0);
         entity.setCapacityLocked(0);
-        entity.setDepartmentCode(request.getDepartmentCode());
-        entity.setDepartmentName(request.getDepartmentName());
+        entity.setDepartmentCode(null);
+        entity.setDepartmentName(null);
         entity.setStatus(request.getStatus());
         entity.setVersionNo(1);
         entity.setCreatedBy(AuthContext.getUserId());
         entity.setUpdatedBy(AuthContext.getUserId());
         entity.setIsDeleted(0);
         resourceCapacityMapper.insert(entity);
+        auditLogService.record("SCHEDULE", "CREATE", "RESOURCE_CAPACITY", entity.getId());
         return entity;
     }
 
     @Transactional
     public ResourceCapacityEntity update(Long id, SaveScheduleRequest request) {
         validateCapacity(request);
+        assertUniqueCenterSlot(id, request);
         ResourceCapacityEntity entity = getById(id);
         int used = entity.getCapacityUsed() == null ? 0 : entity.getCapacityUsed();
         int locked = entity.getCapacityLocked() == null ? 0 : entity.getCapacityLocked();
@@ -74,19 +79,34 @@ public class OperatorScheduleService {
                 .set(ResourceCapacityEntity::getCenterCode, request.getCenterCode())
                 .set(ResourceCapacityEntity::getAppointDate, request.getAppointDate())
                 .set(ResourceCapacityEntity::getTimeSlotCode, request.getTimeSlotCode())
-                .set(ResourceCapacityEntity::getResourceType, request.getResourceType())
-                .set(ResourceCapacityEntity::getResourceCode, request.getResourceCode())
-                .set(ResourceCapacityEntity::getDepartmentCode, request.getDepartmentCode())
-                .set(ResourceCapacityEntity::getDepartmentName, request.getDepartmentName())
+                .set(ResourceCapacityEntity::getResourceType, CENTER_SLOT)
+                .set(ResourceCapacityEntity::getResourceCode, request.getCenterCode())
+                .set(ResourceCapacityEntity::getDepartmentCode, null)
+                .set(ResourceCapacityEntity::getDepartmentName, null)
                 .set(ResourceCapacityEntity::getCapacityTotal, request.getCapacityTotal())
                 .set(ResourceCapacityEntity::getStatus, request.getStatus())
                 .set(ResourceCapacityEntity::getUpdatedBy, AuthContext.getUserId()));
+        auditLogService.record("SCHEDULE", "UPDATE", "RESOURCE_CAPACITY", id);
         return getById(id);
     }
 
     private void validateCapacity(SaveScheduleRequest request) {
         if (request.getCapacityTotal() == null || request.getCapacityTotal() < 0) {
             throw new BizException(ErrorCode.OPERATOR_CAPACITY_INVALID);
+        }
+    }
+
+    private void assertUniqueCenterSlot(Long currentId, SaveScheduleRequest request) {
+        Long count = resourceCapacityMapper.selectCount(new LambdaQueryWrapper<ResourceCapacityEntity>()
+                .eq(ResourceCapacityEntity::getCenterCode, request.getCenterCode())
+                .eq(ResourceCapacityEntity::getAppointDate, request.getAppointDate())
+                .eq(ResourceCapacityEntity::getTimeSlotCode, request.getTimeSlotCode())
+                .eq(ResourceCapacityEntity::getResourceType, CENTER_SLOT)
+                .eq(ResourceCapacityEntity::getResourceCode, request.getCenterCode())
+                .eq(ResourceCapacityEntity::getIsDeleted, 0)
+                .ne(currentId != null, ResourceCapacityEntity::getId, currentId));
+        if (count != null && count > 0) {
+            throw new BizException(ErrorCode.OPERATION_CONFLICT.getCode(), "同一中心同一天同一时段只能配置一条容量");
         }
     }
 

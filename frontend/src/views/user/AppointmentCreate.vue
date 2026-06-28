@@ -25,6 +25,16 @@ const form = ref({
   remark: '',
 })
 
+const selectedPackage = computed(() => packages.value.find((item) => item.id === form.value.packageId))
+
+const applicableCenters = computed(() => {
+  const pkg = selectedPackage.value
+  if (!pkg) return []
+  const centerCodes = pkg.centerCodes || pkg.centers?.map((center) => center.centerCode) || []
+  if (centerCodes.length === 0) return []
+  return centers.value.filter((center) => centerCodes.includes(center.centerCode))
+})
+
 const rules = computed<FormRules>(() => ({
   packageId: [{ required: true, message: '请选择体检套餐', trigger: 'change' }],
   centerCode: [{ required: true, message: '请选择体检中心', trigger: 'change' }],
@@ -40,10 +50,21 @@ onMounted(async () => {
   centers.value = centerRes.data || []
 })
 
+watch(() => form.value.packageId, () => {
+  if (!applicableCenters.value.some((center) => center.centerCode === form.value.centerCode)) {
+    form.value.centerCode = ''
+    form.value.timeSlotCode = ''
+    slots.value = []
+  }
+})
+
 watch(() => [form.value.centerCode, form.value.appointDate], async () => {
+  form.value.timeSlotCode = ''
   if (form.value.centerCode && form.value.appointDate) {
     const res = await getCenterSlots(form.value.centerCode, form.value.appointDate)
     slots.value = res.data || []
+  } else {
+    slots.value = []
   }
 })
 
@@ -76,19 +97,20 @@ async function handleSubmit() {
       <div class="form-header">
         <span class="section-eyebrow">NEW APPOINTMENT</span>
         <h2>创建预约</h2>
-        <p>选择套餐、体检中心和时间，完成预约。</p>
+        <p>选择套餐、适用体检中心和时间，完成预约。</p>
       </div>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="create-form">
         <el-form-item label="体检套餐" prop="packageId">
           <el-select v-model="form.packageId" placeholder="选择套餐" style="width: 100%;">
-            <el-option v-for="p in packages" :key="p.id" :label="`${p.packageName} - ¥${p.price}`" :value="p.id" />
+            <el-option v-for="p in packages" :key="p.id" :label="`${p.packageName} - ￥${p.price}`" :value="p.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="体检中心" prop="centerCode">
-          <el-select v-model="form.centerCode" placeholder="选择中心" style="width: 100%;">
-            <el-option v-for="c in centers" :key="c.centerCode" :label="c.centerName" :value="c.centerCode" />
+          <el-select v-model="form.centerCode" :disabled="!form.packageId" placeholder="先选择套餐" style="width: 100%;">
+            <el-option v-for="c in applicableCenters" :key="c.centerCode" :label="`${c.centerCode} / ${c.centerName}`" :value="c.centerCode" />
           </el-select>
+          <el-alert v-if="form.packageId && applicableCenters.length === 0" title="该套餐暂无适用体检中心，不能预约" type="warning" :closable="false" show-icon />
         </el-form-item>
         <el-form-item label="预约日期" prop="appointDate">
           <el-date-picker v-model="form.appointDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" :disabled-date="(date: Date) => date < new Date(new Date().setHours(0,0,0,0))" style="width: 100%;" />

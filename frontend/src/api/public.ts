@@ -5,6 +5,10 @@ export function listPackages() {
   return get<PackageItem[]>('/public/packages')
 }
 
+export function listPackagesByCenter(centerCode: string) {
+  return get<PackageItem[]>('/public/packages', { params: { centerCode } })
+}
+
 export function getPackageDetail(packageCode: string) {
   return get<PackageItem>(`/public/packages/${packageCode}`)
 }

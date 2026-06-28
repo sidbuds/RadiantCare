@@ -1,12 +1,8 @@
 package com.xixin.health.operator.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.xixin.health.appointment.entity.ExamPackageItemEntity;
-import com.xixin.health.appointment.entity.ResourceCapacityEntity;
-import com.xixin.health.appointment.mapper.ExamPackageItemMapper;
-import com.xixin.health.appointment.mapper.ResourceCapacityMapper;
-import com.xixin.health.exam.entity.ExamDepartmentRouteEntity;
-import com.xixin.health.exam.mapper.ExamDepartmentRouteMapper;
+import com.xixin.health.admin.service.AdminDictService;
+import com.xixin.health.common.entity.DataDictionaryEntity;
 import com.xixin.health.publicapi.entity.ExamCenterEntity;
 import com.xixin.health.publicapi.mapper.ExamCenterMapper;
 import org.springframework.stereotype.Service;
@@ -19,19 +15,16 @@ import java.util.Map;
 @Service
 public class OperatorOptionService {
 
-    private final ExamCenterMapper examCenterMapper;
-    private final ExamDepartmentRouteMapper examDepartmentRouteMapper;
-    private final ExamPackageItemMapper examPackageItemMapper;
-    private final ResourceCapacityMapper resourceCapacityMapper;
+    public static final String DICT_EXAM_ITEM = "EXAM_ITEM";
+    public static final String DICT_TIME_SLOT = "TIME_SLOT";
+    public static final String DICT_EXAM_DEPARTMENT = "EXAM_DEPARTMENT";
 
-    public OperatorOptionService(ExamCenterMapper examCenterMapper,
-                                 ExamDepartmentRouteMapper examDepartmentRouteMapper,
-                                 ExamPackageItemMapper examPackageItemMapper,
-                                 ResourceCapacityMapper resourceCapacityMapper) {
+    private final ExamCenterMapper examCenterMapper;
+    private final AdminDictService adminDictService;
+
+    public OperatorOptionService(ExamCenterMapper examCenterMapper, AdminDictService adminDictService) {
         this.examCenterMapper = examCenterMapper;
-        this.examDepartmentRouteMapper = examDepartmentRouteMapper;
-        this.examPackageItemMapper = examPackageItemMapper;
-        this.resourceCapacityMapper = resourceCapacityMapper;
+        this.adminDictService = adminDictService;
     }
 
     public List<Map<String, Object>> centers() {
@@ -51,68 +44,42 @@ public class OperatorOptionService {
     }
 
     public List<Map<String, Object>> departments(String centerCode) {
-        List<ExamDepartmentRouteEntity> routes = examDepartmentRouteMapper.selectList(
-                new LambdaQueryWrapper<ExamDepartmentRouteEntity>()
-                        .eq(centerCode != null && centerCode.trim().length() > 0,
-                                ExamDepartmentRouteEntity::getCenterCode, centerCode)
-                        .eq(ExamDepartmentRouteEntity::getStatus, 1)
-                        .eq(ExamDepartmentRouteEntity::getIsDeleted, 0)
-                        .orderByAsc(ExamDepartmentRouteEntity::getCenterCode)
-                        .orderByAsc(ExamDepartmentRouteEntity::getDepartmentCode));
-        Map<String, Map<String, Object>> unique = new LinkedHashMap<String, Map<String, Object>>();
-        for (ExamDepartmentRouteEntity route : routes) {
-            String key = route.getCenterCode() + "|" + route.getDepartmentCode();
-            if (!unique.containsKey(key)) {
-                Map<String, Object> item = new LinkedHashMap<String, Object>();
-                item.put("centerCode", route.getCenterCode());
-                item.put("departmentCode", route.getDepartmentCode());
-                item.put("departmentName", route.getDepartmentName());
-                unique.put(key, item);
-            }
+        List<DataDictionaryEntity> dicts = adminDictService.listEnabledItems(DICT_EXAM_DEPARTMENT);
+        String normalizedCenterCode = centerCode == null || centerCode.trim().isEmpty() ? null : centerCode.trim();
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (DataDictionaryEntity dict : dicts) {
+            Map<String, Object> item = new LinkedHashMap<String, Object>();
+            item.put("centerCode", normalizedCenterCode);
+            item.put("departmentCode", dict.getDictCode());
+            item.put("departmentName", dict.getDictName());
+            result.add(item);
         }
-        return new ArrayList<Map<String, Object>>(unique.values());
+        return result;
     }
 
     public List<Map<String, Object>> examItems() {
-        List<ExamPackageItemEntity> items = examPackageItemMapper.selectList(new LambdaQueryWrapper<ExamPackageItemEntity>()
-                .eq(ExamPackageItemEntity::getIsDeleted, 0)
-                .orderByAsc(ExamPackageItemEntity::getItemCode));
-        Map<String, Map<String, Object>> unique = new LinkedHashMap<String, Map<String, Object>>();
-        for (ExamPackageItemEntity source : items) {
-            if (source.getItemCode() == null || unique.containsKey(source.getItemCode())) {
-                continue;
-            }
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (DataDictionaryEntity dict : adminDictService.listEnabledItems(DICT_EXAM_ITEM)) {
             Map<String, Object> item = new LinkedHashMap<String, Object>();
-            item.put("itemCode", source.getItemCode());
-            item.put("itemName", source.getItemName());
-            item.put("unit", source.getUnit());
-            item.put("refRange", source.getRefRange());
-            unique.put(source.getItemCode(), item);
+            item.put("itemCode", dict.getDictCode());
+            item.put("itemName", dict.getDictName());
+            item.put("unit", null);
+            item.put("refRange", dict.getRemark());
+            result.add(item);
         }
-        return new ArrayList<Map<String, Object>>(unique.values());
+        return result;
     }
 
     public List<Map<String, Object>> timeSlots(String centerCode, String departmentCode) {
-        List<ResourceCapacityEntity> capacities = resourceCapacityMapper.selectList(
-                new LambdaQueryWrapper<ResourceCapacityEntity>()
-                        .eq(centerCode != null && centerCode.trim().length() > 0,
-                                ResourceCapacityEntity::getCenterCode, centerCode)
-                        .eq(departmentCode != null && departmentCode.trim().length() > 0,
-                                ResourceCapacityEntity::getDepartmentCode, departmentCode)
-                        .eq(ResourceCapacityEntity::getIsDeleted, 0)
-                        .orderByAsc(ResourceCapacityEntity::getTimeSlotCode));
-        Map<String, Map<String, Object>> unique = new LinkedHashMap<String, Map<String, Object>>();
-        for (ResourceCapacityEntity capacity : capacities) {
-            String key = capacity.getTimeSlotCode();
-            if (key == null || unique.containsKey(key)) {
-                continue;
-            }
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        for (DataDictionaryEntity dict : adminDictService.listEnabledItems(DICT_TIME_SLOT)) {
             Map<String, Object> item = new LinkedHashMap<String, Object>();
-            item.put("timeSlotCode", capacity.getTimeSlotCode());
-            item.put("resourceType", capacity.getResourceType());
-            item.put("resourceCode", capacity.getResourceCode());
-            unique.put(key, item);
+            item.put("timeSlotCode", dict.getDictCode());
+            item.put("timeSlotName", dict.getDictName());
+            item.put("resourceType", "CENTER_SLOT");
+            item.put("resourceCode", centerCode);
+            result.add(item);
         }
-        return new ArrayList<Map<String, Object>>(unique.values());
+        return result;
     }
 }

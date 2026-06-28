@@ -116,7 +116,7 @@ public class AuthService {
             throw new BizException(ErrorCode.LOGIN_FAILED.getCode(), "账号已被封禁");
         }
         if (!passwordEncoder.matches(rawPassword, staffAccount.getPasswordHash())) {
-            throw new BizException(ErrorCode.LOGIN_FAILED.getCode(), "账号已被封禁");
+            throw new BizException(ErrorCode.LOGIN_FAILED);
         }
         List<StaffRoleRelEntity> roles = staffRoleRelMapper.selectList(new LambdaQueryWrapper<StaffRoleRelEntity>()
                 .eq(StaffRoleRelEntity::getStaffAccountId, staffAccount.getId())
@@ -140,7 +140,7 @@ public class AuthService {
 
     private AuthContext.LoginUser loginUser(UserEntity user, String rawPassword) {
         if (user.getStatus() == null || user.getStatus() != 1) {
-            throw new BizException(ErrorCode.LOGIN_FAILED);
+            throw new BizException(ErrorCode.LOGIN_FAILED.getCode(), "账号已被封禁");
         }
         if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
             throw new BizException(ErrorCode.LOGIN_FAILED);
@@ -149,6 +149,28 @@ public class AuthService {
         userMapper.update(null, new LambdaUpdateWrapper<UserEntity>()
                 .eq(UserEntity::getId, user.getId())
                 .set(UserEntity::getLastLoginAt, now));
+
+        // 检查该用户是否有关联的 staff_account（通过 admin 赋予身份创建的）
+        StaffAccountEntity staffAccount = staffAccountMapper.selectOne(new LambdaQueryWrapper<StaffAccountEntity>()
+                .eq(StaffAccountEntity::getBindUserId, user.getId())
+                .eq(StaffAccountEntity::getIsDeleted, 0)
+                .last("limit 1"));
+        if (staffAccount != null && staffAccount.getStatus() != null && staffAccount.getStatus() == 1) {
+            List<StaffRoleRelEntity> roles = staffRoleRelMapper.selectList(new LambdaQueryWrapper<StaffRoleRelEntity>()
+                    .eq(StaffRoleRelEntity::getStaffAccountId, staffAccount.getId())
+                    .eq(StaffRoleRelEntity::getIsDeleted, 0)
+                    .orderByAsc(StaffRoleRelEntity::getId));
+            if (!roles.isEmpty()) {
+                return new AuthContext.LoginUser(
+                        staffAccount.getId(),
+                        staffAccount.getBindUserId(),
+                        staffAccount.getUsername(),
+                        staffAccount.getDisplayName(),
+                        RoleType.valueOf(roles.get(0).getRoleCode())
+                );
+            }
+        }
+
         return new AuthContext.LoginUser(
                 user.getId(),
                 user.getId(),

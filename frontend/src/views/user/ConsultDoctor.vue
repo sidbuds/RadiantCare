@@ -7,7 +7,8 @@ import {
   getMyConsultations,
   sendConsultationMessage,
 } from '@/api/consultation'
-import { getMyReports } from '@/api/report'
+import { downloadReportPdf, getMyReports } from '@/api/report'
+import { saveBlob } from '@/utils/download'
 import { ElMessage } from 'element-plus'
 
 const consultations = ref<any[]>([])
@@ -18,8 +19,10 @@ const loading = ref(true)
 const detailLoading = ref(false)
 const creating = ref(false)
 const sending = ref(false)
+const sendingReport = ref(false)
 const dialogVisible = ref(false)
 const messageText = ref('')
+const selectedReportNo = ref('')
 
 const form = ref({
   reportNo: '',
@@ -131,6 +134,30 @@ async function sendMessage() {
   }
 }
 
+async function sendReport() {
+  if (!currentNo.value || !selectedReportNo.value) {
+    ElMessage.warning('请选择要发送的报告')
+    return
+  }
+  sendingReport.value = true
+  try {
+    await sendConsultationMessage(currentNo.value, {
+      replyContent: `我发送了一份体检报告：${selectedReportNo.value}`,
+      messageType: 'REPORT_PDF',
+      refReportNo: selectedReportNo.value,
+    })
+    selectedReportNo.value = ''
+    await loadList(currentNo.value)
+  } finally {
+    sendingReport.value = false
+  }
+}
+
+async function downloadSharedReport(reportNo: string) {
+  const blob = await downloadReportPdf(reportNo)
+  saveBlob(blob, `${reportNo}.pdf`)
+}
+
 async function handleClose() {
   if (!currentNo.value) return
   await closeConsultation(currentNo.value)
@@ -218,6 +245,15 @@ onMounted(() => {
               <div class="message-bubble">
                 <div class="message-meta">{{ reply.replyRole === 'USER' ? '我' : reply.replyUserName || current.doctorName }}</div>
                 <p>{{ reply.replyContent }}</p>
+                <button
+                  v-if="reply.messageType === 'REPORT_PDF' && reply.refReportNo"
+                  class="report-attachment"
+                  type="button"
+                  @click="downloadSharedReport(reply.refReportNo)"
+                >
+                  <span>体检报告 PDF</span>
+                  <strong>{{ reply.refReportNo }}</strong>
+                </button>
                 <time>{{ reply.replyTime || reply.createdAt }}</time>
               </div>
             </div>
@@ -233,6 +269,25 @@ onMounted(() => {
               @keydown.ctrl.enter.prevent="sendMessage"
             />
             <el-button type="primary" :loading="sending" :disabled="isClosed" @click="sendMessage">发送</el-button>
+          </footer>
+          <footer class="report-send-bar">
+            <el-select
+              v-model="selectedReportNo"
+              :disabled="isClosed"
+              placeholder="选择报告发送给医生"
+              filterable
+              clearable
+            >
+              <el-option
+                v-for="item in reportOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+            <el-button :loading="sendingReport" :disabled="isClosed || !selectedReportNo" @click="sendReport">
+              发送报告
+            </el-button>
           </footer>
         </template>
         <el-empty v-else description="选择或发起一个咨询" />
@@ -412,6 +467,36 @@ onMounted(() => {
 
 .chat-input .el-button {
   align-self: stretch;
+}
+
+.report-send-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 0 20px 16px;
+}
+
+.report-attachment {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.report-attachment span {
+  color: var(--color-ink-muted);
+  font-size: 12px;
+}
+
+.report-attachment strong {
+  font-size: 13px;
 }
 
 @media (max-width: 860px) {

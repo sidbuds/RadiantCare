@@ -6,6 +6,7 @@ import com.xixin.health.auth.entity.StaffRoleRelEntity;
 import com.xixin.health.auth.mapper.StaffAccountMapper;
 import com.xixin.health.auth.mapper.StaffRoleRelMapper;
 import com.xixin.health.common.exception.BizException;
+import com.xixin.health.common.service.AuditLogService;
 import com.xixin.health.user.entity.UserEntity;
 import com.xixin.health.user.mapper.UserMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -34,10 +35,13 @@ class AdminRoleServiceTest {
     @Mock
     private UserMapper userMapper;
 
+    @Mock
+    private AuditLogService auditLogService;
+
     @Test
     @DisplayName("granting doctor role creates staff account and role relation")
     void grantUserRoleCreatesStaffAccountAndRole() {
-        AdminRoleService service = new AdminRoleService(staffAccountMapper, staffRoleRelMapper, userMapper);
+        AdminRoleService service = new AdminRoleService(staffAccountMapper, staffRoleRelMapper, userMapper, auditLogService);
         UserEntity user = new UserEntity();
         user.setId(8L);
         user.setUserNo("u008");
@@ -66,7 +70,7 @@ class AdminRoleServiceTest {
     @Test
     @DisplayName("granting user role only supports doctor or operator")
     void grantUserRoleRejectsUnsupportedRole() {
-        AdminRoleService service = new AdminRoleService(staffAccountMapper, staffRoleRelMapper, userMapper);
+        AdminRoleService service = new AdminRoleService(staffAccountMapper, staffRoleRelMapper, userMapper, auditLogService);
         assertThrows(BizException.class, () -> service.grantUserRole(8L, "ADMIN"));
     }
 }

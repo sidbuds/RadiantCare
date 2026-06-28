@@ -50,12 +50,32 @@ INSERT INTO `exam_package`
 VALUES
 (1001, 'PKG1001', 'Employment Advanced Package', 'Employment Checkup', 699.00, 1, 'Demo package for end-to-end flow', NOW(3), NOW(3), 0, 0, 0);
 
--- Exam package items
+-- Exam package items (realistic Chinese health checkup items)
 INSERT INTO `exam_package_item`
 (`id`, `package_id`, `item_code`, `item_name`, `unit`, `ref_range`, `sort_no`, `created_at`, `updated_at`, `created_by`, `updated_by`, `is_deleted`)
 VALUES
-(2001, 1001, 'BLOOD', 'Blood Test', 'mmol/L', '3.9-6.1', 1, NOW(3), NOW(3), 0, 0, 0),
-(2002, 1001, 'RESP', 'Respiratory Exam', 'L', '3.0-5.0', 2, NOW(3), NOW(3), 0, 0, 0);
+(2001, 1001, 'GLU', '空腹血糖', 'mmol/L', '3.9-6.1', 1, NOW(3), NOW(3), 0, 0, 0),
+(2002, 1001, 'ALT', '谷丙转氨酶', 'U/L', '0-40', 2, NOW(3), NOW(3), 0, 0, 0),
+(2003, 1001, 'AST', '谷草转氨酶', 'U/L', '0-40', 3, NOW(3), NOW(3), 0, 0, 0),
+(2004, 1001, 'TC', '总胆固醇', 'mmol/L', '2.8-5.17', 4, NOW(3), NOW(3), 0, 0, 0),
+(2005, 1001, 'TG', '甘油三酯', 'mmol/L', '0.56-1.7', 5, NOW(3), NOW(3), 0, 0, 0),
+(2006, 1001, 'HDL', '高密度脂蛋白', 'mmol/L', '1.04-1.55', 6, NOW(3), NOW(3), 0, 0, 0),
+(2007, 1001, 'LDL', '低密度脂蛋白', 'mmol/L', '<3.37', 7, NOW(3), NOW(3), 0, 0, 0),
+(2008, 1001, 'BUN', '尿素氮', 'mmol/L', '2.9-8.2', 8, NOW(3), NOW(3), 0, 0, 0),
+(2009, 1001, 'CR', '肌酐', 'umol/L', '44-133', 9, NOW(3), NOW(3), 0, 0, 0),
+(2010, 1001, 'UA', '尿酸', 'umol/L', '150-416', 10, NOW(3), NOW(3), 0, 0, 0),
+(2011, 1001, 'WBC', '白细胞计数', '10^9/L', '4.0-10.0', 11, NOW(3), NOW(3), 0, 0, 0),
+(2012, 1001, 'RBC', '红细胞计数', '10^12/L', '3.5-5.5', 12, NOW(3), NOW(3), 0, 0, 0),
+(2013, 1001, 'HGB', '血红蛋白', 'g/L', '110-160', 13, NOW(3), NOW(3), 0, 0, 0),
+(2014, 1001, 'PLT', '血小板计数', '10^9/L', '100-300', 14, NOW(3), NOW(3), 0, 0, 0),
+(2015, 1001, 'TSH', '促甲状腺激素', 'mIU/L', '0.27-4.2', 15, NOW(3), NOW(3), 0, 0, 0),
+(2016, 1001, 'FT4', '游离甲状腺素', 'pmol/L', '12.0-22.0', 16, NOW(3), NOW(3), 0, 0, 0),
+(2017, 1001, 'CEA', '癌胚抗原', 'ng/mL', '0-5.0', 17, NOW(3), NOW(3), 0, 0, 0),
+(2018, 1001, 'AFP', '甲胎蛋白', 'ng/mL', '0-7.0', 18, NOW(3), NOW(3), 0, 0, 0),
+(2019, 1001, 'HBSAG', '乙肝表面抗原', '-', '阴性', 19, NOW(3), NOW(3), 0, 0, 0),
+(2020, 1001, 'ECG', '心电图', '-', '-', 20, NOW(3), NOW(3), 0, 0, 0),
+(2021, 1001, 'CXR', '胸部X光', '-', '-', 21, NOW(3), NOW(3), 0, 0, 0),
+(2022, 1001, 'BU', '腹部B超', '-', '-', 22, NOW(3), NOW(3), 0, 0, 0);
 
 -- Resource capacity
 INSERT INTO `resource_capacity`
@@ -68,8 +88,12 @@ VALUES
 INSERT INTO `exam_department_route`
 (`id`, `route_code`, `center_code`, `package_id`, `item_code`, `department_code`, `department_name`, `room_no`, `floor_no`, `building_no`, `route_sort`, `guide_text`, `need_empty_stomach`, `status`, `created_at`, `updated_at`, `created_by`, `updated_by`, `is_deleted`)
 VALUES
-(4001, 'ROUTE1001', 'C001', 1001, 'BLOOD', 'LAB', 'Laboratory', '2F-201', '2F', 'A', 1, 'Go to the laboratory first and keep fasting before blood draw.', 1, 1, NOW(3), NOW(3), 0, 0, 0),
-(4002, 'ROUTE1002', 'C001', 1001, 'RESP', 'RESP', 'Respiratory Clinic', '3F-305', '3F', 'A', 2, 'After blood test, go to the respiratory clinic for follow-up exam.', 0, 1, NOW(3), NOW(3), 0, 0, 0);
+(4001, 'ROUTE1001', 'C001', 1001, 'GLU', 'LAB', '检验科', '2F-201', '2F', 'A', 1, '请先到检验科抽血，抽血前需保持空腹。', 1, 1, NOW(3), NOW(3), 0, 0, 0),
+(4002, 'ROUTE1002', 'C001', 1001, 'ALT', 'LAB', '检验科', '2F-201', '2F', 'A', 2, '请到检验科进行肝功能检查。', 1, 1, NOW(3), NOW(3), 0, 0, 0),
+(4003, 'ROUTE1003', 'C001', 1001, 'ECG', 'CARDIO', '心电图室', '3F-301', '3F', 'A', 3, '请到三楼心电图室进行心电图检查。', 0, 1, NOW(3), NOW(3), 0, 0, 0),
+(4004, 'ROUTE1004', 'C001', 1001, 'CXR', 'IMAGING', '影像科', '1F-101', '1F', 'B', 4, '请到一楼影像科进行胸部X光检查。', 0, 1, NOW(3), NOW(3), 0, 0, 0),
+(4005, 'ROUTE1005', 'C001', 1001, 'BU', 'ULTRASOUND', '超声科', '2F-205', '2F', 'A', 5, '请到超声科进行腹部B超检查。', 0, 1, NOW(3), NOW(3), 0, 0, 0),
+(4006, 'ROUTE1006', 'C001', 1001, 'TSH', 'LAB', '检验科', '2F-201', '2F', 'A', 6, '请到检验科进行甲状腺功能检查。', 0, 1, NOW(3), NOW(3), 0, 0, 0);
 
 -- Report templates
 INSERT INTO `report_template`
@@ -81,8 +105,8 @@ VALUES
 INSERT INTO `report_section_template`
 (`id`, `template_id`, `section_code`, `section_name`, `section_type`, `data_source_type`, `item_codes`, `sort_no`, `render_rule`, `created_at`, `updated_at`, `created_by`, `updated_by`, `is_deleted`)
 VALUES
-(6001, 5001, 'SUMMARY', 'Overall Summary', 'TEXT', 'RESULT', 'GLU,RESP_DESC', 1, '{"mode":"summary"}', NOW(3), NOW(3), 0, 0, 0),
-(6002, 5001, 'ITEMS', 'Indicators', 'TABLE', 'RESULT', 'GLU,RESP_DESC', 2, '{"mode":"table"}', NOW(3), NOW(3), 0, 0, 0);
+(6001, 5001, 'SUMMARY', '综合总结', 'TEXT', 'RESULT', 'GLU,ALT,AST,TC,TG', 1, '{"mode":"summary"}', NOW(3), NOW(3), 0, 0, 0),
+(6002, 5001, 'ITEMS', '检查指标', 'TABLE', 'RESULT', 'GLU,ALT,AST,TC,TG,HDL,LDL,BUN,CR,UA,WBC,RBC,HGB,PLT', 2, '{"mode":"table"}', NOW(3), NOW(3), 0, 0, 0);
 
 -- ==================== 阶段一：医生科室关联演示数据 ====================
 -- doctor 账号绑定科室（假设 doctor 账号 id=3，请根据实际数据调整）

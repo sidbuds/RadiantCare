@@ -24,8 +24,22 @@ export interface PackageFormData {
   price?: number
   status?: number
   remark?: string
-  templateCode?: string
+  centerCodes?: string[]
   items?: Array<{ itemCode: string; itemName: string; unit?: string; refRange?: string; sortNo: number }>
+}
+
+export interface PackageRouteItem {
+  itemCode: string
+  itemName?: string
+  departmentCode: string
+  departmentName: string
+  roomNo?: string
+  floorNo?: string
+  buildingNo?: string
+  routeSort?: number
+  guideText?: string
+  needEmptyStomach?: number
+  status?: number
 }
 
 export interface ScheduleFormData {
@@ -60,6 +74,14 @@ export function updateOperatorPackageStatus(id: number, status: number) {
   return requestPatch<void>(`/operator/packages/${id}/status`, { status })
 }
 
+export function getOperatorPackageRoutes(id: number, centerCode: string) {
+  return get<PackageRouteItem[]>(`/operator/packages/${id}/routes`, { params: { centerCode } })
+}
+
+export function saveOperatorPackageRoutes(id: number, data: { centerCode: string; routes: PackageRouteItem[] }) {
+  return put<PackageRouteItem[]>(`/operator/packages/${id}/routes`, data)
+}
+
 export interface CenterOption {
   id: number
   centerCode: string
@@ -82,6 +104,7 @@ export interface ExamItemOption {
 
 export interface TimeSlotOption {
   timeSlotCode: string
+  timeSlotName?: string
   resourceType?: string
   resourceCode?: string
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { getDoctorConsultation, getDoctorConsultationTodo, replyConsultation } from '@/api/consultation'
+import { downloadDoctorSharedReportPdf, getDoctorConsultation, getDoctorConsultationTodo, replyConsultation } from '@/api/consultation'
+import { saveBlob } from '@/utils/download'
 import { ElMessage } from 'element-plus'
 
 const consultations = ref<any[]>([])
@@ -70,6 +71,12 @@ async function sendReply() {
   }
 }
 
+async function downloadSharedReport(reportNo: string) {
+  if (!currentNo.value) return
+  const blob = await downloadDoctorSharedReportPdf(currentNo.value, reportNo)
+  saveBlob(blob, `${reportNo}.pdf`)
+}
+
 onMounted(() => {
   mounted.value = true
   loadList()
@@ -128,6 +135,15 @@ onMounted(() => {
               <div class="message-bubble">
                 <div class="message-meta">{{ reply.replyRole === 'DOCTOR' ? '我' : reply.replyUserName || '用户' }}</div>
                 <p>{{ reply.replyContent }}</p>
+                <button
+                  v-if="reply.messageType === 'REPORT_PDF' && reply.refReportNo"
+                  class="report-attachment"
+                  type="button"
+                  @click="downloadSharedReport(reply.refReportNo)"
+                >
+                  <span>体检报告 PDF</span>
+                  <strong>{{ reply.refReportNo }}</strong>
+                </button>
                 <time>{{ reply.replyTime || reply.createdAt }}</time>
               </div>
             </div>
@@ -297,6 +313,29 @@ onMounted(() => {
 
 .chat-input .el-button {
   align-self: stretch;
+}
+
+.report-attachment {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.report-attachment span {
+  color: var(--color-ink-muted);
+  font-size: 12px;
+}
+
+.report-attachment strong {
+  font-size: 13px;
 }
 
 @media (max-width: 900px) {

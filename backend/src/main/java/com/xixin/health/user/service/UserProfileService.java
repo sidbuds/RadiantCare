@@ -32,7 +32,9 @@ public class UserProfileService {
         result.put("gender", user.getGender());
         result.put("birthDate", user.getBirthDate());
         result.put("idType", user.getIdType());
-        result.put("idNo", maskIdNo(user.getIdNo()));
+        boolean hasIdNo = user.getIdNo() != null && !user.getIdNo().isEmpty();
+        result.put("idNo", hasIdNo ? user.getIdNo() : "");
+        result.put("idNoSet", hasIdNo);
         result.put("mobile", maskMobile(user.getMobile()));
         result.put("email", user.getEmail());
         result.put("address", user.getAddress());
@@ -47,6 +49,18 @@ public class UserProfileService {
         user.setGender(request.getGender());
         if (request.getBirthDate() != null && !request.getBirthDate().isEmpty()) {
             user.setBirthDate(java.time.LocalDate.parse(request.getBirthDate()));
+        }
+        if (request.getIdNo() != null && !request.getIdNo().isEmpty()) {
+            Long count = userMapper.selectCount(new LambdaQueryWrapper<UserEntity>()
+                    .eq(UserEntity::getIdNo, request.getIdNo())
+                    .ne(UserEntity::getId, user.getId())
+                    .eq(UserEntity::getIsDeleted, 0));
+            if (count != null && count > 0) {
+                throw new BizException(ErrorCode.OPERATION_CONFLICT.getCode(), "该身份证号已被使用");
+            }
+            user.setIdNo(request.getIdNo());
+        } else {
+            user.setIdNo(null);
         }
         user.setEmail(request.getEmail());
         user.setAddress(request.getAddress());

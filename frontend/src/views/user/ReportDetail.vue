@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getReport, getReportItems } from '@/api/report'
+import { downloadReportPdf, generateReportPdf, getReport, getReportItems, precheckReportPdf } from '@/api/report'
+import { saveBlob } from '@/utils/download'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
 const report = ref<any>(null)
 const items = ref<any[]>([])
 const loading = ref(true)
+const exporting = ref(false)
 const mounted = ref(false)
 
 const statusMap: Record<number, { label: string; type: string }> = {
@@ -29,6 +32,41 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+async function handleExportPdf() {
+  if (!report.value?.reportNo) return
+  exporting.value = true
+  try {
+    const precheckRes: any = await precheckReportPdf(report.value.reportNo)
+    const missingFields = precheckRes.data?.missingFields || []
+    if (missingFields.length > 0) {
+      try {
+        await ElMessageBox.confirm(
+          `当前个人/体检基础信息缺少：${missingFields.join('、')}。是否仍然生成报告？`,
+          '报告信息不完整',
+          {
+            confirmButtonText: '继续生成',
+            cancelButtonText: '去补充资料',
+            type: 'warning',
+            distinguishCancelAndClose: true,
+          }
+        )
+      } catch (action) {
+        if (action === 'cancel') {
+          router.push('/user/profile')
+        }
+        return
+      }
+    }
+
+    await generateReportPdf(report.value.reportNo)
+    const blob = await downloadReportPdf(report.value.reportNo)
+    saveBlob(blob, `${report.value.reportNo}.pdf`)
+    ElMessage.success('PDF已生成')
+  } finally {
+    exporting.value = false
+  }
+}
 </script>
 
 <template>
@@ -89,6 +127,10 @@ onMounted(async () => {
       </div>
 
       <div class="action-bar" :class="{ 'is-mounted': mounted }">
+        <el-button type="primary" :loading="exporting" @click="handleExportPdf">
+          <el-icon><Download /></el-icon>
+          导出 PDF
+        </el-button>
         <el-button @click="router.push('/user/reports/compare')">
           <el-icon><TrendCharts /></el-icon>
           历年对比

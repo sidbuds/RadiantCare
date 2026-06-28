@@ -3,8 +3,13 @@ node_modules/
 .pnp
 .pnp.js
 
-# Build output (keep frontend/dist for deployment)
+# Build output
 backend/target/
+frontend/dist/
+pptx_build/
+
+# Plan files
+.mimocode/
 
 # IDE
 .idea/

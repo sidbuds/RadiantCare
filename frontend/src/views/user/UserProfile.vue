@@ -18,6 +18,7 @@ const form = ref<UpdateProfileData>({
   name: '',
   gender: null,
   birthDate: null,
+  idNo: null,
   email: null,
   address: null,
   emergencyContact: null,
@@ -33,6 +34,7 @@ const passwordForm = ref({
 const rules: FormRules = {
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
   email: [{ type: 'email', message: '请输入正确的邮箱', trigger: 'blur' }],
+  idNo: [{ pattern: /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/, message: '请输入正确的身份证号', trigger: 'blur' }],
 }
 
 const passwordRules: FormRules = {
@@ -65,6 +67,7 @@ async function loadProfile() {
       name: res.data.name || '',
       gender: res.data.gender,
       birthDate: res.data.birthDate,
+      idNo: res.data.idNo || null,
       email: res.data.email,
       address: res.data.address,
       emergencyContact: res.data.emergencyContact,
@@ -126,8 +129,8 @@ onMounted(() => { mounted.value = true; loadProfile() })
         <el-form-item label="出生日期">
           <el-date-picker v-model="form.birthDate" type="date" value-format="YYYY-MM-DD" style="width: 100%;" />
         </el-form-item>
-        <el-form-item label="身份证号">
-          <el-input :model-value="profile.idNo" disabled />
+        <el-form-item label="身份证号" prop="idNo">
+          <el-input v-model="form.idNo" placeholder="请输入身份证号" maxlength="18" clearable />
         </el-form-item>
         <el-form-item label="手机号">
           <el-input :model-value="profile.mobile" disabled />

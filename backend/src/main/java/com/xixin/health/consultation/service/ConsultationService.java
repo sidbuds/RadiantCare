@@ -2,6 +2,8 @@ package com.xixin.health.consultation.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.xixin.health.appointment.entity.AppointmentEntity;
+import com.xixin.health.appointment.mapper.AppointmentMapper;
 import com.xixin.health.auth.entity.DoctorDepartmentRelEntity;
 import com.xixin.health.auth.entity.StaffAccountEntity;
 import com.xixin.health.auth.entity.StaffRoleRelEntity;
@@ -21,6 +23,8 @@ import com.xixin.health.consultation.mapper.DoctorConsultationMapper;
 import com.xixin.health.consultation.mapper.DoctorConsultationReplyMapper;
 import com.xixin.health.report.entity.ExamReportEntity;
 import com.xixin.health.report.mapper.ExamReportMapper;
+import com.xixin.health.report.service.ReportPdfService;
+import com.xixin.health.report.service.ReportPdfStorageService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,19 +44,25 @@ public class ConsultationService {
     private final StaffAccountMapper staffAccountMapper;
     private final StaffRoleRelMapper staffRoleRelMapper;
     private final DoctorDepartmentRelMapper doctorDepartmentRelMapper;
+    private final ReportPdfService reportPdfService;
+    private final AppointmentMapper appointmentMapper;
 
     public ConsultationService(DoctorConsultationMapper doctorConsultationMapper,
                                DoctorConsultationReplyMapper doctorConsultationReplyMapper,
                                ExamReportMapper examReportMapper,
                                StaffAccountMapper staffAccountMapper,
                                StaffRoleRelMapper staffRoleRelMapper,
-                               DoctorDepartmentRelMapper doctorDepartmentRelMapper) {
+                               DoctorDepartmentRelMapper doctorDepartmentRelMapper,
+                               ReportPdfService reportPdfService,
+                               AppointmentMapper appointmentMapper) {
         this.doctorConsultationMapper = doctorConsultationMapper;
         this.doctorConsultationReplyMapper = doctorConsultationReplyMapper;
         this.examReportMapper = examReportMapper;
         this.staffAccountMapper = staffAccountMapper;
         this.staffRoleRelMapper = staffRoleRelMapper;
         this.doctorDepartmentRelMapper = doctorDepartmentRelMapper;
+        this.reportPdfService = reportPdfService;
+        this.appointmentMapper = appointmentMapper;
     }
 
     @Transactional
@@ -68,15 +78,16 @@ public class ConsultationService {
         }
 
         String targetDepartment = determineTargetDepartment(request);
-        StaffAccountEntity doctor = selectBestDoctor(targetDepartment, request);
+        String centerCode = resolveReportCenterCode(report);
+        StaffAccountEntity doctor = selectBestDoctor(targetDepartment, centerCode, request);
 
         DoctorConsultationEntity consultation = new DoctorConsultationEntity();
         consultation.setConsultationNo(NoGenerator.next("DC"));
         consultation.setUserId(AuthContext.getUserId());
         consultation.setDoctorId(doctor.getId());
         consultation.setDoctorName(doctor.getDisplayName());
-        consultation.setDepartmentCode(targetDepartment != null ? targetDepartment : doctor.getDepartmentCode());
-        consultation.setDepartmentName(resolveDepartmentName(doctor, targetDepartment));
+        consultation.setDepartmentCode(targetDepartment);
+        consultation.setDepartmentName(resolveDepartmentName(doctor, centerCode, targetDepartment));
         consultation.setReportId(report.getId());
         consultation.setReportNo(report.getReportNo());
         consultation.setSourceType(request.getSourceType());
@@ -94,7 +105,7 @@ public class ConsultationService {
         insertReply(consultation.getId(), consultation.getConsultationNo(), "USER",
                 AuthContext.getUserId(),
                 AuthContext.get() == null ? null : AuthContext.get().getUsername(),
-                request.getConsultationContent(), null);
+                request.getConsultationContent(), null, "TEXT", null);
 
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("consultationNo", consultation.getConsultationNo());
@@ -153,10 +164,17 @@ public class ConsultationService {
         }
         ensureConsultationOpen(consultation);
 
+        String messageType = normalizeMessageType(request.getMessageType());
+        if ("REPORT_PDF".equals(messageType)) {
+            return sendReportPdfMessage(consultation, request);
+        }
+        if (!hasText(request.getReplyContent())) {
+            throw new BizException(ErrorCode.PARAM_INVALID.getCode(), "消息内容不能为空");
+        }
         insertReply(consultation.getId(), consultation.getConsultationNo(), "USER",
                 AuthContext.getUserId(),
                 AuthContext.get() == null ? null : AuthContext.get().getUsername(),
-                request.getReplyContent(), request.getAttachmentUrl());
+                request.getReplyContent(), request.getAttachmentUrl(), "TEXT", null);
 
         LocalDateTime now = LocalDateTime.now();
         doctorConsultationMapper.update(null, new LambdaUpdateWrapper<DoctorConsultationEntity>()
@@ -196,11 +214,14 @@ public class ConsultationService {
             throw new BizException(ErrorCode.FORBIDDEN);
         }
         ensureConsultationOpen(consultation);
+        if (!hasText(request.getReplyContent())) {
+            throw new BizException(ErrorCode.PARAM_INVALID.getCode(), "回复内容不能为空");
+        }
 
         insertReply(consultation.getId(), consultation.getConsultationNo(), "DOCTOR",
                 AuthContext.getAccountId(),
                 AuthContext.get() == null ? null : AuthContext.get().getUsername(),
-                request.getReplyContent(), request.getAttachmentUrl());
+                request.getReplyContent(), request.getAttachmentUrl(), "TEXT", null);
 
         LocalDateTime now = LocalDateTime.now();
         doctorConsultationMapper.update(null, new LambdaUpdateWrapper<DoctorConsultationEntity>()
@@ -216,18 +237,31 @@ public class ConsultationService {
         return result;
     }
 
+    public ReportPdfStorageService.StoredObject downloadSharedReportPdf(String consultationNo, String reportNo) {
+        DoctorConsultationEntity consultation = getByNo(consultationNo);
+        if (!AuthContext.getAccountId().equals(consultation.getDoctorId())) {
+            throw new BizException(ErrorCode.FORBIDDEN);
+        }
+        if (!reportNo.equals(consultation.getReportNo()) && !hasSharedReportMessage(consultation.getId(), reportNo)) {
+            throw new BizException(ErrorCode.FORBIDDEN.getCode(), "用户尚未在该咨询中发送此报告");
+        }
+        return reportPdfService.downloadForDoctor(reportNo, consultation.getUserId());
+    }
+
     @Transactional
     public Map<String, Object> assign(String consultationNo, AssignConsultationRequest request) {
         DoctorConsultationEntity consultation = getByNo(consultationNo);
         ensureConsultationOpen(consultation);
 
         StaffAccountEntity doctor = getEnabledDoctor(request.getDoctorId());
+        String centerCode = resolveConsultationCenterCode(consultation);
+        ensureDoctorMatchesConsultation(doctor.getId(), centerCode, consultation.getDepartmentCode());
         doctorConsultationMapper.update(null, new LambdaUpdateWrapper<DoctorConsultationEntity>()
                 .eq(DoctorConsultationEntity::getId, consultation.getId())
                 .set(DoctorConsultationEntity::getDoctorId, doctor.getId())
                 .set(DoctorConsultationEntity::getDoctorName, doctor.getDisplayName())
-                .set(DoctorConsultationEntity::getDepartmentCode, doctor.getDepartmentCode())
-                .set(DoctorConsultationEntity::getDepartmentName, doctor.getDepartmentName())
+                .set(DoctorConsultationEntity::getDepartmentCode, consultation.getDepartmentCode())
+                .set(DoctorConsultationEntity::getDepartmentName, resolveDepartmentName(doctor, centerCode, consultation.getDepartmentCode()))
                 .set(DoctorConsultationEntity::getConsultationStatus, 1)
                 .set(DoctorConsultationEntity::getUpdatedBy, AuthContext.getAccountId()));
 
@@ -271,7 +305,9 @@ public class ConsultationService {
                              Long replyUserId,
                              String replyUserName,
                              String replyContent,
-                             String attachmentUrl) {
+                             String attachmentUrl,
+                             String messageType,
+                             String refReportNo) {
         DoctorConsultationReplyEntity reply = new DoctorConsultationReplyEntity();
         reply.setConsultationId(consultationId);
         reply.setConsultationNo(consultationNo);
@@ -280,11 +316,63 @@ public class ConsultationService {
         reply.setReplyUserName(replyUserName);
         reply.setReplyContent(replyContent);
         reply.setAttachmentUrl(attachmentUrl);
+        reply.setMessageType(messageType);
+        reply.setRefReportNo(refReportNo);
         reply.setReplyTime(LocalDateTime.now());
         reply.setCreatedBy(replyUserId);
         reply.setUpdatedBy(replyUserId);
         reply.setIsDeleted(0);
         doctorConsultationReplyMapper.insert(reply);
+    }
+
+    private Map<String, Object> sendReportPdfMessage(DoctorConsultationEntity consultation, ReplyConsultationRequest request) {
+        if (!hasText(request.getRefReportNo())) {
+            throw new BizException(ErrorCode.PARAM_INVALID.getCode(), "请选择要发送的报告");
+        }
+        ReportPdfService.ReportPdfResult pdf = reportPdfService.ensurePdfForConsultation(request.getRefReportNo(), AuthContext.getUserId());
+        String content = hasText(request.getReplyContent())
+                ? request.getReplyContent()
+                : "我发送了一份体检报告：" + request.getRefReportNo();
+
+        insertReply(consultation.getId(), consultation.getConsultationNo(), "USER",
+                AuthContext.getUserId(),
+                AuthContext.get() == null ? null : AuthContext.get().getUsername(),
+                content,
+                pdf.getPdfUrl(),
+                "REPORT_PDF",
+                request.getRefReportNo());
+
+        LocalDateTime now = LocalDateTime.now();
+        doctorConsultationMapper.update(null, new LambdaUpdateWrapper<DoctorConsultationEntity>()
+                .eq(DoctorConsultationEntity::getId, consultation.getId())
+                .set(DoctorConsultationEntity::getConsultationStatus, 1)
+                .set(DoctorConsultationEntity::getLatestReplyTime, now)
+                .set(DoctorConsultationEntity::getUpdatedBy, AuthContext.getUserId()));
+
+        Map<String, Object> result = new HashMap<String, Object>();
+        result.put("consultationNo", consultation.getConsultationNo());
+        result.put("status", "WAITING_DOCTOR");
+        result.put("messageTime", now.toString());
+        result.put("reportNo", request.getRefReportNo());
+        return result;
+    }
+
+    private boolean hasSharedReportMessage(Long consultationId, String reportNo) {
+        Long count = doctorConsultationReplyMapper.selectCount(new LambdaQueryWrapper<DoctorConsultationReplyEntity>()
+                .eq(DoctorConsultationReplyEntity::getConsultationId, consultationId)
+                .eq(DoctorConsultationReplyEntity::getMessageType, "REPORT_PDF")
+                .eq(DoctorConsultationReplyEntity::getRefReportNo, reportNo)
+                .eq(DoctorConsultationReplyEntity::getReplyRole, "USER")
+                .eq(DoctorConsultationReplyEntity::getIsDeleted, 0));
+        return count != null && count > 0;
+    }
+
+    private String normalizeMessageType(String messageType) {
+        return hasText(messageType) ? messageType.trim().toUpperCase(Locale.ROOT) : "TEXT";
+    }
+
+    private boolean hasText(String value) {
+        return value != null && value.trim().length() > 0;
     }
 
     private void ensureConsultationOpen(DoctorConsultationEntity consultation) {
@@ -315,10 +403,10 @@ public class ConsultationService {
         return "LAB";
     }
 
-    private StaffAccountEntity selectBestDoctor(String targetDepartment, CreateConsultationRequest request) {
-        List<StaffAccountEntity> doctors = enabledDoctors();
+    private StaffAccountEntity selectBestDoctor(String targetDepartment, String centerCode, CreateConsultationRequest request) {
+        List<StaffAccountEntity> doctors = enabledDoctors(centerCode, targetDepartment);
         if (doctors.isEmpty()) {
-            throw new BizException(ErrorCode.DATA_NOT_FOUND.getCode(), "暂无可分配医生");
+            throw new BizException(ErrorCode.DATA_NOT_FOUND.getCode(), "暂无可分配医生：" + centerCode + "/" + targetDepartment);
         }
 
         StaffAccountEntity selected = null;
@@ -352,15 +440,11 @@ public class ConsultationService {
         if (targetDepartment == null || targetDepartment.isEmpty()) {
             return 0;
         }
-        if (targetDepartment.equalsIgnoreCase(doctor.getDepartmentCode())) {
-            return 100;
-        }
-
         Long count = doctorDepartmentRelMapper.selectCount(new LambdaQueryWrapper<DoctorDepartmentRelEntity>()
                 .eq(DoctorDepartmentRelEntity::getDoctorId, doctor.getId())
                 .eq(DoctorDepartmentRelEntity::getDepartmentCode, targetDepartment)
                 .eq(DoctorDepartmentRelEntity::getIsDeleted, 0));
-        return count != null && count > 0 ? 80 : 0;
+        return count != null && count > 0 ? 100 : 0;
     }
 
     private int specialtyScore(StaffAccountEntity doctor, CreateConsultationRequest request) {
@@ -444,15 +528,20 @@ public class ConsultationService {
         return doctor;
     }
 
-    private List<StaffAccountEntity> enabledDoctors() {
-        List<StaffAccountEntity> accounts = staffAccountMapper.selectList(new LambdaQueryWrapper<StaffAccountEntity>()
-                .eq(StaffAccountEntity::getStatus, 1)
-                .eq(StaffAccountEntity::getIsDeleted, 0)
-                .orderByAsc(StaffAccountEntity::getId));
-
+    private List<StaffAccountEntity> enabledDoctors(String centerCode, String departmentCode) {
+        List<DoctorDepartmentRelEntity> rels = doctorDepartmentRelMapper.selectList(
+                new LambdaQueryWrapper<DoctorDepartmentRelEntity>()
+                        .eq(DoctorDepartmentRelEntity::getCenterCode, centerCode)
+                        .eq(DoctorDepartmentRelEntity::getDepartmentCode, departmentCode)
+                        .eq(DoctorDepartmentRelEntity::getIsDeleted, 0)
+                        .orderByDesc(DoctorDepartmentRelEntity::getIsPrimary));
         List<StaffAccountEntity> doctors = new ArrayList<StaffAccountEntity>();
-        for (StaffAccountEntity account : accounts) {
-            if (isDoctorAccount(account.getId())) {
+        for (DoctorDepartmentRelEntity rel : rels) {
+            StaffAccountEntity account = staffAccountMapper.selectById(rel.getDoctorId());
+            if (account != null
+                    && Integer.valueOf(1).equals(account.getStatus())
+                    && Integer.valueOf(0).equals(account.getIsDeleted())
+                    && isDoctorAccount(account.getId())) {
                 doctors.add(account);
             }
         }
@@ -467,15 +556,46 @@ public class ConsultationService {
         return count != null && count > 0;
     }
 
-    private String resolveDepartmentName(StaffAccountEntity doctor, String targetDepartment) {
-        if (targetDepartment == null || targetDepartment.isEmpty()) {
-            return doctor.getDepartmentName();
+    private String resolveReportCenterCode(ExamReportEntity report) {
+        if (report.getAppointmentId() == null) {
+            throw new BizException(ErrorCode.PARAM_INVALID.getCode(), "报告缺少预约信息，无法按中心分配咨询医生");
         }
-        if (targetDepartment.equalsIgnoreCase(doctor.getDepartmentCode()) && doctor.getDepartmentName() != null) {
+        AppointmentEntity appointment = appointmentMapper.selectById(report.getAppointmentId());
+        if (appointment == null || !hasText(appointment.getCenterCode())) {
+            throw new BizException(ErrorCode.PARAM_INVALID.getCode(), "预约缺少体检中心，无法按中心分配咨询医生");
+        }
+        return appointment.getCenterCode();
+    }
+
+    private String resolveConsultationCenterCode(DoctorConsultationEntity consultation) {
+        ExamReportEntity report = examReportMapper.selectOne(new LambdaQueryWrapper<ExamReportEntity>()
+                .eq(ExamReportEntity::getReportNo, consultation.getReportNo())
+                .eq(ExamReportEntity::getIsDeleted, 0)
+                .last("limit 1"));
+        if (report == null) {
+            throw new BizException(ErrorCode.DATA_NOT_FOUND.getCode(), "报告不存在");
+        }
+        return resolveReportCenterCode(report);
+    }
+
+    private void ensureDoctorMatchesConsultation(Long doctorId, String centerCode, String departmentCode) {
+        Long count = doctorDepartmentRelMapper.selectCount(new LambdaQueryWrapper<DoctorDepartmentRelEntity>()
+                .eq(DoctorDepartmentRelEntity::getDoctorId, doctorId)
+                .eq(DoctorDepartmentRelEntity::getCenterCode, centerCode)
+                .eq(DoctorDepartmentRelEntity::getDepartmentCode, departmentCode)
+                .eq(DoctorDepartmentRelEntity::getIsDeleted, 0));
+        if (count == null || count == 0) {
+            throw new BizException(ErrorCode.PARAM_INVALID.getCode(), "医生未绑定该咨询对应的中心/科室，不能分配");
+        }
+    }
+
+    private String resolveDepartmentName(StaffAccountEntity doctor, String centerCode, String targetDepartment) {
+        if (targetDepartment == null || targetDepartment.isEmpty()) {
             return doctor.getDepartmentName();
         }
         DoctorDepartmentRelEntity relation = doctorDepartmentRelMapper.selectOne(new LambdaQueryWrapper<DoctorDepartmentRelEntity>()
                 .eq(DoctorDepartmentRelEntity::getDoctorId, doctor.getId())
+                .eq(DoctorDepartmentRelEntity::getCenterCode, centerCode)
                 .eq(DoctorDepartmentRelEntity::getDepartmentCode, targetDepartment)
                 .eq(DoctorDepartmentRelEntity::getIsDeleted, 0)
                 .orderByDesc(DoctorDepartmentRelEntity::getIsPrimary)
