@@ -53,7 +53,7 @@ public class DoctorAnalyticsService {
     }
 
     public Map<String, Object> abnormalOverview(LocalDate startDate, LocalDate endDate) {
-        Long doctorId = AuthContext.getUserId();
+        Long doctorId = AuthContext.getAccountId();
         LocalDate start = resolveStart(startDate, 29);
         LocalDate end = resolveEnd(endDate);
         List<ExamResultEntity> results = loadExamResults(start, end, doctorId, null);
@@ -74,7 +74,7 @@ public class DoctorAnalyticsService {
     }
 
     public List<Map<String, Object>> abnormalDistribution(LocalDate startDate, LocalDate endDate) {
-        Long doctorId = AuthContext.getUserId();
+        Long doctorId = AuthContext.getAccountId();
         LocalDate start = resolveStart(startDate, 29);
         LocalDate end = resolveEnd(endDate);
         List<ExamResultEntity> results = loadExamResults(start, end, doctorId, null);
@@ -128,7 +128,7 @@ public class DoctorAnalyticsService {
     }
 
     public List<Map<String, Object>> highRiskUsers(LocalDate startDate, LocalDate endDate) {
-        Long doctorId = AuthContext.getUserId();
+        Long doctorId = AuthContext.getAccountId();
         LocalDate start = resolveStart(startDate, 29);
         LocalDate end = resolveEnd(endDate);
         List<ExamResultEntity> results = loadExamResults(start, end, doctorId, null);
@@ -185,7 +185,7 @@ public class DoctorAnalyticsService {
     }
 
     public List<Map<String, Object>> abnormalTrend(LocalDate startDate, LocalDate endDate) {
-        Long doctorId = AuthContext.getUserId();
+        Long doctorId = AuthContext.getAccountId();
         LocalDate start = resolveStart(startDate, 6);
         LocalDate end = resolveEnd(endDate);
         List<ExamResultEntity> results = loadExamResults(start, end, doctorId, null);
@@ -219,7 +219,7 @@ public class DoctorAnalyticsService {
     }
 
     public Map<String, Object> workloadOverview(LocalDate startDate, LocalDate endDate) {
-        Long doctorId = AuthContext.getUserId();
+        Long doctorId = AuthContext.getAccountId();
         LocalDate start = resolveStart(startDate, 29);
         LocalDate end = resolveEnd(endDate);
         List<ExamTaskItemEntity> taskItems = loadTaskItems(start, end, doctorId, null);
@@ -245,7 +245,7 @@ public class DoctorAnalyticsService {
     }
 
     public List<Map<String, Object>> workloadTrend(LocalDate startDate, LocalDate endDate) {
-        Long doctorId = AuthContext.getUserId();
+        Long doctorId = AuthContext.getAccountId();
         LocalDate start = resolveStart(startDate, 6);
         LocalDate end = resolveEnd(endDate);
         List<ExamTaskItemEntity> taskItems = loadTaskItems(start, end, doctorId, null);
@@ -290,7 +290,7 @@ public class DoctorAnalyticsService {
     }
 
     public List<Map<String, Object>> workloadBreakdown(LocalDate startDate, LocalDate endDate) {
-        Long doctorId = AuthContext.getUserId();
+        Long doctorId = AuthContext.getAccountId();
         LocalDate start = resolveStart(startDate, 29);
         LocalDate end = resolveEnd(endDate);
         List<ExamTaskItemEntity> taskItems = loadTaskItems(start, end, doctorId, null);

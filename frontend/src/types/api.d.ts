@@ -121,11 +121,13 @@ export interface Appointment {
 export interface Order {
   id: number
   orderNo: string
+  status?: number | string
   userId: number
   appointmentNo: string
   packageId: number
   packageName: string
   totalAmount: number
+  discountAmount?: number
   payAmount: number
   payChannel: string
   orderStatus: number
@@ -133,6 +135,9 @@ export interface Order {
   payStatus: number
   payTime: string
   createdAt: string
+  expireTime?: string
+  remainingSeconds?: number
+  isExisting?: boolean
   items?: OrderItem[]
 }
 

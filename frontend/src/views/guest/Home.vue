@@ -88,7 +88,7 @@ const statusSummaries = computed<StatusSummary[]>(() => {
     return guestSummaries.value
   }
 
-  const latestAppointment = firstByTime(appointments.value, 'createdAt')
+  const latestAppointment = firstByTime(appointments.value, 'createdAt', 'appointDate')
   const latestReport = firstByTime(reports.value, 'publishedAt', 'createdAt')
   const latestConsultation = firstByTime(consultations.value, 'createdAt')
 
@@ -96,7 +96,7 @@ const statusSummaries = computed<StatusSummary[]>(() => {
     {
       key: 'appointment',
       title: '最近预约',
-      value: latestAppointment?.statusText || '暂无预约',
+      value: latestAppointment ? appointmentStatusText(latestAppointment) : '暂无预约',
       detail: latestAppointment
         ? `${latestAppointment.centerName || '体检中心'} · ${formatDate(latestAppointment.appointDate)} ${latestAppointment.timeSlotName || ''}`.trim()
         : '选择套餐后即可提交预约，这里会同步最新安排。',
@@ -107,9 +107,9 @@ const statusSummaries = computed<StatusSummary[]>(() => {
     {
       key: 'report',
       title: '最新报告',
-      value: latestReport?.reportStatusText || '暂无报告',
+      value: latestReport ? reportStatusText(latestReport) : '暂无报告',
       detail: latestReport
-        ? `${latestReport.packageName || '体检报告'} · ${formatDate(latestReport.publishedAt || latestReport.reportDate || latestReport.createdAt)}`
+        ? `报告 ${latestReport.reportNo || ''} · ${formatDate(latestReport.publishedAt || latestReport.reportDate || latestReport.createdAt)}`
         : '报告发布后会在这里提示，方便继续查看详情。',
       actionText: latestReport ? '查看报告' : '报告列表',
       route: '/user/reports',
@@ -118,7 +118,7 @@ const statusSummaries = computed<StatusSummary[]>(() => {
     {
       key: 'consultation',
       title: '最近咨询',
-      value: latestConsultation?.consultationStatusText || '暂无咨询',
+      value: latestConsultation ? consultationStatusText(latestConsultation) : '暂无咨询',
       detail: latestConsultation
         ? `${latestConsultation.consultationTitle || '报告咨询'} · ${formatDate(latestConsultation.createdAt)}`
         : '有报告疑问时，可以从报告页发起医生咨询。',
@@ -128,6 +128,47 @@ const statusSummaries = computed<StatusSummary[]>(() => {
     },
   ]
 })
+
+function appointmentStatusText(appointment: Appointment) {
+  if (appointment.statusText) {
+    return appointment.statusText
+  }
+  const statusMap: Record<number, string> = {
+    0: '待支付',
+    1: '待体检',
+    2: '已完成',
+    3: '已取消',
+    4: '爽约',
+  }
+  return statusMap[appointment.status] || '状态待确认'
+}
+
+function reportStatusText(report: ExamReport) {
+  // 优先用后端返回的文本
+  if (report.reportStatusText) {
+    return report.reportStatusText
+  }
+  // 根据状态码映射
+  const statusMap: Record<number, string> = {
+    0: '待生成',
+    1: '待审核',
+    3: '已发布',
+    4: '待处理',
+  }
+  return statusMap[report.reportStatus ?? report.status] || '暂无报告'
+}
+
+function consultationStatusText(consultation: Consultation) {
+  if (consultation.consultationStatusText) {
+    return consultation.consultationStatusText
+  }
+  const statusMap: Record<number, string> = {
+    0: '待回复',
+    1: '已回复',
+    2: '已关闭',
+  }
+  return statusMap[consultation.consultationStatus] || '暂无咨询'
+}
 
 onMounted(async () => {
   await replayEntrance()

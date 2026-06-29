@@ -16,9 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-/**
- * 订单控制器 - 用户订单管理
- */
 @RestController
 @RequestMapping("/api/orders")
 @PreAuthorize("hasRole('USER')")
@@ -32,31 +29,31 @@ public class OrderController {
         this.refundService = refundService;
     }
 
-    /** 创建订单 */
     @PostMapping
     public ApiResult<Map<String, Object>> create(@Validated @RequestBody CreateOrderRequest request) {
         return ApiResult.success(orderService.create(request));
     }
 
-    /** 查询订单详情 */
     @GetMapping("/{orderNo}")
     public ApiResult<?> detail(@PathVariable String orderNo) {
         return ApiResult.success(orderService.detail(orderNo));
     }
 
-    /** 查询我的订单列表 */
     @GetMapping("/mine")
     public ApiResult<?> mine() {
         return ApiResult.success(orderService.mine());
     }
 
-    /** 订单支付 */
     @PostMapping("/{orderNo}/pay")
     public ApiResult<Map<String, Object>> pay(@PathVariable String orderNo) {
         return ApiResult.success(orderService.pay(orderNo));
     }
 
-    /** 申请退款 */
+    @PostMapping("/{orderNo}/cancel")
+    public ApiResult<Map<String, Object>> cancel(@PathVariable String orderNo) {
+        return ApiResult.success(orderService.cancelByUser(orderNo));
+    }
+
     @PostMapping("/{orderNo}/refund")
     public ApiResult<?> refund(@PathVariable String orderNo, @Validated @RequestBody ApplyRefundRequest request) {
         return ApiResult.success(refundService.apply(orderNo, request));

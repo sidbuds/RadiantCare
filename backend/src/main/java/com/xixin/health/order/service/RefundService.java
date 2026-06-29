@@ -2,12 +2,13 @@ package com.xixin.health.order.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.xixin.health.common.enums.ErrorCode;
 import com.xixin.health.common.exception.BizException;
 import com.xixin.health.common.util.AuthContext;
 import com.xixin.health.common.util.NoGenerator;
-import com.xixin.health.appointment.entity.AppointmentEntity;
-import com.xixin.health.appointment.mapper.AppointmentMapper;
+import com.xixin.health.appointment.service.AppointmentService;
+import com.xixin.health.exam.service.ExamService;
 import com.xixin.health.order.dto.ApplyRefundRequest;
 import com.xixin.health.order.dto.RefundAuditRequest;
 import com.xixin.health.order.entity.OrderEntity;
@@ -33,21 +34,24 @@ import java.util.Map;
 public class RefundService {
 
     private final OrderMapper orderMapper;
-    private final AppointmentMapper appointmentMapper;
+    private final AppointmentService appointmentService;
     private final RefundApplyMapper refundApplyMapper;
     private final RefundAuditLogMapper refundAuditLogMapper;
     private final RefundRecordMapper refundRecordMapper;
+    private final ExamService examService;
 
     public RefundService(OrderMapper orderMapper,
-                         AppointmentMapper appointmentMapper,
+                         AppointmentService appointmentService,
                          RefundApplyMapper refundApplyMapper,
                          RefundAuditLogMapper refundAuditLogMapper,
-                         RefundRecordMapper refundRecordMapper) {
+                         RefundRecordMapper refundRecordMapper,
+                         ExamService examService) {
         this.orderMapper = orderMapper;
-        this.appointmentMapper = appointmentMapper;
+        this.appointmentService = appointmentService;
         this.refundApplyMapper = refundApplyMapper;
         this.refundAuditLogMapper = refundAuditLogMapper;
         this.refundRecordMapper = refundRecordMapper;
+        this.examService = examService;
     }
 
     /** 申请退款 */
@@ -133,17 +137,17 @@ public class RefundService {
             throw new BizException(ErrorCode.REFUND_ORDER_NOT_ELIGIBLE);
         }
 
-        refundApplyMapper.update(null, new LambdaUpdateWrapper<RefundApplyEntity>()
-                .eq(RefundApplyEntity::getId, apply.getId())
-                .set(RefundApplyEntity::getApplyStatus, 1)
-                .set(RefundApplyEntity::getAuditStatus, 1)
-                .set(RefundApplyEntity::getUpdatedBy, AuthContext.getUserId()));
+        refundApplyMapper.update(null, new UpdateWrapper<RefundApplyEntity>()
+                .eq("id", apply.getId())
+                .set("apply_status", 1)
+                .set("audit_status", 1)
+                .set("updated_by", AuthContext.getUserId()));
         insertAuditLog(apply, "APPROVE", "PASS", request.getAuditRemark());
 
-        refundApplyMapper.update(null, new LambdaUpdateWrapper<RefundApplyEntity>()
-                .eq(RefundApplyEntity::getId, apply.getId())
-                .set(RefundApplyEntity::getApplyStatus, 3)
-                .set(RefundApplyEntity::getUpdatedBy, AuthContext.getUserId()));
+        refundApplyMapper.update(null, new UpdateWrapper<RefundApplyEntity>()
+                .eq("id", apply.getId())
+                .set("apply_status", 3)
+                .set("updated_by", AuthContext.getUserId()));
 
         RefundRecordEntity record = new RefundRecordEntity();
         record.setRefundNo(NoGenerator.next("RFD"));
@@ -159,19 +163,18 @@ public class RefundService {
         record.setIsDeleted(0);
         refundRecordMapper.insert(record);
 
-        refundApplyMapper.update(null, new LambdaUpdateWrapper<RefundApplyEntity>()
-                .eq(RefundApplyEntity::getId, apply.getId())
-                .set(RefundApplyEntity::getApplyStatus, 4)
-                .set(RefundApplyEntity::getUpdatedBy, AuthContext.getUserId()));
+        refundApplyMapper.update(null, new UpdateWrapper<RefundApplyEntity>()
+                .eq("id", apply.getId())
+                .set("apply_status", 4)
+                .set("updated_by", AuthContext.getUserId()));
 
-        orderMapper.update(null, new LambdaUpdateWrapper<OrderEntity>()
-                .eq(OrderEntity::getId, order.getId())
-                .set(OrderEntity::getStatus, 2)
-                .set(OrderEntity::getUpdatedBy, AuthContext.getUserId()));
+        orderMapper.update(null, new UpdateWrapper<OrderEntity>()
+                .eq("id", order.getId())
+                .set("status", 2)
+                .set("updated_by", AuthContext.getUserId()));
 
-        appointmentMapper.update(null, new LambdaUpdateWrapper<AppointmentEntity>()
-                .eq(AppointmentEntity::getId, order.getAppointmentId())
-                .set(AppointmentEntity::getStatus, 3));
+        appointmentService.cancelPaidById(order.getAppointmentId(), "退款审核通过，系统自动取消预约");
+        examService.revokeForRefundedOrder(order.getId(), "退款审核通过，系统自动撤回体检任务");
 
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("applyNo", applyNo);

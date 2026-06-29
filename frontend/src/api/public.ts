@@ -33,4 +33,8 @@ export function getFaq() {
   return get<FaqItem[]>('/public/content/faq')
 }
 
+export function getAppointmentConfig() {
+  return get<{ advanceDays: number; allowToday: boolean; defaultCapacity: number }>('/public/content/appointment-config')
+}
+
 

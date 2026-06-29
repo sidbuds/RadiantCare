@@ -15,6 +15,7 @@ import com.xixin.health.common.service.AuditLogService;
 import com.xixin.health.operator.service.OperatorPackageService;
 import com.xixin.health.operator.dto.SavePackageRouteRequest;
 import com.xixin.health.order.mapper.OrderMapper;
+import com.xixin.health.publicapi.service.PublicPackageCacheService;
 import com.xixin.health.report.mapper.ReportTemplateMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -62,6 +63,9 @@ class OperatorPackageServiceTest {
     @Mock
     private AuditLogService auditLogService;
 
+    @Mock
+    private PublicPackageCacheService packageCacheService;
+
     @Test
     @DisplayName("package status update does not require items")
     void updateStatusDoesNotRequireItems() {
@@ -75,7 +79,8 @@ class OperatorPackageServiceTest {
                 packageCenterRelMapper,
                 examCenterMapper,
                 routeMapper,
-                auditLogService
+                auditLogService,
+                packageCacheService
         );
         ExamPackageEntity entity = new ExamPackageEntity();
         entity.setId(1001L);
@@ -136,7 +141,8 @@ class OperatorPackageServiceTest {
                 packageCenterRelMapper,
                 examCenterMapper,
                 routeMapper,
-                auditLogService
+                auditLogService,
+                packageCacheService
         );
     }
 }

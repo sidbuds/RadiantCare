@@ -9,6 +9,7 @@ import com.xixin.health.appointment.mapper.ExamPackageCenterRelMapper;
 import com.xixin.health.appointment.mapper.ExamPackageItemMapper;
 import com.xixin.health.appointment.mapper.ExamPackageMapper;
 import com.xixin.health.appointment.mapper.ResourceCapacityMapper;
+import com.xixin.health.common.service.SystemConfigService;
 import com.xixin.health.publicapi.entity.ExamCenterEntity;
 import com.xixin.health.publicapi.mapper.ExamCenterMapper;
 import org.springframework.stereotype.Service;
@@ -28,19 +29,22 @@ public class PublicService {
     private final ResourceCapacityMapper resourceCapacityMapper;
     private final ExamPackageCenterRelMapper packageCenterRelMapper;
     private final PublicPackageCacheService packageCacheService;
+    private final SystemConfigService systemConfigService;
 
     public PublicService(ExamPackageMapper examPackageMapper,
                          ExamPackageItemMapper examPackageItemMapper,
                          ExamCenterMapper examCenterMapper,
                          ResourceCapacityMapper resourceCapacityMapper,
                          ExamPackageCenterRelMapper packageCenterRelMapper,
-                         PublicPackageCacheService packageCacheService) {
+                         PublicPackageCacheService packageCacheService,
+                         SystemConfigService systemConfigService) {
         this.examPackageMapper = examPackageMapper;
         this.examPackageItemMapper = examPackageItemMapper;
         this.examCenterMapper = examCenterMapper;
         this.resourceCapacityMapper = resourceCapacityMapper;
         this.packageCenterRelMapper = packageCenterRelMapper;
         this.packageCacheService = packageCacheService;
+        this.systemConfigService = systemConfigService;
     }
 
     public List<Map<String, Object>> listPackages(String centerCode) {
@@ -146,6 +150,14 @@ public class PublicService {
                 .eq(ResourceCapacityEntity::getStatus, 1)
                 .eq(ResourceCapacityEntity::getIsDeleted, 0)
                 .orderByAsc(ResourceCapacityEntity::getTimeSlotCode));
+    }
+
+    public Map<String, Object> getAppointmentConfig() {
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("advanceDays", systemConfigService.getIntValue("appointment.advance_days", 7));
+        result.put("allowToday", systemConfigService.getBooleanValue("appointment.allow_today", Boolean.FALSE));
+        result.put("defaultCapacity", systemConfigService.getIntValue("schedule.default_capacity", 20));
+        return result;
     }
 
     public Map<String, Object> getCheckupGuide() {

@@ -25,6 +25,7 @@ function resolveStatus(status: number) {
   if (status === 2) return 'REFUNDED'
   if (status === 3) return 'REFUNDING'
   if (status === 4) return 'COMPLETED'
+  if (status === 5) return 'CANCELED'
   return ''
 }
 

@@ -9,6 +9,7 @@ import com.xixin.health.appointment.mapper.ExamPackageMapper;
 import com.xixin.health.appointment.mapper.ResourceCapacityMapper;
 import com.xixin.health.appointment.service.AppointmentService;
 import com.xixin.health.common.exception.BizException;
+import com.xixin.health.common.service.SystemConfigService;
 import com.xixin.health.common.util.AuthContext;
 import com.xixin.health.exam.mapper.ExamTaskMapper;
 import com.xixin.health.operator.service.OperatorPackageService;
@@ -25,9 +26,12 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AppointmentService 单元测试")
@@ -47,6 +51,9 @@ class AppointmentServiceTest {
 
     @Mock
     private OperatorPackageService operatorPackageService;
+
+    @Mock
+    private SystemConfigService systemConfigService;
 
     @InjectMocks
     private AppointmentService appointmentService;
@@ -83,9 +90,7 @@ class AppointmentServiceTest {
     void create_Success() {
         try (MockedStatic<AuthContext> authContext = mockStatic(AuthContext.class)) {
             authContext.when(AuthContext::getUserId).thenReturn(1L);
-
-            when(examPackageMapper.selectById(1001L)).thenReturn(packageEntity);
-            when(operatorPackageService.isPackageAvailableAtCenter(1001L, "C001")).thenReturn(true);
+            mockCommonSuccessBeforeCapacity();
             when(appointmentMapper.selectCount(any())).thenReturn(0L);
             when(resourceCapacityMapper.selectList(any())).thenReturn(Collections.singletonList(capacity));
             when(appointmentMapper.insert(any())).thenReturn(1);
@@ -100,11 +105,10 @@ class AppointmentServiceTest {
     }
 
     @Test
-    @DisplayName("套餐不存在创建失败")
+    @DisplayName("套餐不存在时创建失败")
     void create_PackageNotFound() {
         try (MockedStatic<AuthContext> authContext = mockStatic(AuthContext.class)) {
             authContext.when(AuthContext::getUserId).thenReturn(1L);
-
             when(examPackageMapper.selectById(1001L)).thenReturn(null);
 
             assertThrows(BizException.class, () -> appointmentService.create(createRequest));
@@ -112,19 +116,47 @@ class AppointmentServiceTest {
     }
 
     @Test
-    @DisplayName("时段已满创建失败")
+    @DisplayName("不允许当天预约时创建失败")
+    void create_TodayDisabled() {
+        try (MockedStatic<AuthContext> authContext = mockStatic(AuthContext.class)) {
+            authContext.when(AuthContext::getUserId).thenReturn(1L);
+            createRequest.setAppointDate(LocalDate.now());
+            mockCommonSuccessBeforeCapacity();
+
+            assertThrows(BizException.class, () -> appointmentService.create(createRequest));
+        }
+    }
+
+    @Test
+    @DisplayName("超过提前预约天数时创建失败")
+    void create_AfterAdvanceDays() {
+        try (MockedStatic<AuthContext> authContext = mockStatic(AuthContext.class)) {
+            authContext.when(AuthContext::getUserId).thenReturn(1L);
+            createRequest.setAppointDate(LocalDate.now().plusDays(8));
+            mockCommonSuccessBeforeCapacity();
+
+            assertThrows(BizException.class, () -> appointmentService.create(createRequest));
+        }
+    }
+
+    @Test
+    @DisplayName("时段已满时创建失败")
     void create_CapacityFull() {
         try (MockedStatic<AuthContext> authContext = mockStatic(AuthContext.class)) {
             authContext.when(AuthContext::getUserId).thenReturn(1L);
-
-            capacity.setCapacityUsed(20); // 已满
-
-            when(examPackageMapper.selectById(1001L)).thenReturn(packageEntity);
-            when(operatorPackageService.isPackageAvailableAtCenter(1001L, "C001")).thenReturn(true);
+            capacity.setCapacityUsed(20);
+            mockCommonSuccessBeforeCapacity();
             when(appointmentMapper.selectCount(any())).thenReturn(0L);
             when(resourceCapacityMapper.selectList(any())).thenReturn(Collections.singletonList(capacity));
 
             assertThrows(BizException.class, () -> appointmentService.create(createRequest));
         }
+    }
+
+    private void mockCommonSuccessBeforeCapacity() {
+        when(examPackageMapper.selectById(1001L)).thenReturn(packageEntity);
+        when(operatorPackageService.isPackageAvailableAtCenter(1001L, "C001")).thenReturn(true);
+        when(systemConfigService.getBooleanValue("appointment.allow_today", Boolean.FALSE)).thenReturn(false);
+        when(systemConfigService.getIntValue("appointment.advance_days", 7)).thenReturn(7);
     }
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { getAppointmentConfig } from '@/api/public'
 import {
   getOperatorSchedules,
   createOperatorSchedule,
@@ -33,13 +34,14 @@ const dialogVisible = ref(false)
 const editing = ref(false)
 const formRef = ref<FormInstance>()
 const submitLoading = ref(false)
+const defaultCapacity = ref(20)
 
 const createEmptyForm = (): ScheduleForm => ({
   id: 0,
   centerCode: '',
   appointDate: '',
   timeSlotCode: '',
-  capacityTotal: 20,
+  capacityTotal: defaultCapacity.value,
   status: 1,
 })
 
@@ -66,9 +68,10 @@ function loadSchedules() {
 }
 
 async function loadOptions() {
-  const [centerRes, timeSlotRes] = await Promise.all([getCenterOptions(), getTimeSlotOptions()])
+  const [centerRes, timeSlotRes, configRes] = await Promise.all([getCenterOptions(), getTimeSlotOptions(), getAppointmentConfig()])
   centers.value = centerRes.data || []
   timeSlots.value = timeSlotRes.data || []
+  defaultCapacity.value = Math.max(configRes.data?.defaultCapacity ?? 20, 1)
 }
 
 watch([pageNum, pageSize], loadSchedules)

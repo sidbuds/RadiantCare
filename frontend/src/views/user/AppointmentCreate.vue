@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { listPackages, listCenters, getCenterSlots } from '@/api/public'
+import { listPackages, listCenters, getCenterSlots, getAppointmentConfig } from '@/api/public'
 import { createAppointment } from '@/api/appointment'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -15,6 +15,8 @@ const { loading, mounted, execute } = useLoading()
 const packages = ref<PackageItem[]>([])
 const centers = ref<ExamCenter[]>([])
 const slots = ref<TimeSlot[]>([])
+const advanceDays = ref(7)
+const allowToday = ref(false)
 
 const formRef = ref<FormInstance>()
 const form = ref({
@@ -45,9 +47,11 @@ const rules = computed<FormRules>(() => ({
 }))
 
 onMounted(async () => {
-  const [pkgRes, centerRes] = await Promise.all([listPackages(), listCenters()])
+  const [pkgRes, centerRes, configRes] = await Promise.all([listPackages(), listCenters(), getAppointmentConfig()])
   packages.value = pkgRes.data || []
   centers.value = centerRes.data || []
+  advanceDays.value = Math.max(configRes.data?.advanceDays ?? 7, 0)
+  allowToday.value = configRes.data?.allowToday ?? false
 })
 
 watch(() => form.value.packageId, () => {
@@ -68,6 +72,14 @@ watch(() => [form.value.centerCode, form.value.appointDate], async () => {
   }
 })
 
+const disabledDate = (date: Date) => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const minDate = allowToday.value ? today : new Date(today.getTime() + 86400000)
+  const maxDate = new Date(today.getTime() + advanceDays.value * 86400000)
+  return date < minDate || date > maxDate
+}
+
 async function handleSubmit() {
   if (!formRef.value) return
   const valid = await formRef.value.validate().catch(() => false)
@@ -79,7 +91,7 @@ async function handleSubmit() {
       packageId: form.value.packageId!,
     })
     ElMessage.success('预约成功')
-    router.push(`/user/appointments/${res.data.appointmentNo}`)
+    router.push(`/user/orders/${res.data.appointmentNo}/confirm`)
   })
 }
 </script>
@@ -103,7 +115,7 @@ async function handleSubmit() {
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="create-form">
         <el-form-item label="体检套餐" prop="packageId">
           <el-select v-model="form.packageId" placeholder="选择套餐" style="width: 100%;">
-            <el-option v-for="p in packages" :key="p.id" :label="`${p.packageName} - ￥${p.price}`" :value="p.id" />
+            <el-option v-for="p in packages" :key="p.id" :label="`${p.packageName} - ¥${p.price}`" :value="p.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="体检中心" prop="centerCode">
@@ -113,7 +125,7 @@ async function handleSubmit() {
           <el-alert v-if="form.packageId && applicableCenters.length === 0" title="该套餐暂无适用体检中心，不能预约" type="warning" :closable="false" show-icon />
         </el-form-item>
         <el-form-item label="预约日期" prop="appointDate">
-          <el-date-picker v-model="form.appointDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" :disabled-date="(date: Date) => date < new Date(new Date().setHours(0,0,0,0))" style="width: 100%;" />
+          <el-date-picker v-model="form.appointDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" :disabled-date="disabledDate" style="width: 100%;" />
         </el-form-item>
         <el-form-item label="时段" prop="timeSlotCode">
           <div class="slot-grid">

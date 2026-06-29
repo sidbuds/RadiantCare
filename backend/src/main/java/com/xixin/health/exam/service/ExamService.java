@@ -257,6 +257,38 @@ public class ExamService {
                 .orderByAsc(ExamTaskItemEntity::getId));
     }
 
+    @Transactional
+    public int revokeForRefundedOrder(Long orderId, String reason) {
+        if (orderId == null) {
+            return 0;
+        }
+        List<ExamTaskEntity> tasks = examTaskMapper.selectList(new LambdaQueryWrapper<ExamTaskEntity>()
+                .eq(ExamTaskEntity::getOrderId, orderId)
+                .eq(ExamTaskEntity::getIsDeleted, 0));
+        int count = 0;
+        for (ExamTaskEntity task : tasks) {
+            examTaskItemMapper.update(null, new LambdaUpdateWrapper<ExamTaskItemEntity>()
+                    .eq(ExamTaskItemEntity::getTaskId, task.getId())
+                    .eq(ExamTaskItemEntity::getIsDeleted, 0)
+                    .ne(ExamTaskItemEntity::getItemStatus, 2)
+                    .set(ExamTaskItemEntity::getItemStatus, 5)
+                    .set(ExamTaskItemEntity::getSkipReason, reason)
+                    .set(ExamTaskItemEntity::getIsDeleted, 1)
+                    .set(ExamTaskItemEntity::getUpdatedAt, LocalDateTime.now()));
+            int updated = examTaskMapper.update(null, new LambdaUpdateWrapper<ExamTaskEntity>()
+                    .eq(ExamTaskEntity::getId, task.getId())
+                    .eq(ExamTaskEntity::getIsDeleted, 0)
+                    .set(ExamTaskEntity::getTaskStatus, 5)
+                    .set(ExamTaskEntity::getRemark, reason)
+                    .set(ExamTaskEntity::getIsDeleted, 1)
+                    .set(ExamTaskEntity::getUpdatedAt, LocalDateTime.now()));
+            if (updated > 0) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     public Map<String, Object> doctorItemDetail(String taskNo, String taskItemNo) {
         ExamTaskItemEntity item = getDoctorTaskItem(taskNo, taskItemNo);
         ExamTaskEntity task = getTaskByNo(taskNo);

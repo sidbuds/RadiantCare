@@ -12,6 +12,7 @@ import com.xixin.health.appointment.mapper.ResourceCapacityMapper;
 import com.xixin.health.common.enums.ErrorCode;
 import com.xixin.health.common.enums.RoleType;
 import com.xixin.health.common.exception.BizException;
+import com.xixin.health.common.service.SystemConfigService;
 import com.xixin.health.common.util.AuthContext;
 import com.xixin.health.common.util.NoGenerator;
 import com.xixin.health.exam.entity.ExamTaskEntity;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,17 +39,20 @@ public class AppointmentService {
     private final ResourceCapacityMapper resourceCapacityMapper;
     private final ExamTaskMapper examTaskMapper;
     private final OperatorPackageService operatorPackageService;
+    private final SystemConfigService systemConfigService;
 
     public AppointmentService(AppointmentMapper appointmentMapper,
                               ExamPackageMapper examPackageMapper,
                               ResourceCapacityMapper resourceCapacityMapper,
                               ExamTaskMapper examTaskMapper,
-                              OperatorPackageService operatorPackageService) {
+                              OperatorPackageService operatorPackageService,
+                              SystemConfigService systemConfigService) {
         this.appointmentMapper = appointmentMapper;
         this.examPackageMapper = examPackageMapper;
         this.resourceCapacityMapper = resourceCapacityMapper;
         this.examTaskMapper = examTaskMapper;
         this.operatorPackageService = operatorPackageService;
+        this.systemConfigService = systemConfigService;
     }
 
     /** 查询可用预约时段 */
@@ -68,6 +73,7 @@ public class AppointmentService {
     public Map<String, Object> create(CreateAppointmentRequest request) {
         examPackageExists(request.getPackageId());
         assertPackageAvailableAtCenter(request.getPackageId(), request.getCenterCode());
+        validateAppointDate(request.getAppointDate());
         Long userId = AuthContext.getUserId();
         long duplicateCount = appointmentMapper.selectCount(new LambdaQueryWrapper<AppointmentEntity>()
                 .eq(AppointmentEntity::getUserId, userId)
@@ -167,23 +173,51 @@ public class AppointmentService {
                 .set(AppointmentEntity::getCancelReason, reason)
                 .set(AppointmentEntity::getUpdatedBy, AuthContext.getUserId()));
 
-        if (entity.getTimeSlotCode() != null && !entity.getTimeSlotCode().isEmpty()) {
-            List<ResourceCapacityEntity> capacities = resourceCapacityMapper.selectList(
-                    new LambdaQueryWrapper<ResourceCapacityEntity>()
-                            .eq(ResourceCapacityEntity::getCenterCode, entity.getCenterCode())
-                            .eq(ResourceCapacityEntity::getAppointDate, entity.getAppointDate())
-                            .eq(ResourceCapacityEntity::getTimeSlotCode, entity.getTimeSlotCode())
-                            .eq(ResourceCapacityEntity::getStatus, 1)
-                            .eq(ResourceCapacityEntity::getIsDeleted, 0));
-            for (ResourceCapacityEntity cap : capacities) {
-                int used = cap.getCapacityUsed() == null ? 0 : cap.getCapacityUsed();
-                if (used > 0) {
-                    cap.setCapacityUsed(used - 1);
-                    resourceCapacityMapper.updateById(cap);
-                    break;
-                }
-            }
+        releaseCapacity(entity);
+    }
+
+    @Transactional
+    public boolean cancelPendingById(Long appointmentId, String reason) {
+        if (appointmentId == null) {
+            return false;
         }
+        AppointmentEntity entity = appointmentMapper.selectById(appointmentId);
+        if (entity == null || entity.getIsDeleted() == null || entity.getIsDeleted() != 0) {
+            return false;
+        }
+        int updated = appointmentMapper.update(null, new LambdaUpdateWrapper<AppointmentEntity>()
+                .eq(AppointmentEntity::getId, entity.getId())
+                .eq(AppointmentEntity::getStatus, 0)
+                .set(AppointmentEntity::getStatus, 3)
+                .set(AppointmentEntity::getCancelReason, reason)
+                .set(AppointmentEntity::getUpdatedAt, LocalDateTime.now()));
+        if (updated <= 0) {
+            return false;
+        }
+        releaseCapacity(entity);
+        return true;
+    }
+
+    @Transactional
+    public boolean cancelPaidById(Long appointmentId, String reason) {
+        if (appointmentId == null) {
+            return false;
+        }
+        AppointmentEntity entity = appointmentMapper.selectById(appointmentId);
+        if (entity == null || entity.getIsDeleted() == null || entity.getIsDeleted() != 0) {
+            return false;
+        }
+        int updated = appointmentMapper.update(null, new LambdaUpdateWrapper<AppointmentEntity>()
+                .eq(AppointmentEntity::getId, entity.getId())
+                .in(AppointmentEntity::getStatus, 0, 1)
+                .set(AppointmentEntity::getStatus, 3)
+                .set(AppointmentEntity::getCancelReason, reason)
+                .set(AppointmentEntity::getUpdatedAt, LocalDateTime.now()));
+        if (updated <= 0) {
+            return false;
+        }
+        releaseCapacity(entity);
+        return true;
     }
 
     /**
@@ -220,6 +254,24 @@ public class AppointmentService {
         return entity;
     }
 
+    private void validateAppointDate(LocalDate appointDate) {
+        if (appointDate == null) {
+            throw new BizException(ErrorCode.PARAM_INVALID);
+        }
+        LocalDate today = LocalDate.now();
+        boolean allowToday = systemConfigService.getBooleanValue("appointment.allow_today", Boolean.FALSE);
+        int advanceDays = Math.max(systemConfigService.getIntValue("appointment.advance_days", 7), 0);
+        LocalDate minDate = allowToday ? today : today.plusDays(1);
+        LocalDate maxDate = today.plusDays(advanceDays);
+        if (appointDate.isBefore(minDate) || appointDate.isAfter(maxDate)) {
+            String range = allowToday ? "今天到" + maxDate : today.plusDays(1) + "到" + maxDate;
+            throw new BizException(ErrorCode.PARAM_INVALID.getCode(), "预约日期不在允许范围内，" + range + "可预约");
+        }
+        if (ChronoUnit.DAYS.between(today, appointDate) > advanceDays) {
+            throw new BizException(ErrorCode.PARAM_INVALID.getCode(), "预约日期超过系统允许的提前天数");
+        }
+    }
+
     private void examPackageExists(Long packageId) {
         ExamPackageEntity packageEntity = examPackageMapper.selectById(packageId);
         if (packageEntity == null || packageEntity.getStatus() == null || packageEntity.getStatus() != 1) {
@@ -244,6 +296,27 @@ public class AppointmentService {
     private void assertPackageAvailableAtCenter(Long packageId, String centerCode) {
         if (!operatorPackageService.isPackageAvailableAtCenter(packageId, centerCode)) {
             throw new BizException(ErrorCode.PARAM_INVALID.getCode(), "该套餐不适用于所选体检中心");
+        }
+    }
+
+    private void releaseCapacity(AppointmentEntity entity) {
+        if (entity == null || entity.getTimeSlotCode() == null || entity.getTimeSlotCode().isEmpty()) {
+            return;
+        }
+        List<ResourceCapacityEntity> capacities = resourceCapacityMapper.selectList(
+                new LambdaQueryWrapper<ResourceCapacityEntity>()
+                        .eq(ResourceCapacityEntity::getCenterCode, entity.getCenterCode())
+                        .eq(ResourceCapacityEntity::getAppointDate, entity.getAppointDate())
+                        .eq(ResourceCapacityEntity::getTimeSlotCode, entity.getTimeSlotCode())
+                        .eq(ResourceCapacityEntity::getStatus, 1)
+                        .eq(ResourceCapacityEntity::getIsDeleted, 0));
+        for (ResourceCapacityEntity cap : capacities) {
+            int used = cap.getCapacityUsed() == null ? 0 : cap.getCapacityUsed();
+            if (used > 0) {
+                cap.setCapacityUsed(used - 1);
+                resourceCapacityMapper.updateById(cap);
+                break;
+            }
         }
     }
 }

@@ -9,6 +9,7 @@ import com.xixin.health.appointment.mapper.ExamPackageCenterRelMapper;
 import com.xixin.health.appointment.mapper.ExamPackageItemMapper;
 import com.xixin.health.appointment.mapper.ExamPackageMapper;
 import com.xixin.health.appointment.mapper.ResourceCapacityMapper;
+import com.xixin.health.common.service.SystemConfigService;
 import com.xixin.health.publicapi.mapper.ExamCenterMapper;
 import com.xixin.health.publicapi.service.PublicPackageCacheService;
 import com.xixin.health.publicapi.service.PublicService;
@@ -29,6 +30,8 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -51,6 +54,8 @@ class PublicServiceCacheTest {
     private StringRedisTemplate redisTemplate;
     @Mock
     private ValueOperations<String, String> valueOperations;
+    @Mock
+    private SystemConfigService systemConfigService;
 
     @Test
     @DisplayName("package list uses cache after first query")
@@ -80,7 +85,8 @@ class PublicServiceCacheTest {
                 examCenterMapper,
                 resourceCapacityMapper,
                 packageCenterRelMapper,
-                cacheService
+                cacheService,
+                systemConfigService
         );
         when(examPackageMapper.selectOne(any())).thenReturn(packageEntity());
         when(examPackageItemMapper.selectList(any())).thenReturn(Collections.singletonList(packageItem()));
@@ -101,18 +107,19 @@ class PublicServiceCacheTest {
                 examCenterMapper,
                 resourceCapacityMapper,
                 packageCenterRelMapper,
-                cacheService(store)
+                cacheService(store),
+                systemConfigService
         );
     }
 
     private PublicPackageCacheService cacheService(Map<String, String> store) {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get(anyString())).thenAnswer(invocation -> store.get(invocation.getArgument(0)));
-        when(valueOperations.set(anyString(), anyString(), any())).thenAnswer(invocation -> {
+        doAnswer(invocation -> {
             store.put(invocation.getArgument(0), invocation.getArgument(1));
             return null;
-        });
-        when(valueOperations.increment(anyString())).thenAnswer(invocation -> {
+        }).when(valueOperations).set(anyString(), anyString(), any());
+        lenient().when(valueOperations.increment(anyString())).thenAnswer(invocation -> {
             String key = invocation.getArgument(0);
             long next = Long.parseLong(store.getOrDefault(key, "0")) + 1L;
             store.put(key, String.valueOf(next));

@@ -13,6 +13,10 @@ export function payOrder(orderNo: string) {
   return post<Order>(`/orders/${orderNo}/pay`)
 }
 
+export function cancelOrder(orderNo: string) {
+  return post<Order>(`/orders/${orderNo}/cancel`)
+}
+
 export function applyRefund(orderNo: string, data: { reason: string }) {
   return post<void>(`/orders/${orderNo}/refund`, data)
 }

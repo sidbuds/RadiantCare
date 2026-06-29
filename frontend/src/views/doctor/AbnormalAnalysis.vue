@@ -14,6 +14,8 @@ const mounted = ref(false)
 
 const distributionChart = ref<HTMLElement>()
 const trendChart = ref<HTMLElement>()
+let distributionChartInstance: echarts.ECharts | undefined
+let trendChartInstance: echarts.ECharts | undefined
 
 const chartTheme = {
   backgroundColor: 'transparent',
@@ -52,9 +54,15 @@ async function fetchData() {
 }
 
 function renderCharts() {
+  if (!distribution.value.length) {
+    distributionChartInstance?.clear()
+  }
+  if (!trend.value.length) {
+    trendChartInstance?.clear()
+  }
   if (distributionChart.value && distribution.value.length) {
-    const chart = echarts.init(distributionChart.value)
-    chart.setOption({
+    distributionChartInstance = distributionChartInstance || echarts.init(distributionChart.value)
+    distributionChartInstance.setOption({
       ...chartTheme,
       title: { text: '异常项目分布', ...chartTheme.title },
       tooltip: { ...chartTheme.tooltip },
@@ -75,8 +83,8 @@ function renderCharts() {
     })
   }
   if (trendChart.value && trend.value.length) {
-    const chart = echarts.init(trendChart.value)
-    chart.setOption({
+    trendChartInstance = trendChartInstance || echarts.init(trendChart.value)
+    trendChartInstance.setOption({
       ...chartTheme,
       title: { text: '异常趋势', ...chartTheme.title },
       tooltip: { ...chartTheme.tooltip, trigger: 'axis' },
@@ -140,8 +148,14 @@ onMounted(() => {
     </section>
 
     <section class="chart-grid">
-      <div class="chart-card data-card" :class="{ 'is-mounted': mounted }"><div ref="distributionChart" class="chart-box" /></div>
-      <div class="chart-card data-card" :class="{ 'is-mounted': mounted }"><div ref="trendChart" class="chart-box" /></div>
+      <div class="chart-card data-card" :class="{ 'is-mounted': mounted }">
+        <div v-if="distribution.length" ref="distributionChart" class="chart-box" />
+        <el-empty v-else description="暂无异常分布数据" :image-size="80" />
+      </div>
+      <div class="chart-card data-card" :class="{ 'is-mounted': mounted }">
+        <div v-if="trend.length" ref="trendChart" class="chart-box" />
+        <el-empty v-else description="暂无异常趋势数据" :image-size="80" />
+      </div>
     </section>
 
     <section v-if="highRiskUsers.length" class="table-shell data-card" :class="{ 'is-mounted': mounted }">

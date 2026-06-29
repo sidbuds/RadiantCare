@@ -10,6 +10,7 @@ const breakdown = ref<any[]>([])
 const loading = ref(true)
 const mounted = ref(false)
 const trendChart = ref<HTMLElement>()
+let trendChartInstance: echarts.ECharts | undefined
 
 const chartTheme = {
   backgroundColor: 'transparent',
@@ -46,10 +47,14 @@ async function fetchData() {
 }
 
 function renderTrendChart() {
+  if (!trend.value.length) {
+    trendChartInstance?.clear()
+    return
+  }
   if (trendChart.value && trend.value.length) {
-    const chart = echarts.init(trendChart.value)
+    trendChartInstance = trendChartInstance || echarts.init(trendChart.value)
     const colors = ['#6a9a92', '#b87070', '#22c55e', '#8b5cf6']
-    chart.setOption({
+    trendChartInstance.setOption({
       ...chartTheme,
       title: { text: '工作量趋势', ...chartTheme.title },
       tooltip: { ...chartTheme.tooltip, trigger: 'axis' },
@@ -116,7 +121,8 @@ onMounted(() => {
     </section>
 
     <section class="chart-card data-card" :class="{ 'is-mounted': mounted }">
-      <div ref="trendChart" class="chart-box" />
+      <div v-if="trend.length" ref="trendChart" class="chart-box" />
+      <el-empty v-else description="暂无工作量趋势数据" :image-size="80" />
     </section>
 
     <section v-if="breakdown.length" class="table-shell data-card" :class="{ 'is-mounted': mounted }">
