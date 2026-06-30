@@ -29,6 +29,9 @@ public class AdminConfigService {
             wrapper.eq(SystemConfigEntity::getConfigGroup, configGroup);
         }
         List<SystemConfigEntity> list = systemConfigMapper.selectList(wrapper);
+        for (SystemConfigEntity entity : list) {
+            maskSensitiveValue(entity);
+        }
         int total = list.size();
         int from = Math.min((pageNum - 1) * pageSize, total);
         int to = Math.min(from + pageSize, total);
@@ -41,6 +44,9 @@ public class AdminConfigService {
     public void updateConfig(Long id, String configValue) {
         SystemConfigEntity entity = systemConfigMapper.selectById(id);
         if (entity != null) {
+            if (isSensitiveConfig(entity) && (configValue == null || configValue.trim().isEmpty())) {
+                return;
+            }
             entity.setConfigValue(configValue);
             systemConfigMapper.updateById(entity);
             auditLogService.record("CONFIG", "UPDATE", "SYSTEM_CONFIG", id);
@@ -65,5 +71,15 @@ public class AdminConfigService {
         } catch (NumberFormatException ex) {
             return defaultValue;
         }
+    }
+
+    private void maskSensitiveValue(SystemConfigEntity entity) {
+        if (isSensitiveConfig(entity) && entity.getConfigValue() != null && !entity.getConfigValue().trim().isEmpty()) {
+            entity.setConfigValue("********");
+        }
+    }
+
+    private boolean isSensitiveConfig(SystemConfigEntity entity) {
+        return entity != null && "ai.api.key".equals(entity.getConfigKey());
     }
 }

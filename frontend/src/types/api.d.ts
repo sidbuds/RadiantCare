@@ -248,6 +248,7 @@ export interface ExamReport {
   packageName: string
   templateCode: string
   reportDate?: string
+  status?: number
   reportStatus: number
   reportStatusText: string
   conclusion: string
