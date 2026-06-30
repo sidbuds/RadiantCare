@@ -269,6 +269,27 @@ function goRoute(route: string) {
               : '从选套餐到查报告，按一条明确路径走。少一点跳转，多一点确定感。'
             }}
           </p>
+          <div v-if="isLoggedIn" class="hero-quick-actions">
+            <button class="ai-entry-btn" type="button" @click="router.push('/user/ai-assistant')">
+              <span class="ai-entry-icon">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <rect width="18" height="18" rx="5" fill="var(--color-brand)" />
+                  <path
+                    d="M5.5 7h7M5.5 10h4M5 5h8v8H5z"
+                    stroke="var(--color-on-brand)"
+                    stroke-width="1.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span class="ai-entry-text">
+                <strong>智能报告助手</strong>
+                <small>AI 解读你的体检报告</small>
+              </span>
+              <el-icon :size="14"><Right /></el-icon>
+            </button>
+          </div>
         </div>
 
         <div class="flow-panel" aria-label="用户操作主链路">
@@ -511,6 +532,68 @@ function goRoute(route: string) {
     color: rgba(25, 35, 34, 0.72);
     font-size: 17px;
     line-height: 1.85;
+  }
+}
+
+.hero-quick-actions {
+  margin-top: 20px;
+}
+
+.ai-entry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px 10px 10px;
+  border: 1px solid rgba(58, 143, 133, 0.2);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(58, 143, 133, 0.4);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 16px rgba(58, 143, 133, 0.12);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .el-icon {
+    color: var(--color-brand);
+    opacity: 0.6;
+  }
+}
+
+.ai-entry-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--color-brand-light);
+  flex-shrink: 0;
+}
+
+.ai-entry-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  text-align: left;
+
+  strong {
+    font-size: 13px;
+    font-weight: 600;
+    color: #192322;
+  }
+
+  small {
+    font-size: 11px;
+    color: rgba(25, 35, 34, 0.55);
   }
 }
 

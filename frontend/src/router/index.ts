@@ -36,6 +36,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'reports/:reportNo', name: 'ReportDetail', component: () => import('@/views/user/ReportDetail.vue') },
       { path: 'health-profile', name: 'HealthProfile', component: () => import('@/views/user/HealthProfile.vue') },
       { path: 'consultations', name: 'ConsultDoctor', component: () => import('@/views/user/ConsultDoctor.vue') },
+      { path: 'ai-assistant', name: 'AiAssistant', component: () => import('@/views/user/AiAssistant.vue') },
     ],
   },
   // 医生端

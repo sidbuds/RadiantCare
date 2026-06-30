@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   closeConsultation,
   createConsultation,
@@ -7,10 +8,12 @@ import {
   getMyConsultations,
   sendConsultationMessage,
 } from '@/api/consultation'
-import { downloadReportPdf, getMyReports } from '@/api/report'
+import { getMyReports } from '@/api/report'
+import { downloadReportPdf } from '@/api/report'
 import { saveBlob } from '@/utils/download'
 import { ElMessage } from 'element-plus'
 
+const router = useRouter()
 const consultations = ref<any[]>([])
 const reports = ref<any[]>([])
 const current = ref<any | null>(null)
@@ -86,9 +89,7 @@ async function selectConsultation(no: string) {
 }
 
 async function openDialog() {
-  if (reports.value.length === 0) {
-    await loadReports()
-  }
+  if (reports.value.length === 0) await loadReports()
   if (reports.value.length === 0) {
     ElMessage.warning('当前没有可咨询的已发布报告')
     return
@@ -121,9 +122,7 @@ async function handleSubmit() {
 }
 
 async function sendMessage() {
-  if (!currentNo.value || !messageText.value.trim()) {
-    return
-  }
+  if (!currentNo.value || !messageText.value.trim()) return
   sending.value = true
   try {
     await sendConsultationMessage(currentNo.value, { replyContent: messageText.value.trim() })
@@ -151,6 +150,10 @@ async function sendReport() {
   } finally {
     sendingReport.value = false
   }
+}
+
+function goAiAssistant() {
+  router.push('/user/ai-assistant')
 }
 
 async function downloadSharedReport(reportNo: string) {
@@ -198,14 +201,24 @@ onMounted(() => {
         <span class="section-eyebrow">CONSULT</span>
         <h2>医生咨询</h2>
       </div>
-      <el-button type="primary" @click="openDialog">
-        <el-icon><Plus /></el-icon>
-        发起咨询
-      </el-button>
+      <div class="header-actions">
+        <el-button @click="goAiAssistant">
+          <el-icon><ChatDotRound /></el-icon>
+          智能助手
+        </el-button>
+        <el-button type="primary" @click="openDialog">
+          <el-icon><Plus /></el-icon>
+          发起咨询
+        </el-button>
+      </div>
     </div>
 
     <section class="consult-shell">
       <aside class="conversation-list" v-loading="loading">
+        <div class="sidebar-head">
+          <span>咨询记录</span>
+          <span class="count-badge">{{ consultations.length }}</span>
+        </div>
         <button
           v-for="item in consultations"
           :key="item.consultationNo"
@@ -227,12 +240,14 @@ onMounted(() => {
       <main class="chat-panel" v-loading="detailLoading">
         <template v-if="current">
           <header class="chat-header">
-            <div>
+            <div class="chat-header-info">
               <strong>{{ current.consultationTitle || '报告咨询' }}</strong>
               <span>报告 {{ current.reportNo }} · {{ current.doctorName }}</span>
             </div>
-            <el-button v-if="!isClosed" link type="primary" @click="shareProfile">分享档案</el-button>
-            <el-button v-if="!isClosed" link type="danger" @click="handleClose">关闭咨询</el-button>
+            <div class="chat-header-actions">
+              <el-button v-if="!isClosed" link type="primary" @click="shareProfile">分享档案</el-button>
+              <el-button v-if="!isClosed" link type="danger" @click="handleClose">关闭咨询</el-button>
+            </div>
           </header>
 
           <div class="message-list">
@@ -243,7 +258,10 @@ onMounted(() => {
               :class="{ mine: reply.replyRole === 'USER' }"
             >
               <div class="message-bubble">
-                <div class="message-meta">{{ reply.replyRole === 'USER' ? '我' : reply.replyUserName || current.doctorName }}</div>
+                <div class="message-meta">
+                  <span>{{ reply.replyRole === 'USER' ? '我' : reply.replyUserName || current.doctorName }}</span>
+                  <time>{{ reply.replyTime || reply.createdAt }}</time>
+                </div>
                 <p>{{ reply.replyContent }}</p>
                 <button
                   v-if="reply.messageType === 'REPORT_PDF' && reply.refReportNo"
@@ -254,43 +272,48 @@ onMounted(() => {
                   <span>体检报告 PDF</span>
                   <strong>{{ reply.refReportNo }}</strong>
                 </button>
-                <time>{{ reply.replyTime || reply.createdAt }}</time>
               </div>
             </div>
           </div>
 
           <footer class="chat-input">
-            <el-input
-              v-model="messageText"
-              type="textarea"
-              :rows="3"
-              :disabled="isClosed"
-              placeholder="继续描述你的问题"
-              @keydown.ctrl.enter.prevent="sendMessage"
-            />
-            <el-button type="primary" :loading="sending" :disabled="isClosed" @click="sendMessage">发送</el-button>
-          </footer>
-          <footer class="report-send-bar">
-            <el-select
-              v-model="selectedReportNo"
-              :disabled="isClosed"
-              placeholder="选择报告发送给医生"
-              filterable
-              clearable
-            >
-              <el-option
-                v-for="item in reportOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+            <div class="input-row">
+              <el-input
+                v-model="messageText"
+                type="textarea"
+                :rows="2"
+                :disabled="isClosed"
+                placeholder="继续描述你的问题，Ctrl + Enter 发送"
+                @keydown.ctrl.enter.prevent="sendMessage"
               />
-            </el-select>
-            <el-button :loading="sendingReport" :disabled="isClosed || !selectedReportNo" @click="sendReport">
-              发送报告
-            </el-button>
+              <el-button type="primary" :loading="sending" :disabled="isClosed" @click="sendMessage">发送</el-button>
+            </div>
+            <div class="report-send-bar">
+              <el-select v-model="selectedReportNo" :disabled="isClosed" placeholder="选择报告发送给医生" filterable clearable>
+                <el-option v-for="item in reportOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+              <el-button :loading="sendingReport" :disabled="isClosed || !selectedReportNo" @click="sendReport">
+                发送报告
+              </el-button>
+            </div>
           </footer>
         </template>
-        <el-empty v-else description="选择或发起一个咨询" />
+        <div v-else class="empty-chat">
+          <div class="empty-icon">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <rect width="48" height="48" rx="14" fill="var(--color-brand-light)" />
+              <path
+                d="M16 20h16M16 26h10M14 14h20v20H14z"
+                stroke="var(--color-brand)"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <h3>选择或发起一个咨询</h3>
+          <p>在左侧选择已有咨询，或点击右上角发起新咨询</p>
+        </div>
       </main>
     </section>
 
@@ -298,12 +321,7 @@ onMounted(() => {
       <el-form :model="form" label-width="90px">
         <el-form-item label="报告编号">
           <el-select v-model="form.reportNo" placeholder="请选择报告" style="width: 100%" filterable>
-            <el-option
-              v-for="item in reportOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
+            <el-option v-for="item in reportOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="问题类型">
@@ -315,7 +333,7 @@ onMounted(() => {
           </el-select>
         </el-form-item>
         <el-form-item label="标题">
-          <el-input v-model="form.consultationTitle" placeholder="例如：血脂偏高需要注意什么" />
+          <el-input v-model="form.consultationTitle" placeholder="例如：血脂偏高需要注意什么？" />
         </el-form-item>
         <el-form-item label="内容">
           <el-input v-model="form.consultationContent" type="textarea" :rows="5" placeholder="请描述异常项、症状和想确认的问题" />
@@ -330,23 +348,66 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+/* ── 页面头部 ── */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── 主布局 ── */
 .consult-shell {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
-  gap: 16px;
-  min-height: 620px;
-}
-
-.conversation-list,
-.chat-panel {
-  background: var(--color-panel);
+  gap: 0;
+  height: calc(100vh - var(--header-height) - 180px);
+  min-height: 560px;
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-panel);
+  overflow: hidden;
 }
 
+/* ── 左侧会话列表 ── */
 .conversation-list {
-  padding: 12px;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--color-line);
+  background: var(--color-surface-warm);
+  overflow-y: auto;
+  padding: 0;
+}
+
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--color-line);
+
+  span:first-child {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-ink-soft);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+}
+
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--color-brand-light);
+  color: var(--color-brand);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .conversation-item {
@@ -355,125 +416,149 @@ onMounted(() => {
   justify-content: space-between;
   gap: 10px;
   width: 100%;
-  padding: 14px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  border: none;
+  border-bottom: 1px solid var(--color-line);
   background: transparent;
   color: var(--color-ink);
   text-align: left;
   cursor: pointer;
-}
+  transition: background var(--duration-fast) ease;
 
-.conversation-item.active,
-.conversation-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--color-line);
+  &:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  &.active {
+    background: var(--color-brand-light);
+    border-left: 2px solid var(--color-brand);
+  }
 }
 
 .item-main {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+
+  strong,
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  strong {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  span {
+    font-size: 12px;
+    color: var(--color-ink-muted);
+  }
 }
 
-.item-main strong,
-.item-main span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.item-main span {
-  color: var(--color-ink-muted);
-  font-size: 12px;
-}
-
+/* ── 右侧聊天面板 ── */
 .chat-panel {
   display: flex;
-  min-width: 0;
   flex-direction: column;
+  min-width: 0;
 }
 
-.chat-header,
-.chat-input {
+.chat-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 20px;
+  padding: 14px 20px;
   border-bottom: 1px solid var(--color-line);
+  background: var(--color-panel);
 }
 
-.chat-header span {
-  display: block;
-  margin-top: 4px;
-  color: var(--color-ink-muted);
-  font-size: 12px;
+.chat-header-info {
+  min-width: 0;
+
+  strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  span {
+    display: block;
+    font-size: 12px;
+    color: var(--color-ink-muted);
+    margin-top: 2px;
+  }
 }
 
+.chat-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── 消息列表 ── */
 .message-list {
   flex: 1;
+  min-height: 0;
   padding: 20px;
-  overflow: auto;
+  overflow-y: auto;
 }
 
 .message-row {
   display: flex;
   margin-bottom: 14px;
-}
 
-.message-row.mine {
-  justify-content: flex-end;
+  &.mine {
+    justify-content: flex-end;
+
+    .message-bubble {
+      background: var(--color-brand-light);
+      border-color: var(--color-line-accent);
+    }
+
+    .message-meta {
+      flex-direction: row-reverse;
+    }
+  }
 }
 
 .message-bubble {
   max-width: min(640px, 78%);
-  padding: 12px 14px;
+  padding: 12px 16px;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--color-surface-warm);
   border: 1px solid var(--color-line);
 }
 
-.message-row.mine .message-bubble {
-  background: var(--color-brand-light);
-  border-color: rgba(201, 164, 78, 0.25);
-}
-
 .message-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 6px;
-  color: var(--color-ink-muted);
-  font-size: 12px;
+
+  span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-ink-soft);
+  }
+
+  time {
+    font-size: 11px;
+    color: var(--color-ink-faint);
+  }
 }
 
 .message-bubble p {
   margin: 0;
   color: var(--color-ink);
-  line-height: 1.7;
+  font-size: 14px;
+  line-height: 1.75;
   white-space: pre-wrap;
-}
-
-.message-bubble time {
-  display: block;
-  margin-top: 8px;
-  color: var(--color-ink-faint);
-  font-size: 11px;
-}
-
-.chat-input {
-  border-top: 1px solid var(--color-line);
-  border-bottom: 0;
-}
-
-.chat-input .el-button {
-  align-self: stretch;
-}
-
-.report-send-bar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  padding: 0 20px 16px;
 }
 
 .report-attachment {
@@ -484,24 +569,113 @@ onMounted(() => {
   padding: 10px 12px;
   border: 1px solid var(--color-line);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--color-panel);
   color: var(--color-ink);
   text-align: left;
   cursor: pointer;
+  transition: border-color var(--duration-fast) ease;
+
+  &:hover {
+    border-color: var(--color-brand-muted);
+  }
+
+  span {
+    color: var(--color-ink-muted);
+    font-size: 12px;
+  }
+
+  strong {
+    font-size: 13px;
+    font-family: var(--font-mono);
+  }
 }
 
-.report-attachment span {
+/* ── 输入区域 ── */
+.chat-input {
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-line);
+  background: var(--color-panel);
+}
+
+.input-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.report-send-bar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* ── 空状态 ── */
+.empty-chat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  flex: 1;
+}
+
+.empty-icon {
+  margin-bottom: 20px;
+}
+
+.empty-chat h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--color-ink);
+  margin: 0 0 8px;
+}
+
+.empty-chat p {
+  font-size: 14px;
   color: var(--color-ink-muted);
-  font-size: 12px;
+  margin: 0;
 }
 
-.report-attachment strong {
-  font-size: 13px;
-}
-
+/* ── 响应式 ── */
 @media (max-width: 860px) {
   .consult-shell {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
+  }
+
+  .conversation-list {
+    border-right: none;
+    border-bottom: 1px solid var(--color-line);
+    max-height: 240px;
+  }
+
+  .chat-panel {
+    min-height: 400px;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chat-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .input-row,
+  .report-send-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .message-bubble {
+    max-width: 90%;
   }
 }
 </style>
